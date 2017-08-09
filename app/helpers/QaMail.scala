@@ -1,20 +1,24 @@
 package helpers
 
-import models.{QaEntry, OrderNotification}
+import models.{OrderNotification, OrderNotificationRepo, QaEntry}
 import play.api.Play
 import java.sql.Connection
+
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import play.api.i18n.{Messages, MessagesProvider}
 import javax.inject._
-import akka.actor.{ActorSystem}
+
+import akka.actor.ActorSystem
 
 @Singleton
 class QaMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient
+  system: ActorSystem, mailerClient: MailerClient,
+  orderNotificationRepo: OrderNotificationRepo
 ) extends HasLogger {
   val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
   val from = Play.current.configuration.getString("user.registration.email.from").get
@@ -23,7 +27,7 @@ class QaMail @Inject() (
     implicit conn: Connection, mp: MessagesProvider
   ) {
     if (! disableMailer) {
-      OrderNotification.listAdmin.foreach { admin =>
+      orderNotificationRepo.listAdmin.foreach { admin =>
         logger.info("Sending QA mail to " + admin.email)
         val body = views.html.mail.qa(admin, qa).toString
         system.scheduler.scheduleOnce(0.microsecond) {

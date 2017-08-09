@@ -1,0 +1,14 @@
+@()(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("createNewRecommendationByAdminTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("createNewRecommendationByAdminTitle")</h1>
+
+  
+
+}

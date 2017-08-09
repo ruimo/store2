@@ -1,6 +1,8 @@
 package models
 
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
+
 import helpers.PasswordHash
 
 case class ModifyUserProfile(
@@ -9,13 +11,16 @@ case class ModifyUserProfile(
   lastName: String,
   email: String,
   password: String
+)(
+  implicit entryUserRegistrationRepo: EntryUserRegistrationRepo,
+  storeUserRepo: StoreUserRepo
 ) {
   def save(login: LoginSession)(implicit conn: Connection) {
-    val salt = EntryUserRegistration.tokenGenerator.next
-    val stretchCount: Int = StoreUser.PasswordHashStretchCount()
+    val salt = entryUserRegistrationRepo.tokenGenerator.next
+    val stretchCount: Int = storeUserRepo.PasswordHashStretchCount()
     val passwordHash = PasswordHash.generate(password, salt, stretchCount)
 
-    StoreUser.update(
+    storeUserRepo.update(
       login.storeUser.copy(
         firstName = firstName,
         middleName = middleName,
@@ -29,7 +34,11 @@ case class ModifyUserProfile(
   }
 }
 
-object ModifyUserProfile {
+@Singleton
+class ModifyUserProfileRepo @Inject() (
+  implicit entryUserRegistrationRepo: EntryUserRegistrationRepo,
+  storeUserRepo: StoreUserRepo
+) {
   def apply(login: LoginSession): ModifyUserProfile = ModifyUserProfile(
     login.storeUser.firstName,
     login.storeUser.middleName,

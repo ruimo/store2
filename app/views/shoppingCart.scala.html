@@ -1,0 +1,74 @@
+@(
+  list: ShoppingCartTotal
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("shopping.cart"), Some(loginSession)) {
+  <script src="@routes.Assets.versioned("javascripts/showRecommendation.js")"></script>
+  <script type="text/javascript">
+    $(function() {
+      showRecommendation(
+        $("#recommendedContent"),
+        '@routes.Recommendation.byShoppingCartJson()',
+        '@Messages("recommendedItemTitle")',
+        '@routes.ItemDetail.show(111, 222)',
+        '@routes.ItemPictures.getPicture(111, 0)'
+      );
+    })
+  </script>
+} {
+  <h2 class="shoppingCart">@Messages("shopping.cart")</h2>
+
+  @if(! list.table.isEmpty) {
+    <table class="shoppingCartTable">
+      <tr class="tableHeader">
+        <th>@Messages("itemName")</th>
+        <th>@Messages("site")</th>
+        <th>@Messages("unitPrice")</th>
+        <th>
+          @Messages("quantity")
+          <form action="@routes.Purchase.clear()" style="display: inline;">
+            <input type="submit" value="@Messages("remove.all")">
+          </form>
+        </th>
+        <th>@Messages("subtotal")</th>
+      </tr>
+
+      @list.table.map { e =>
+        <tr class="tableBody">
+          <td class="itemName">@e.itemName.name</td>
+          <td class="siteName">@e.site.name</td>
+          <td class="unitPrice">@amount(e.unitPrice)</td>
+          <td class="changeQuantity">
+            <form id="changeItemQuantityInShoppingCart" action="@routes.Purchase.changeItemQuantity()" style="display: inline;">
+              <input type="hidden" name="cartId" value="@e.shoppingCartItem.id.get">
+              <input type="text" style="text-align: right;" name="quantity" value="@e.shoppingCartItem.quantity">
+              <input type="submit" value="@Messages("update")">
+            </form>
+            <form id="removeItemInShoppingCart" action="@routes.Purchase.deleteItemFromCart()" style="display: inline;">
+              <input type="hidden" name="cartId" value="@e.shoppingCartItem.id.get">
+              <input type="submit" value="@Messages("remove")">
+            </form>
+          </td>
+          <td class="price">
+            @amount(e.itemPrice)
+          </td>
+        </tr>
+      }
+    </table>
+
+    <div id="recommendedContent">
+    </div>
+
+    <div class="toEnterShippingAddress">
+      <div class="toEnterShippingAddressInner">
+        <a href="@routes.Shipping.startEnterShippingAddress()">@Messages("enter.address")</a>
+      </div>
+    </div>
+  } else {
+    <h2 class="shoppingCartEmpty">@Messages("shopping.cart.empty")</h2>
+  }
+}

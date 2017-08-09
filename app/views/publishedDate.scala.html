@@ -1,0 +1,5 @@
+@(date: java.time.LocalDateTime)(implicit request: MessagesRequest[AnyContent])
+
+@{
+  DateTimeFormatter.ofPattern(Messages("published.date.format")).format(date)
+}

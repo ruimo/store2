@@ -56,7 +56,8 @@ object FacebookPostV25 {
 class Facebook(
   appId: String, appSecret: String, 
   tokenCacheDurationInMilli: Long = 60 * 60 * 1000, cacheDurationInMilli: Long = 60 * 1000,
-  wsClient: WSClient
+  wsClient: WSClient,
+  cache: Cache
 ) {
   val FeedCacheSize = 100
   val FeedCachePeriod = 3 * 60 * 1000
@@ -82,7 +83,7 @@ class Facebook(
           val (key, value) = feedCache.head
           feedCache.remove(key)
         }
-        val f: () => immutable.Seq[FacebookPostV25] = Cache.mayBeCached(
+        val f: () => immutable.Seq[FacebookPostV25] = cache.mayBeCached(
           gen = () => retrieveFeedsV25(pageId),
           expirationInMillis = Some(FeedCachePeriod)
         )
@@ -92,7 +93,7 @@ class Facebook(
     }()
   }
 
-  val accessToken: () => String = Cache.mayBeCached[String](
+  val accessToken: () => String = cache.mayBeCached[String](
     gen = () => acuireAccessToken,
     expirationInMillis = Some(tokenCacheDurationInMilli)
   )
@@ -149,8 +150,9 @@ class Facebook(
 }
 
 @Singleton
-class FacebookFactory @Inject() (
-  wsClient: WSClient
+class FacebookRepo @Inject() (
+  wsClient: WSClient,
+  cache: Cache
 ) {
-  def apply(appId: String, appSecret: String): Facebook = new Facebook(appId, appSecret, wsClient = wsClient)
+  def apply(appId: String, appSecret: String): Facebook = new Facebook(appId, appSecret, wsClient = wsClient, cache = cache)
 }

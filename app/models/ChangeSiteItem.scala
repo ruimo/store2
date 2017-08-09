@@ -9,10 +9,10 @@ case class ChangeSiteItemTable(
 case class ChangeSiteItem(
   siteId: Long
 ) {
-  def add(itemId: Long)(implicit conn: Connection) {
+  def add(itemId: Long)(implicit conn: Connection, siteItemRepo: SiteItemRepo, itemPriceRepo: ItemPriceRepo) {
     ExceptionMapper.mapException {
-      SiteItem.add(ItemId(itemId), siteId)
-      ItemPrice.add(ItemId(itemId), siteId)
+      siteItemRepo.add(ItemId(itemId), siteId)
+      itemPriceRepo.add(ItemId(itemId), siteId)
     }
   }
 }

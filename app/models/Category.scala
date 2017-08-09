@@ -1,5 +1,7 @@
 package models
 
+import javax.inject.Inject
+import javax.inject.Singleton
 import helpers.Cache
 import play.api.Play
 import anorm._
@@ -20,7 +22,11 @@ case class CategoryName(locale: LocaleInfo, categoryId: Long, name: String) {
 
 case class Category(id: Option[Long] = None, categoryCode: String)
 
-object Category {
+@Singleton
+class CategoryRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  categoryNameRepo: CategoryNameRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("category.category_id") ~
     SqlParser.get[String]("category.category_code") map {
@@ -28,11 +34,11 @@ object Category {
     }
   }
 
-  val withName = Category.simple ~ CategoryName.simple map {
+  val withName = simple ~ categoryNameRepo.simple map {
     case cat~name => (cat, name)
   }
 
-  val withNameOpt = Category.simple ~ (CategoryName.simple ?) map {
+  val withNameOpt = simple ~ (categoryNameRepo.simple ?) map {
     case cat~nameOpt => (cat, nameOpt)
   }
 
@@ -46,7 +52,7 @@ object Category {
   ).executeUpdate()
 
   def tableForDropDown(implicit lang: Lang, conn: Connection): Seq[(String, String)] = {
-    val locale = LocaleInfo.byLang(lang)
+    val locale = localeInfoRepo.byLang(lang)
 
     SQL(
       """
@@ -73,7 +79,7 @@ object Category {
     and c.category_id <> p.ancestor
       )
     """
-  ).as(Category.simple *)
+  ).as(simple *)
 
 
   def root(locale: LocaleInfo)(implicit conn: Connection): Seq[Category] = SQL(
@@ -103,7 +109,7 @@ object Category {
     """ replaceAll(" +"," ")
     ).on(
       'locale_id -> locale.id
-    ).as(Category.simple *)
+    ).as(simple *)
 
 
   def listWithName(
@@ -260,7 +266,7 @@ object Category {
     """
   ).on(
     'category_id -> id
-  ).as(Category.simple.singleOpt)
+  ).as(simple.singleOpt)
 
   def rename(category: Category, newNames: Map[LocaleInfo, String])(implicit conn: Connection) : Unit =
     rename(category.id.get, newNames)
@@ -340,13 +346,16 @@ object Category {
   }
 }
 
-object CategoryName {
+@Singleton
+class CategoryNameRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo
+) {
   val simple = {
     SqlParser.get[Long]("category_name.locale_id") ~
     SqlParser.get[Long]("category_name.category_id") ~
     SqlParser.get[String]("category_name.category_name") map {
       case localeId~categoryId~categoryName =>
-        CategoryName(LocaleInfo(localeId), categoryId, categoryName)
+        CategoryName(localeInfoRepo(localeId), categoryId, categoryName)
     }
   }
 
@@ -429,14 +438,18 @@ object CategoryName {
     NamedParameter("localeId", locale.id) +:
     codes.zipWithIndex.map { t => NamedParameter("cc" + t._2, t._1) }: _*
   ).as(
-    SqlParser.get[String]("category.category_code") ~
+    (SqlParser.get[String]("category.category_code") ~
     SqlParser.get[String]("category_name.category_name") map {
       case code~name => (code, name)
-    } *
+    }) *
   )
 }
 
-object CategoryPath {
+@Singleton
+class CategoryPathRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  categoryNameRepo: CategoryNameRepo
+) {
   val simple = {
     SqlParser.get[Long]("category_path.ancestor") ~
     SqlParser.get[Long]("category_path.descendant") ~
@@ -448,7 +461,7 @@ object CategoryPath {
 
   val child = SqlParser.get[Long]("category_path.descendant")
 
-  val withName = child ~ CategoryName.simple map {
+  val withName = child ~ categoryNameRepo.simple map {
     case cat~name => (cat, name)
   }
 
@@ -526,20 +539,25 @@ object CategoryPath {
             or n.locale_id = {locale_id})
       """ replaceAll(" +"," ")
     ).on('locale_id -> locale.id).as(
-      SqlParser.get[Long]("category_path.ancestor") ~ 
+      (SqlParser.get[Long]("category_path.ancestor") ~
       SqlParser.get[Long]("category_name.locale_id") ~
       SqlParser.get[Long]("category_name.category_id") ~
       SqlParser.get[String]("category_name.category_name") map {
-        case p ~ locale ~ cat ~ name => (p, CategoryName(LocaleInfo(locale),cat,name))
-      } *
+        case p ~ locale ~ cat ~ name => (p, CategoryName(localeInfoRepo(locale),cat,name))
+      }) *
     )
 }
 
 case class SupplementalCategory(itemId: ItemId, categoryId: Long)
 
-object SupplementalCategory {
+@Singleton
+class SupplementalCategoryRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  categoryNameRepo: CategoryNameRepo,
+  cache: Cache
+) {
   def MaxSupplementalCategoryCountPerItem =
-    Cache.Conf.getInt("maxSupplementalCategoryCountPerItem").getOrElse(10)
+    cache.Conf.getInt("maxSupplementalCategoryCountPerItem").getOrElse(10)
 
   val simple = {
     SqlParser.get[Long]("supplemental_category.category_id") ~
@@ -548,7 +566,7 @@ object SupplementalCategory {
     }
   }
 
-  val withName = simple ~ CategoryName.simple map {
+  val withName = simple ~ categoryNameRepo.simple map {
     case cat~name => (cat, name)
   }
 
@@ -601,7 +619,7 @@ object SupplementalCategory {
     """
   ).on(
     'itemId -> itemId.id,
-    'localeId -> LocaleInfo.byLang(lang).id
+    'localeId -> localeInfoRepo.byLang(lang).id
   ).as(
     withName *
   )

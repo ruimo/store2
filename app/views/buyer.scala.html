@@ -1,0 +1,7 @@
+@(buyer: StoreUser)(implicit request: MessagesRequest[AnyContent])
+
+@import java.util.Locale
+
+<span class="companyName">@{buyer.companyName.getOrElse("-")}</span><br>
+<span class="name">@name(buyer)</span><br>
+<span class="email">@{buyer.email}</span>

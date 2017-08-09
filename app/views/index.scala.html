@@ -1,20 +1,27 @@
-@*
- * This template takes a single argument, a String containing a
- * message to display.
- *@
-@(message: String)
+@(
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
 
-@*
- * Call the `main` template with two arguments. The first
- * argument is a `String` with the title of the page, the second
- * argument is an `Html` object containing the body of the page.
- *@
-@main("Welcome to Play") {
+@main(Messages("company.name"), loginSession) {
+} {
+  @helper.form(action=routes.ItemQuery.query(List())) {
+    <input type="search" id="searchbox" name="q" placeholder="@Messages("search.placeholder")">
+    <input type="submit" id="searchsubmit" value="@Messages("search.button.title")">
+  }
 
-    @*
-     * Get an `Html` object by calling the built-in Play welcome
-     * template and passing a `String` message.
-     *@
-    @welcome(message, style = "scala")
+  @flash.get("errorMessage").map { message =>
+    <div class="globalErrorMessage">
+      @message
+    </div>
+  }
 
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
 }

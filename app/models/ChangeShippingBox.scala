@@ -9,9 +9,9 @@ case class ChangeShippingBox(
   boxSize: Int,
   boxName: String
 ) {
-  def save(implicit conn: Connection) {
+  def save(implicit shippingBoxRepo: ShippingBoxRepo, conn: Connection) {
     ExceptionMapper.mapException {
-      ShippingBox.update(id, siteId, itemClass, boxSize, boxName)
+      shippingBoxRepo.update(id, siteId, itemClass, boxSize, boxName)
     }
   }
 }

@@ -1,0 +1,43 @@
+@(sites: Seq[Site])(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("editSiteTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("editSiteTitle")</h1>
+
+  <table class="siteTable">
+    <tr class="siteTableHeader">
+      <th class="id">Identifier</th>
+      <th class="siteName">@Messages("siteName")</th>
+      <th class="action">@Messages("action")</th>
+    </tr>
+    @sites.map { site =>
+      <tr class="siteTableBody">
+        <td class="id">
+          <a href="@routes.SiteMaintenance.changeSiteStart(site.id.get)">
+            @site.id.get
+          </a>
+        </td>
+        <td class="siteName">@site.name</td>
+        <td class="action">
+          @helper.form(action = helper.CSRF(routes.SiteMaintenance.deleteSite(site.id.get))) {
+            <input type="submit" style="float: left;" value=@Messages("remove")>
+          }
+        </td>
+      </tr>
+    }
+  </table>
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.SiteMaintenance.index()">
+        @Messages("backTo", Messages("siteMaintenanceTitle"))
+    </a>
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}
+

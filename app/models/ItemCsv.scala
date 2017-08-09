@@ -1,111 +1,23 @@
 package models
 
-import java.nio.file.{Path, Files}
+import javax.inject.Singleton
+import javax.inject.Inject
+import java.nio.file.{Files, Path}
 import java.io.{BufferedReader, StringReader}
+
 import scala.collection.immutable
 import scala.annotation.tailrec
 import java.time.format.DateTimeFormatter
-import java.time.Instant
+import java.time.{Instant, LocalDateTime}
+
 import scala.util.control.TailCalls._
 import scala.util.Try
 import java.sql.Connection
+
+import models.ItemCsv.InvalidColumnException
 import play.api.Logger
 
 object ItemCsv {
-  class FieldParser[T](to: String => T) {
-    def parse(lineNo: Int, colNo: Int, name: String, s: String): Option[T] = s match {
-      case "" => None
-      case str => try {
-        Some(to(str))
-      }
-      catch {
-        case nfe: NumberFormatException =>
-          throw new InvalidColumnException(lineNo, colNo, name + " is invalid", str, nfe)
-      }
-    }
-  }
-  case class EpochMilli(value: Long) extends AnyVal
-  implicit object BigDecimalFieldParser extends FieldParser[BigDecimal](BigDecimal.apply)
-  implicit object LongFieldParser extends FieldParser[Long](_.toLong)
-  val YyyyMmDdHhMmSsParserFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-  object YyyyMmDdHhMmSsParser extends FieldParser[EpochMilli](
-    s => EpochMilli(java.sql.Timestamp.valueOf(s).getTime)
-  )
-
-  def to[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): Option[T] =
-    parser.parse(lineNo, colNo, name, s)
-  def toMandatory[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): T =
-    parser.parse(lineNo, colNo, name, s).getOrElse {
-      throw new InvalidColumnException(lineNo, colNo, name + " is empty", s)
-    }
-
-  case class ItemNumericMetadataField(
-    s: String
-  )
-
-  case class ItemTextMetadataField(
-    s: String
-  )
-
-  case class SiteItemNumericMetadataField(
-    typeCode: SiteItemNumericMetadataType,
-    value: Long,
-    until: Long
-  )
-
-  object SiteItemNumericMetadataField {
-    def apply(lineNo: Int, colNo: Int, s: String): SiteItemNumericMetadataField = {
-      val split = s.split("/")
-      SiteItemNumericMetadataField(
-        try {
-          SiteItemNumericMetadataType.byIndex(
-            getLongRemovingAfterColonComment(split(0)).getOrElse {
-              throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
-            }.toInt
-          )
-        }
-        catch {
-          case t: ArrayIndexOutOfBoundsException =>
-            throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
-          case t: NumberFormatException =>
-            throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
-        },
-        toMandatory[Long](lineNo, colNo, "site item numeric metadata value", split(1)),
-        toMandatory[EpochMilli](lineNo, colNo, "site item numeric metadata until", split(2))(YyyyMmDdHhMmSsParser).value
-      )
-    }
-  }
-
-  case class SiteItemTextMetadataField(
-    typeCode: SiteItemTextMetadataType,
-    value: String
-  )
-
-  object SiteItemTextMetadataField {
-    def apply(lineNo: Int, colNo: Int, s: String): SiteItemTextMetadataField = {
-      val idx = s.indexOf("/")
-      if (idx == -1) throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata", s)
-
-      val typeCode = s.substring(0, idx)
-      SiteItemTextMetadataField(
-        try {
-          SiteItemTextMetadataType.byIndex(
-            getLongRemovingAfterColonComment(typeCode).getOrElse {
-              throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
-            }.toInt
-          )
-        }
-        catch {
-          case t: ArrayIndexOutOfBoundsException =>
-            throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
-          case t: NumberFormatException =>
-            throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
-        },
-        s.substring(idx + 1)
-      )
-    }
-  }
-
   abstract class ItemCsvParseException(
     val lineNo: Int, msg: Option[String] = None, cause: Throwable = null
   ) extends Exception("line " + lineNo + msg.map(": " + _).getOrElse(""), cause)
@@ -115,8 +27,6 @@ object ItemCsv {
   ) extends ItemCsvParseException(
     lineNo, Some("Invalid col(" + colNo + ") '" + desc + "': '" + value + "'"), cause
   )
-
-  class NoLangDefException(lineNo: Int) extends ItemCsvParseException(lineNo)
 
   class InvalidSiteException(
     lineNo: Int, cause: Throwable = null
@@ -178,10 +88,19 @@ object ItemCsv {
     itemDetailPicture: String
   ) extends CsvLine
 
-  def removeAfterColonComment(s: String): String = {
-    val idx = s.indexOf(':')
-    if (idx == -1) s else s.substring(0, idx)
-  }
+  case class ItemNumericMetadataField(
+    s: String
+  )
+
+  case class ItemTextMetadataField(
+    s: String
+  )
+
+  case class SiteItemNumericMetadataField(
+    typeCode: SiteItemNumericMetadataType,
+    value: Long,
+    until: LocalDateTime
+  )
 
   def getLongRemovingAfterColonComment(s: String): Option[Long] =
     try {
@@ -191,6 +110,107 @@ object ItemCsv {
       case e: NumberFormatException => None
     }
 
+  implicit object BigDecimalFieldParser extends FieldParser[BigDecimal](BigDecimal.apply)
+  implicit object LongFieldParser extends FieldParser[Long](_.toLong)
+
+  object SiteItemNumericMetadataField {
+
+    def apply(lineNo: Int, colNo: Int, s: String): SiteItemNumericMetadataField = {
+      val split = s.split("/")
+      SiteItemNumericMetadataField(
+        try {
+          SiteItemNumericMetadataType.byIndex(
+            getLongRemovingAfterColonComment(split(0)).getOrElse {
+              throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
+            }.toInt
+          )
+        }
+        catch {
+          case t: ArrayIndexOutOfBoundsException =>
+            throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
+          case t: NumberFormatException =>
+            throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
+        },
+        toMandatory[Long](lineNo, colNo, "site item numeric metadata value", split(1)),
+        toMandatory[LocalDateTime](lineNo, colNo, "site item numeric metadata until", split(2))(YyyyMmDdHhMmSsParser)
+      )
+    }
+  }
+
+  case class SiteItemTextMetadataField(
+    typeCode: SiteItemTextMetadataType,
+    value: String
+  )
+
+  object SiteItemTextMetadataField {
+    def apply(lineNo: Int, colNo: Int, s: String): SiteItemTextMetadataField = {
+      val idx = s.indexOf("/")
+      if (idx == -1) throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata", s)
+
+      val typeCode = s.substring(0, idx)
+      SiteItemTextMetadataField(
+        try {
+          SiteItemTextMetadataType.byIndex(
+            getLongRemovingAfterColonComment(typeCode).getOrElse {
+              throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
+            }.toInt
+          )
+        }
+        catch {
+          case t: ArrayIndexOutOfBoundsException =>
+            throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
+          case t: NumberFormatException =>
+            throw new InvalidColumnException(lineNo, colNo, "Invalid site item text metadata code", s)
+        },
+        s.substring(idx + 1)
+      )
+    }
+  }
+
+  class NoLangDefException(lineNo: Int) extends ItemCsvParseException(lineNo)
+  def removeAfterColonComment(s: String): String = {
+    val idx = s.indexOf(':')
+    if (idx == -1) s else s.substring(0, idx)
+  }
+
+  val YyyyMmDdHhMmSsParserFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+  object YyyyMmDdHhMmSsParser extends FieldParser[LocalDateTime](
+    s => java.sql.Timestamp.valueOf(s).toLocalDateTime
+  )
+
+  def to[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): Option[T] =
+    parser.parse(lineNo, colNo, name, s)
+  def toMandatory[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): T =
+    parser.parse(lineNo, colNo, name, s).getOrElse {
+      throw new InvalidColumnException(lineNo, colNo, name + " is empty", s)
+    }
+  class FieldParser[T](to: String => T) {
+    def parse(lineNo: Int, colNo: Int, name: String, s: String): Option[T] = s match {
+      case "" => None
+      case str => try {
+        Some(to(str))
+      }
+      catch {
+        case nfe: NumberFormatException =>
+          throw new InvalidColumnException(lineNo, colNo, name + " is invalid", str, nfe)
+      }
+    }
+  }
+}
+
+@Singleton
+class ItemCsvRepo @Inject() (
+  itemRepo: ItemRepo, currencyRegistry: CurrencyRegistry, itemPriceHistoryRepo: ItemPriceHistoryRepo,
+  localeInfoRepo: LocaleInfoRepo,
+  siteItemRepo: SiteItemRepo,
+  itemNameRepo: ItemNameRepo,
+  itemPriceRepo: ItemPriceRepo,
+  itemDescriptionRepo: ItemDescriptionRepo,
+  taxRepo: TaxRepo,
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
+  import models.ItemCsv._
+
   // Returns current locale id.
   def processOneLine(
     lineNo: Int,
@@ -199,15 +219,15 @@ object ItemCsv {
   ): Option[LocaleInfo] = {
     readCsvLine(lineNo, z) match {
       case CommentCsvLine => locale
-      case LocaleCsvLine(lid) => Some(LocaleInfo.get(lid).getOrElse {
+      case LocaleCsvLine(lid) => Some(localeInfoRepo.get(lid).getOrElse {
         Logger.error("Invalid locale id = " + lid + ". line " + lineNo)
         throw new InvalidLocaleException(lineNo)
       })
       case item: ItemCsvLine => locale match {
-        case None => {
+        case None =>
           Logger.error("Locale is not defined. line " + lineNo)
           throw new NoLangDefException(lineNo)
-        }
+
         case Some(loc) =>
           processItem(lineNo, dir, loc, item, conn, toPicPath, toDetailPicPath)
           locale
@@ -222,49 +242,47 @@ object ItemCsv {
   ) {
     implicit val connection = conn
     val item: Item = try {
-      Item.createNew(itemCsv.categoryId)
+      itemRepo.createNew(itemCsv.categoryId)
     }
     catch {
-      case e: Throwable => {
+      case e: Throwable =>
         Logger.error("Item CSV error. line " + lineNo + ", record: " + itemCsv)
         throw new InvalidCategoryException(lineNo, e)
-      }
     }
     val siteItem: SiteItem = try {
-      SiteItem.add(item.id.get, itemCsv.siteId)
+      siteItemRepo.add(item.id.get, itemCsv.siteId)
     }
     catch {
-      case e: Throwable => {
+      case e: Throwable =>
         Logger.error("Invalid site. line " + lineNo + ", record: " + itemCsv)
         throw new InvalidSiteException(lineNo, e)
-      }
     }
     if (itemCsv.isCoupon) {
       Coupon.updateAsCoupon(item.id.get)
     }
-    val itemName = ItemName.createNew(
+    val itemName = itemNameRepo.createNew(
       item, immutable.Map(locale -> itemCsv.itemName)
     )
-    val itemPrice = ItemPrice.add(item.id.get, itemCsv.siteId)
+    val itemPrice = itemPriceRepo.add(item.id.get, itemCsv.siteId)
 
-    CurrencyInfo.get(itemCsv.currencyId).getOrElse {
+    currencyRegistry.get(itemCsv.currencyId).getOrElse {
       Logger.error("Invalid currency. line " + lineNo + ", record: " + itemCsv)
       throw new InvalidCurrencyException(lineNo)
     }
 
-    Tax.get(itemCsv.taxId).getOrElse {
+    taxRepo.get(itemCsv.taxId).getOrElse {
       Logger.error("Invalid tax. line " + lineNo + ", record: " + itemCsv)
       throw new InvalidTaxException(lineNo)
     }
 
-    val itemPriceHistory = ItemPriceHistory.add(
+    val itemPriceHistory = itemPriceHistoryRepo.add(
       item.id.get, itemCsv.siteId, itemCsv.taxId, itemCsv.currencyId,
       itemCsv.price, itemCsv.listPrice, itemCsv.costPrice.getOrElse(BigDecimal(0)),
-      new org.joda.time.DateTime(Until.Ever)
+      Until.EverLocalDateTime
     )
-    val itemDesc = ItemDescription.add(itemCsv.siteId, item.id.get, locale.id, itemCsv.description)
+    val itemDesc = itemDescriptionRepo.add(itemCsv.siteId, item.id.get, locale.id, itemCsv.description)
     itemCsv.siteItemNumericMetadata.foreach { md =>
-      val siteItemNumericMetadata = SiteItemNumericMetadata.createNew(
+      val siteItemNumericMetadata = siteItemNumericMetadataRepo.createNew(
         itemCsv.siteId, item.id.get, md.typeCode, md.value, md.until
       )
     }
@@ -283,6 +301,8 @@ object ItemCsv {
     Files.createDirectories(toDetailPath.getParent)
     Files.copy(dir.resolve(itemCsv.itemDetailPicture), toDetailPath)
   }
+
+  import models.ItemCsv.CsvLine
 
   def readCsvLine(lineNo: Int, z: Iterator[String]): CsvLine = {
     def init(): TailRec[CsvLine] = {

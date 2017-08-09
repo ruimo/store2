@@ -1,0 +1,51 @@
+@(
+  accountingBillForm: Form[YearMonth],
+  summaries: Seq[TransactionSummaryEntry],
+  detailByTranSiteId: scala.collection.immutable.LongMap[Seq[TransactionDetail]],
+  boxBySiteAndItemSize: scala.collection.immutable.LongMap[scala.collection.immutable.LongMap[TransactionLogShipping]],
+  siteTranByTranId: scala.collection.immutable.LongMap[PersistedTransaction],
+  addresses: Map[Long, Address]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+@import views.fieldctors.FieldConstructors.showOnlyRequired
+@import scala.collection.immutable.LongMap
+
+@main(Messages("orderHistoryTitle"), Some(loginSession)) {
+} {
+  <h1 class="title">@Messages("orderHistoryTitle")</h1>
+
+  @form(action = CSRF(routes.OrderHistory.showMonthly()), 'id -> "orderHistoryForm") {
+    <table>
+      <tr valign="top">
+        <td>
+          @inputText(
+            accountingBillForm("year"),
+            'size -> 4, 'maxLength -> 4, '_showConstraints -> false
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>@Messages("year")</td>
+        <td>
+          @inputText(
+            accountingBillForm("month"),
+            'size -> 2, 'maxLength -> 2, '_showConstraints -> false
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>@Messages("month")</td>
+        <td>
+          <input type="submit" value="@Messages("showAccountingBill")">
+        </td>
+      </tr>
+    </table>
+  }
+
+  @accountingBillTable(summaries, detailByTranSiteId, boxBySiteAndItemSize, siteTranByTranId, false, addresses)
+}

@@ -1,0 +1,20 @@
+@(
+  title: String,
+  loginSession: Option[LoginSession],
+  contentCssClass: String = "contents"
+)(header: Html)(content: Html)(
+  implicit request: MessagesRequest[AnyContent]
+)
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    @commonHeader(title, header)
+  </head>
+  <body>
+    <div class="@contentCssClass">
+      @content
+    </div>
+  </body>
+</html>

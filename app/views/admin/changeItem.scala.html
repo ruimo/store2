@@ -1,0 +1,945 @@
+@(
+  c: ChangeItem,
+  itemMaintenance: ItemMaintenance
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  localeInfoRepo: LocaleInfoRepo,
+  lang: Lang,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import org.joda.time.format.DateTimeFormat
+@import helper._
+
+@fileUpload(id: Long, idx: Int) = {
+  <table class="fileUploadTable">
+    <tr>
+      <td class="picture"><img src="@routes.ItemPictures.getPicture(id, idx)"></td>
+      <td class="upload">
+        @form(action = CSRF(routes.ItemPictures.upload(id, idx)), 'enctype -> "multipart/form-data") {
+          <input id="itemPictureUpload@idx" type="file" name="picture">
+          <input id="itemPictureUploadSubmit@idx" type="submit" value='@Messages("register")'>
+        }
+      </td>
+      <td class="remove">
+        @form(action = CSRF(routes.ItemPictures.remove(id, idx))) {
+          <input id="itemPictureRemove@idx" type="submit" value="@Messages("remove")">
+        }
+      </td>
+    </tr>
+  </table>
+}
+
+@fileDetailUpload(id: Long) = {
+  <table class="fileDetailUploadTable">
+    <tr>
+      <td class="picture"><img src="@routes.ItemPictures.getDetailPicture(id)"></td>
+      <td class="upload">
+        @form(action = CSRF(routes.ItemPictures.uploadDetail(id)), 'enctype -> "multipart/form-data") {
+          <input type="file" name="picture">
+          <input type="submit" value='@Messages("register")'>
+        }
+      </td>
+      <td class="remove">
+        @form(action = CSRF(routes.ItemPictures.removeDetail(id))) {
+          <input type="submit" value="@Messages("remove")">
+        }
+      </td>
+    </tr>
+  </table>
+}
+
+@attachmentUpload(id: Long, idx: Int) = {
+  <table class="attachmentUploadTable">
+    <tr>
+      <td class="name">@c.attachmentNames.get(idx).getOrElse("-")</td>
+      <td class="upload">
+        @form(action = CSRF(routes.ItemPictures.uploadItemAttachment(id, idx)), 'enctype -> "multipart/form-data") {
+          <input id="itemAttachmentUpload@idx" type="file" name="attachment">
+          <input id="itemAttachmentUploadSubmit@idx" type="submit" value='@Messages("register")'>
+        }
+      </td>
+      @c.attachmentNames.get(idx) match {
+        case Some(name) => {
+          <td class="remove">
+            @form(action = CSRF(routes.ItemPictures.removeAttachment(id, idx, name))) {
+              <input id="itemAttachmentRemove@idx" type="submit" value="@Messages("remove")">
+            }
+          </td>
+        }
+        case None => {
+          <td></td>
+        }
+      }
+    </tr>
+  </table>
+}
+
+@nameForm(field: Field) = {
+  <tr>
+    <td>
+      <button type="button"
+              onclick="location.href='@routes.ItemMaintenance.removeItemName(c.id, field("localeId").value.get.toLong)';">
+        @Messages("remove")
+      </button>
+
+      @Messages("lang." + localeInfoRepo(field("localeId").value.get.toLong).lang)
+      <div style="display: none;">
+      @inputText(field("localeId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      </div>
+    </td>
+    <td>
+      @inputText(
+        field("itemName")
+      )(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+  </tr>
+}
+
+@itemMetadataForm(field: Field) = {
+  @if(field("metadataType").value.isDefined) {
+    <tr>
+      <td>
+        <button type="button"
+                onclick="location.href='@routes.ItemMaintenance.removeItemMetadata(c.id, field("metadataType").value.get.toInt)';">
+          @Messages("remove")
+        </button>
+
+        @Messages("itemNumericMetadata" + ItemNumericMetadataType.byIndex(field("metadataType").value.get.toInt))
+        <div style="display: none;">
+        @inputText(field("metadataType"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+        </div>
+      </td>
+      <td>
+        @inputText(
+          field("metadata")
+        )(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+    </tr>
+  }
+}
+
+@itemTextMetadataForm(field: Field) = {
+  @if(field("metadataType").value.isDefined) {
+    <tr>
+      <td>
+        <button type="button"
+                onclick="location.href='@routes.ItemMaintenance.removeItemTextMetadata(c.id, field("metadataType").value.get.toInt)';">
+          @Messages("remove")
+        </button>
+
+        @Messages("itemTextMetadata" + ItemTextMetadataType.byIndex(field("metadataType").value.get.toInt))
+        <div style="display: none;">
+        @inputText(field("metadataType"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+        </div>
+      </td>
+      <td>
+        @inputText(
+          field("metadata")
+        )(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+    </tr>
+  }
+}
+
+@siteItemMetadataForm(field: Field) = {
+  @if(field("siteId").value.isDefined && field("metadataType").value.isDefined) {
+    <tr>
+      <td class="siteId">
+        <button type="button"
+                onclick="location.href='@routes.ItemMaintenance.removeSiteItemMetadata(c.id, field("id").value.get.toLong)';">
+          @Messages("remove")
+        </button>
+        @inputText(field("id"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+        @c.siteMap(field("siteId").value.get.toLong).name
+        @inputText(field("siteId"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+      <td class="metadataType">
+        @Messages("siteItemMetadata" + SiteItemNumericMetadataType.byIndex(field("metadataType").value.get.toInt))
+        <div style="display: none;">
+        @inputText(field("metadataType"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+        </div>
+      </td>
+      <td class="metadata">
+        @inputText(
+          field("metadata")
+        )(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+      <td class="validUntil">
+        @inputText(field("validUntil"))(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+    </tr>
+  }
+}
+
+@siteItemTextMetadataForm(field: Field) = {
+  @if(field("siteId").value.isDefined && field("metadataType").value.isDefined) {
+    <tr>
+      <td>
+        <button type="button"
+                class="removeSiteItemTextMetadataButton"
+                onclick="location.href='@routes.ItemMaintenance.removeSiteItemTextMetadata(c.id, field("siteId").value.get.toLong, field("metadataType").value.get.toInt)';">
+          @Messages("remove")
+        </button>
+        @c.siteMap(field("siteId").value.get.toLong).name
+        @inputText(field("siteId"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+      <td>
+        @Messages("siteItemTextMetadata" + SiteItemTextMetadataType.byIndex(field("metadataType").value.get.toInt))
+        <div style="display: none;">
+        @inputText(field("metadataType"), 'type -> "hidden")(
+          FieldConstructor(simpleField.f), implicitly
+        )
+        </div>
+      </td>
+      <td>
+        @inputText(
+          field("metadata")
+        )(
+          FieldConstructor(simpleField.f), implicitly
+        )
+      </td>
+    </tr>
+  }
+}
+
+@descriptionForm(field: Field) = {
+  <tr>
+    <td>
+      <button type="button"
+              onclick="location.href='@routes.ItemMaintenance.removeItemDescription(field("siteId").value.get.toLong, c.id, field("localeId").value.get.toLong)';">
+        @Messages("remove")
+      </button>
+      @{c.siteMap.get(field("siteId").value.get.toLong).map { _.name }.getOrElse("-")}
+      <div style="float: right;">
+      @inputText(field("siteId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      </div>
+    </td>
+    <td>
+      @Messages("lang." + localeInfoRepo(field("localeId").value.get.toLong).lang)
+      <div style="display: none;">
+      @inputText(field("localeId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      </div>
+    </td>
+    <td>
+      @textarea(
+        field("itemDescription"), '_label -> "",
+        'rows -> 5, 'cols -> 40
+      )(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+  </tr>
+}
+
+@priceForm(field: Field) = {
+  <tr>
+    <td>
+      <div style="display: none;">
+      @inputText(field("itemPriceId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      @inputText(field("itemPriceHistoryId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      </div>
+      <button type="button"
+              onclick="location.href='@routes.ItemMaintenance.removeItemPrice(c.id, field("siteId").value.get.toLong, field("itemPriceHistoryId").value.get.toLong)';">
+        @Messages("remove")
+      </button>
+      @{c.siteMap.get(field("siteId").value.get.toLong).map { _.name }.getOrElse("-")}
+      <div style="float: right;">
+      @inputText(field("siteId"), 'type -> "hidden")(
+        FieldConstructor(simpleField.f), implicitly
+      )
+      </div>
+    </td>
+    <td>
+      @select(
+        field("taxId"),
+        c.taxTable,
+        '_showConstraints -> false
+      )(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+    <td>
+      @select(
+        field("currencyId"),
+        c.currencyTable,
+        '_showConstraints -> false
+      )(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+    <td>
+      @inputText(field("itemPrice"))(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+    <td>
+      @inputText(field("listPrice"))(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+    <td>
+      @inputText(field("costPrice"))(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+    <td>
+      @inputText(field("validUntil"))(
+        FieldConstructor(simpleField.f), implicitly
+      )
+    </td>
+  </tr>
+}
+
+@main(Messages("changeItemTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  @flash.get("errorMessage").map { message =>
+    <div class="globalErrorMessage">
+      @message
+    </div>
+  }
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+  <h1 class="title">@Messages("changeItemTitle")</h1>
+  <h2 class="itemId">@Messages("item") Id: @c.id</h2>
+
+  <h2 class="itemName">@Messages("itemName")</h2>
+
+  @form(action = CSRF(routes.ItemMaintenance.changeItemName(c.id))) {
+    <table class="changeItemName" style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("language")</th>
+        <th>@Messages("itemName")</th>
+      </tr>
+
+      @repeat(c.itemNameTableForm("itemNames")) { name => @nameForm(name) }
+
+      <tr class="itemBody">
+        <td colspan="2">
+          <input class="itemName" style="float: right;" type="submit" value='@Messages("update")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addItemName(c.id))) {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("language")</th>
+        <th>@Messages("itemName")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newItemNameForm("localeId"), 
+            c.langTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemNameForm("itemName"), '_label -> ""
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="siteItem">@Messages("siteItem")</h2>
+
+  <table class="changeHandlingSitePanel" style="margin-left: 20px; width: 70%;">
+    <tr class="itemHeader">
+      <th>@Messages("site")</th>
+      <th>@Messages("createdDate")</th>
+    </tr>
+
+    @c.siteItemTable.map { e =>
+      <tr>
+        <td>
+          <button type="button" class="deleteHandlingSiteButton"
+                  onclick="location.href='@routes.ItemMaintenance.removeSiteItem(c.id, e._1.id.get)';">
+            @Messages("remove")
+          </button>
+          @e._1.name
+        </td>
+        <td>
+          @DateTimeFormat.forPattern(Messages("site.item.date.format")).print(e._2.created)
+        </td>
+      </tr>
+    }
+  </table>
+
+  @form(action = CSRF(routes.ItemMaintenance.addSiteItem(c.id))) {
+    <table class="changeHandlingSitePanel" style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newSiteItemForm("siteId"),
+            c.siteNameTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="category">@Messages("category")</h2>
+  
+  @form(action = CSRF(routes.ItemMaintenance.updateItemCategory(c.id))) {
+    @select(
+      c.updateCategoryForm("categoryId"), 
+      c.categoryTable, 
+      '_label -> Messages("category"),
+      '_showConstraints -> false
+    )
+
+    <input type="submit" value='@Messages("update")'>
+  }
+
+  <h2 class="supplementalCategory">@Messages("supplementalCategory")</h2>
+  <table id="removeSupplementalCategoriesTable">
+    @c.supplementalCategories.map { t =>
+      <tr class="removeSupplementalCategoryRow">
+        <td class="categoryName">@t._2</td>
+        <td class="removeForm">
+          @form(action = CSRF(routes.ItemMaintenance.removeSupplementalCategory(c.id, t._1))) {
+            <input type="submit" value='@Messages("remove")'>
+          }
+        </td>
+      </tr>
+    }
+  </table>
+
+  @form(action = CSRF(routes.ItemMaintenance.addSupplementalCategory(c.id)), 'id -> "addSupplementalCategoryForm") {
+    @select(
+      c.newSupplementalCategoryForm("categoryId"),
+      c.categoryTable, 
+      '_showConstraints -> false
+    )(
+      FieldConstructor(simpleField.f), implicitly
+    )
+    <input style="float: right;" type="submit" value='@Messages("add")'>
+  }
+
+  <h2 class="coupon">@Messages("coupon")</h2>
+  @form(action = CSRF(routes.ItemMaintenance.updateItemAsCoupon(c.id))) {
+    @checkbox(
+      c.couponForm("isCoupon"), '_showConstraints -> false, '_label -> Messages("coupon")
+    )
+
+    <input type="submit" value='@Messages("update")'>
+  }
+
+  <h2 class="itemMetadata">@Messages("itemMetadata")</h2>
+
+  @if(! c.itemMetadataTableForm("itemMetadatas").indexes.isEmpty) {
+    @form(action = CSRF(routes.ItemMaintenance.changeItemMetadata(c.id)), 'id -> "changeItemMetadataForm") {
+      <table style="margin-left: 20px; width: 70%;">
+        <tr class="itemHeader">
+          <th>@Messages("itemMetadataType")</th>
+          <th>@Messages("itemMetadata")</th>
+        </tr>
+  
+        @repeat(c.itemMetadataTableForm("itemMetadatas")) { metadata => @itemMetadataForm(metadata) }
+  
+        @if(! c.itemMetadataTableForm("itemMetadatas").indexes.isEmpty) {
+          <tr>
+            <td colspan="3">
+              <input style="float: right;" type="submit" value='@Messages("update")'>
+            </td>
+          </tr>
+        }
+      </table>
+    }
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addItemMetadata(c.id)), 'id -> "addItemMetadataForm") {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("itemMetadataType")</th>
+        <th>@Messages("itemMetadata")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newItemMetadataForm("metadataType"), 
+            itemMaintenance.itemMetadataTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemNameForm("metadata"), '_label -> ""
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="itemTextMetadata">@Messages("itemTextMetadata")</h2>
+
+  @if(! c.itemTextMetadataTableForm("itemMetadatas").indexes.isEmpty) {
+    @form(action = CSRF(routes.ItemMaintenance.changeItemTextMetadata(c.id)), 'id -> "changeItemTextMetadataForm") {
+      <table style="margin-left: 20px; width: 70%;">
+        <tr class="itemHeader">
+          <th>@Messages("itemMetadataType")</th>
+          <th>@Messages("itemMetadata")</th>
+        </tr>
+
+        @repeat(c.itemTextMetadataTableForm("itemMetadatas")) { metadata => @itemTextMetadataForm(metadata) }
+
+        @if(! c.itemTextMetadataTableForm("itemMetadatas").indexes.isEmpty) {
+          <tr>
+            <td colspan="2">
+              <input style="float: right;" type="submit" value='@Messages("update")'>
+            </td>
+          </tr>
+        }
+      </table>
+    }
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addItemTextMetadata(c.id)), 'id -> "addItemTextMetadataForm") {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("itemMetadataType")</th>
+        <th>@Messages("itemMetadata")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newItemTextMetadataForm("metadataType"), 
+            itemMaintenance.itemTextMetadataTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemNameForm("metadata"), '_label -> ""
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="siteItemMetadata">@Messages("siteItemMetadata")</h2>
+
+  @if(! c.siteItemMetadataTableForm("siteItemMetadatas").indexes.isEmpty) {
+    @form(action = CSRF(routes.ItemMaintenance.changeSiteItemMetadata(c.id)), 'id -> "changeSiteItemMetadataForm") {
+      <table style="margin-left: 20px; width: 70%;">
+        <tr class="itemHeader">
+          <th>@Messages("site")</th>
+          <th>@Messages("itemMetadataType")</th>
+          <th>@Messages("itemMetadata")</th>
+          <th>@Messages("validUntil")</th>
+        </tr>
+
+        @repeat(c.siteItemMetadataTableForm("siteItemMetadatas")) { metadata => @siteItemMetadataForm(metadata) }
+
+        @if(! c.siteItemMetadataTableForm("siteItemMetadatas").indexes.isEmpty) {
+          <tr>
+            <td colspan="4">
+              <input style="float: right;" class="updateSiteItemNumericMetadata" type="submit" value='@Messages("update")'>
+            </td>
+          </tr>
+        }
+      </table>
+    }
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addSiteItemMetadata(c.id)), 'id -> "addSiteItemMetadataForm") {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("itemMetadataType")</th>
+        <th>@Messages("itemMetadata")</th>
+        <th>@Messages("validUntil")</th>
+      </tr>
+      <tr>
+        <td class="siteId">
+          @select(
+            c.newSiteItemMetadataForm("siteId"), 
+            c.siteNameTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td class="metadataType">
+          @select(
+            c.newSiteItemMetadataForm("metadataType"), 
+            itemMaintenance.siteItemMetadataTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td class="metadata">
+          @inputText(
+            c.newSiteItemMetadataForm("metadata"), '_label -> ""
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td class="validUntil">
+          @inputText(
+            c.newSiteItemMetadataForm("validUntil")
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="4">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="siteItemTextMetadata">@Messages("siteItemTextMetadata")</h2>
+
+  @if(! c.siteItemTextMetadataTableForm("siteItemTextMetadatas").indexes.isEmpty) {
+    @form(action = CSRF(routes.ItemMaintenance.changeSiteItemTextMetadata(c.id)), 'id -> "changeSiteItemTextMetadataForm") {
+      <table style="margin-left: 20px; width: 70%;">
+        <tr class="itemHeader">
+          <th>@Messages("site")</th>
+          <th>@Messages("itemMetadataType")</th>
+          <th>@Messages("itemMetadata")</th>
+        </tr>
+  
+        @repeat(c.siteItemTextMetadataTableForm("siteItemTextMetadatas")) { metadata =>
+          @siteItemTextMetadataForm(metadata)
+        }
+  
+        @if(! c.siteItemTextMetadataTableForm("siteItemTextMetadatas").indexes.isEmpty) {
+          <tr>
+            <td colspan="3">
+              <input style="float: right;" type="submit" value='@Messages("update")'>
+            </td>
+          </tr>
+        }
+      </table>
+    }
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addSiteItemTextMetadata(c.id)), 'id -> "addSiteItemTextMetadataForm") {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("itemMetadataType")</th>
+        <th>@Messages("itemMetadata")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newSiteItemTextMetadataForm("siteId"), 
+            c.siteNameTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @select(
+            c.newSiteItemTextMetadataForm("metadataType"), 
+            itemMaintenance.siteItemTextMetadataTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newSiteItemTextMetadataForm("metadata"), '_label -> ""
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="itemPriceTitle">@Messages("itemPrice")</h2>
+
+  @form(action = CSRF(routes.ItemMaintenance.changeItemPrice(c.id))) {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("tax")</th>
+        <th>@Messages("currency")</th>
+        <th>@Messages("price")</th>
+        <th>@Messages("listPrice")</th>
+        <th>@Messages("costPrice")</th>
+        <th>@Messages("validUntil")</th>
+      </tr>
+
+      @if(! c.itemPriceTableForm("itemPrices").indexes.isEmpty) {
+        @repeat(c.itemPriceTableForm("itemPrices")) { price => @priceForm(price) }
+      }
+      <tr>
+        <td colspan="7">
+          <input id="changeItemPriceButton" style="float: right;" type="submit" value='@Messages("update")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addItemPrice(c.id))) {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("tax")</th>
+        <th>@Messages("currency")</th>
+        <th>@Messages("price")</th>
+        <th>@Messages("listPrice")</th>
+        <th>@Messages("costPrice")</th>
+        <th>@Messages("validUntil")</th>
+      </tr>
+      <tr>
+        <td>
+          <div style="display: none;">
+            @inputText(c.newItemPriceForm("itemPriceId"), 'type -> "hidden")(
+              FieldConstructor(simpleField.f), implicitly
+            )
+            @inputText(c.newItemPriceForm("itemPriceHistoryId"), 'type -> "hidden")(
+              FieldConstructor(simpleField.f), implicitly
+            )
+          </div>
+          @select(
+            c.newItemPriceForm("siteId"), 
+            c.itemInSiteTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @select(
+            c.newItemPriceForm("taxId"), 
+            c.taxTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @select(
+            c.newItemPriceForm("currencyId"), 
+            c.currencyTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemPriceForm("itemPrice")
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemPriceForm("listPrice")
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemPriceForm("costPrice")
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            c.newItemPriceForm("validUntil")
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="7">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="itemDescription">@Messages("itemDescription")</h2>
+
+  @form(action = CSRF(routes.ItemMaintenance.changeItemDescription(c.id))) {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("language")</th>
+        <th>@Messages("itemDescription")</th>
+      </tr>
+
+      @repeat(c.itemDescriptionTableForm("itemDescriptions")) { description => @descriptionForm(description) }
+
+      <tr>
+        <td colspan="3">
+          <input style="float: right;" type="submit" value='@Messages("update")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  @form(action = CSRF(routes.ItemMaintenance.addItemDescription(c.id))) {
+    <table style="margin-left: 20px; width: 70%;">
+      <tr class="itemHeader">
+        <th>@Messages("site")</th>
+        <th>@Messages("language")</th>
+        <th>@Messages("itemDescription")</th>
+      </tr>
+      <tr>
+        <td>
+          @select(
+            c.newItemDescriptionForm("siteId"), 
+            c.siteNameTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @select(
+            c.newItemDescriptionForm("localeId"), 
+            c.langTable,
+            '_showConstraints -> false
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @textarea(
+            c.newItemDescriptionForm("itemDescription"), '_label -> "",
+            'rows -> 5, 'cols -> 40
+          )(
+            FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+      </tr>
+
+      <tr>
+        <td colspan="3">
+          <input style="float: right;" type="submit" value='@Messages("add")'>
+        </td>
+      </tr>
+    </table>
+  }
+
+  <h2 class="itemPicture">@Messages("itemPicture")</h2>
+
+  @{(0 until 5) map { idx => fileUpload(c.id, idx)}}
+
+  <h2 class="itemDetailPictureTitle">@Messages("itemDetailPicture")</h2>
+
+  @fileDetailUpload(c.id)
+
+  <h2 class="itemAttachment">@Messages("itemAttachment")</h2>
+
+  @{(0 until 5) map { idx => attachmentUpload(c.id, idx)}}
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.ItemMaintenance.index()">
+      @Messages("backTo", Messages("itemMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}

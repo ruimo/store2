@@ -5,13 +5,17 @@ import anorm.SqlParser
 
 import scala.language.postfixOps
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
 
 case class OrderNotification(
   id: Option[Long] = None,
   storeUserId: Long
 )
 
-object OrderNotification {
+@Singleton
+class OrderNotificationRepo @Inject() (
+  implicit storeUserRepo: StoreUserRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("order_notification.order_notification_id") ~
     SqlParser.get[Long]("order_notification.store_user_id") map {
@@ -83,7 +87,7 @@ object OrderNotification {
 
 
     ).as(
-      StoreUser.simple *
+      storeUserRepo.simple *
     )
 
   def listAdmin(implicit conn: Connection): Seq[StoreUser] =
@@ -98,6 +102,6 @@ object OrderNotification {
     ).on(
       'userRole -> UserRole.ADMIN.ordinal
     ).as(
-      StoreUser.simple *
+      storeUserRepo.simple *
     )
 }

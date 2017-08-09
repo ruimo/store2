@@ -2,8 +2,10 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
 
 case class RecommendByAdmin(
   id: Option[Long] = None,
@@ -13,7 +15,11 @@ case class RecommendByAdmin(
   enabled: Boolean
 )
 
-object RecommendByAdmin {
+@Singleton
+class RecommendByAdminRepo @Inject() (
+  itemNameRepo: ItemNameRepo,
+  siteRepo: SiteRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("recommend_by_admin.recommend_by_admin_id") ~
     SqlParser.get[Long]("recommend_by_admin.site_id") ~
@@ -64,7 +70,7 @@ object RecommendByAdmin {
     SqlParser.scalar[Long].single
   )
 
-  val listParser = RecommendByAdmin.simple~(ItemName.simple?)~(Site.simple?) map {
+  val listParser = simple~(itemNameRepo.simple?)~(siteRepo.simple?) map {
     case recommend~itemName~site => (
       recommend, itemName, site
     )

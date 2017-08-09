@@ -14,14 +14,16 @@ case class ChangeTransporterNameTable(
 
 case class ChangeTransporterName(
   localeId: Long, transporterName: String
+)(
+  implicit transporterNameRepo: TransporterNameRepo
 ) {
   def update(id: Long)(implicit conn: Connection) {
-    TransporterName.update(id, localeId, transporterName)
+    transporterNameRepo.update(id, localeId, transporterName)
   }
 
   def add(id: Long)(implicit conn: Connection) {
     ExceptionMapper.mapException {
-      TransporterName.add(id, localeId, transporterName)
+      transporterNameRepo.add(id, localeId, transporterName)
     }
   }
 }

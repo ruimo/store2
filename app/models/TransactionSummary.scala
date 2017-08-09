@@ -2,9 +2,14 @@ package models
 
 import anorm._
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
+
+import controllers.AuthMessagesRequest
+
 import scala.language.postfixOps
 import scala.collection.immutable
 import play.api.i18n.Lang
+import play.api.mvc.{AnyContent, MessagesRequest}
 
 case class TransactionSummaryEntry(
   transactionId: Long,
@@ -35,7 +40,14 @@ case class AccountingBillTable(
   siteTranByTranId: immutable.LongMap[PersistedTransaction]
 )
 
-object TransactionSummary {
+@Singleton
+class TransactionSummary @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  transactionSummary: TransactionSummary,
+  transactionPersister: TransactionPersister,
+  storeUserRepo: StoreUserRepo,
+  transactionDetailRepo: TransactionDetailRepo
+) {
   val ListDefaultOrderBy = OrderBy("base.transaction_time", Desc)
   val parser = {
     SqlParser.get[Long]("tranid") ~
@@ -48,7 +60,7 @@ object TransactionSummary {
     SqlParser.get[String]("site_name") ~
     SqlParser.get[java.math.BigDecimal]("shipping") ~
     SqlParser.get[Int]("transtatus") ~
-    StoreUser.simple ~
+    storeUserRepo.simple ~
     SqlParser.get[Option[java.util.Date]]("shipping_date") ~
     SqlParser.get[java.util.Date]("transaction_status.last_update") ~ 
     SqlParser.get[Option[Long]]("transaction_status.transporter_id") ~
@@ -237,14 +249,14 @@ object TransactionSummary {
     )
 
   def accountingBillForUser(
-    siteId: Option[Long], yearMonth: HasYearMonth, userId: Option[Long], lang: Lang, userShippedDate: Boolean
+    siteId: Option[Long], yearMonth: HasYearMonth, userId: Option[Long], langs: List[Lang], userShippedDate: Boolean
   )(
     implicit conn: Connection
   ): AccountingBillTable = {
     val summariesForAllUser: Seq[TransactionSummaryEntry] =
       summaryForAllUser(yearMonth, userId, siteId, userShippedDate)
     val summaries = summaryForUser(userId, summariesForAllUser)
-    val siteTranByTranId: immutable.LongMap[PersistedTransaction] = getSiteTranByTranId(summaries, lang)
+    val siteTranByTranId: immutable.LongMap[PersistedTransaction] = getSiteTranByTranId(summaries, langs)
 
     AccountingBillTable(
       summariesForAllUser,
@@ -256,10 +268,10 @@ object TransactionSummary {
   def getDetailByTranSiteId(
     summaries: Seq[TransactionSummaryEntry]
   )(
-    implicit conn: Connection, lang: Lang
+    implicit conn: Connection, request: AuthMessagesRequest[AnyContent]
   ): immutable.LongMap[Seq[TransactionDetail]] = summaries.foldLeft(immutable.LongMap[Seq[TransactionDetail]]()) {
     (sum, e) =>
-    val details = TransactionDetail.show(e.transactionSiteId, LocaleInfo.getDefault)
+    val details = transactionDetailRepo.show(e.transactionSiteId, localeInfoRepo.getDefault(request.acceptLanguages.toList))
     sum.updated(e.transactionSiteId, details)
   }
 
@@ -268,7 +280,7 @@ object TransactionSummary {
   )(
     implicit conn: Connection
   ): Seq[TransactionSummaryEntry] = {
-    val summariesForAllUser: Seq[TransactionSummaryEntry] = TransactionSummary.listByPeriod(
+    val summariesForAllUser: Seq[TransactionSummaryEntry] = transactionSummary.listByPeriod(
       siteId = siteId,
       yearMonth = yearMonth,
       onlyShipped = true, useShippedDate = userShippedDate
@@ -286,12 +298,12 @@ object TransactionSummary {
   }
 
   def getSiteTranByTranId(
-    summaries: Seq[TransactionSummaryEntry], lang: Lang
+    summaries: Seq[TransactionSummaryEntry], langs: List[Lang]
   )(
     implicit conn: Connection
   ): immutable.LongMap[PersistedTransaction] = summaries.foldLeft(immutable.LongMap[PersistedTransaction]()) {
     (sum, e) =>
-    val siteTran = (new TransactionPersister).load(e.transactionId, LocaleInfo.getDefault(lang))
+    val siteTran = transactionPersister.load(e.transactionId, localeInfoRepo.getDefault(langs))
     sum.updated(e.transactionId, siteTran)
   }
 }

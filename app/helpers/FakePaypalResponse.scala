@@ -1,17 +1,25 @@
 package helpers
 
-import play.api.libs.ws.{WSResponse, WSCookie}
+import javax.inject.{Inject, Singleton}
+
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import play.api.libs.ws.{WSCookie, WSResponse}
 import play.api.libs.json._
+
 import scala.xml.Elem
 
-object FakePaypalResponse {
-  val FakePaypalResponsBody: () => String = Cache.config(
-    _.getString("fakePaypalRespons.body").getOrElse(
+@Singleton
+class FakePaypalResponseRepo @Inject() (
+  cache: Cache
+) {
+  val FakePaypalResponsBody: () => String = cache.config(
+    _.getOptional[String]("fakePaypalRespons.body").getOrElse(
       throw new IllegalStateException("Specify fakePaypalRespons.body in configuration.")
     )
   )
-  val FakePaypalResponsStatusCode: () => Int = Cache.config(
-    _.getInt("fakePaypalRespons.statusCode").getOrElse(
+  val FakePaypalResponsStatusCode: () => Int = cache.config(
+    _.getOptional[Int]("fakePaypalRespons.statusCode").getOrElse(
       throw new IllegalStateException("Specify fakePaypalRespons.statusCode in configuration.")
     )
   )
@@ -30,10 +38,13 @@ case class FakePaypalResponse(
   def bodyAsBytes: Array[Byte] = body.getBytes
   def cookie(name: String): Option[WSCookie] = None
   def cookies: Seq[WSCookie] = Seq()
-  def header(key: String): Option[String] = None
+  override def header(key: String): Option[String] = None
   def json: JsValue = JsNull
   def statusText: String = ""
   def underlying[T] = (new AnyRef).asInstanceOf[T]
   def xml: Elem = <resp/>
+
+  override def headers: Map[String, Seq[String]] = allHeaders
+  override def bodyAsSource: Source[ByteString, _] = Source.single(ByteString(body))
 }
 

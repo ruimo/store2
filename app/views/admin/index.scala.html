@@ -1,0 +1,103 @@
+@()(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@config = @{
+  play.api.Play.maybeApplication.map(_.configuration).get
+}
+
+@siteOwnerCanUploadUserCsv = @{
+  config.getBoolean("siteOwnerCanUploadUserCsv").getOrElse(false)
+}
+
+@main(Messages("adminTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("adminTitle")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+  @if(siteOwnerCanUploadUserCsv || loginSession.isSuperUser) {
+    <div class="menuItem">
+      <a href="@routes.UserMaintenance.index()">
+        @Messages("userMaintenanceTitle")
+      </a>
+    </div>
+  }
+
+  @if(loginSession.isSuperUser) {
+    <div class="menuItem">
+      <a href="@routes.SiteMaintenance.index()">
+        @Messages("siteMaintenanceTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.CategoryMaintenance.index()">
+        @Messages("categoryMaintenanceTitle")
+      </a>
+    </div>
+  }
+
+  <div class="menuItem">
+    <a href="@routes.ItemMaintenance.index()">
+      @Messages("itemMaintenanceTitle")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.TransactionMaintenance.index()">
+      @Messages("transactionMaintenanceTitle")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.AccountingBill.index()">
+      @Messages("accountingBillTitle")
+    </a>
+  </div>
+
+  @if(loginSession.isSuperUser) {
+    <div class="menuItem">
+      <a href="@routes.TaxMaintenance.index()">
+        @Messages("taxMaintenanceTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.TransporterMaintenance.index()">
+        @Messages("transporterMaintenanceTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.ShippingBoxMaintenance.index()">
+        @Messages("shippingBoxMaintenanceTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.DirectSql.index()">
+        @Messages("executeDirectSqlTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.Recommendation.index()">
+        @Messages("recommendationTitle")
+      </a>
+    </div>
+
+    <div class="menuItem">
+      <a href="@routes.NewsMaintenance.index()">
+        @Messages("newsMaintenanceTitle")
+      </a>
+    </div>
+  }
+}

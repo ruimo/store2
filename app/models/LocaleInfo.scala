@@ -1,9 +1,15 @@
 package models
 
+import play.api.db.Database
+import javax.inject.Inject
+import javax.inject.Singleton
+
 import anorm._
 import anorm.SqlParser
 import java.util.Locale
-import play.api.i18n.{Messages, Lang}
+
+import play.api.i18n.{Lang, Messages, MessagesProvider}
+
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.language.postfixOps
@@ -25,7 +31,11 @@ case class LocaleInfo(id: Long, lang: String, country: Option[String] = None) {
   def matchLanguage(l: Lang): Boolean = lang == l.language
 }
 
-object LocaleInfo {
+@Singleton
+class LocaleInfoRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  db: Database
+) {
   lazy val Ja = apply(1L)
   lazy val En = apply(2L)
 
@@ -37,34 +47,38 @@ object LocaleInfo {
     }
   }
 
-  lazy val registry: immutable.SortedMap[Long, LocaleInfo] = DB.withConnection { implicit conn =>
+  lazy val registry: immutable.SortedMap[Long, LocaleInfo] = db.withConnection { implicit conn =>
     immutable.TreeMap(
       SQL("select * from locale")
-        .as(LocaleInfo.simple *)
+        .as(localeInfoRepo.simple *)
         .map(r => r.id -> r): _*
     )
   }
 
   lazy val byLangTable: Map[Lang, LocaleInfo] =
     registry.values.foldLeft(new mutable.HashMap[Lang, LocaleInfo]) {
-      (map, e) => {map.put(new Lang(e.lang, e.country.getOrElse("")), e); map}
+      (map, e) => {map.put(Lang(e.lang, e.country.getOrElse("")), e); map}
     }.toMap
 
   def byLang(lang: Lang): LocaleInfo =
     byLangTable.get(lang).orElse(
-      byLangTable.get(new Lang(lang.language))
+      byLangTable.get(Lang(lang.language))
     ).get
 
-  def localeTable(implicit lang: Lang): Seq[(String, String)] = registry.values.map {
+  def localeTable(implicit mp: MessagesProvider): Seq[(String, String)] = registry.values.map {
     e => e.id.toString -> Messages("lang." + e.lang)
   }.toSeq
 
-  def getDefault(implicit lang: Lang): LocaleInfo =
-    byLangTable.get(lang).orElse {
-      byLangTable.get(new Lang(lang.language))
-    }.getOrElse {
-      LocaleInfo.En
-    }
+  def getDefault(implicit langs: List[Lang]): LocaleInfo = langs match {
+    case Seq() => localeInfoRepo.En
+    case l::tail =>
+      byLangTable.get(l).orElse {
+        byLangTable.get(Lang(l.language))
+      } match {
+        case None => getDefault(tail)
+        case Some(linfo) => linfo
+      }
+  }
 
   def apply(id: Long): LocaleInfo = get(id).get
 

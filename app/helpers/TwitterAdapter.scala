@@ -1,13 +1,16 @@
 package helpers
 
+import javax.inject.{Inject, Singleton}
+
 import play.api.Logger
-import twitter4j.{Twitter, TwitterFactory, Status, OEmbedRequest}
+import twitter4j.{OEmbedRequest, Status, Twitter, TwitterFactory}
 import twitter4j.conf.ConfigurationBuilder
 
 class TwitterAdapter(
   consumerKey: String, secretKey: String,
   accessToken: String, accessTokenSecret: String,
-  cacheDurationInMilli: Long = 5 * 60 * 1000
+  cacheDurationInMilli: Long = 5 * 60 * 1000,
+  cache: Cache
 ) {
   private val twitter = new TwitterFactory(
     new ConfigurationBuilder()
@@ -18,7 +21,7 @@ class TwitterAdapter(
       .build()
   ).getInstance()
 
-  def getLatestTweet(screenName: String): () => Option[Status] = Cache.mayBeCached[Option[Status]](
+  def getLatestTweet(screenName: String): () => Option[Status] = cache.mayBeCached[Option[Status]](
     gen = () => {
       val z: java.util.Iterator[Status] = twitter.getUserTimeline(screenName).iterator
       if (z.hasNext) Some(z.next) else None
@@ -28,7 +31,7 @@ class TwitterAdapter(
 
   def getLatestTweetEmbed(
     screenName: String, omitScript: Boolean = true, maxWidth: Option[Int] = None
-  ): () => Option[(String, java.time.Instant)] = Cache.mayBeCached[Option[(String, java.time.Instant)]](
+  ): () => Option[(String, java.time.Instant)] = cache.mayBeCached[Option[(String, java.time.Instant)]](
     gen = () => getLatestTweet(screenName)().map { st =>
       val tweetId = st.getId
       val req = new OEmbedRequest(tweetId, "https://twitter.com/" + screenName + "/status/" + tweetId)
@@ -41,13 +44,16 @@ class TwitterAdapter(
   )
 }
 
-object TwitterAdapter {
+@Singleton
+class TwitterAdapterRepo @Inject() (
+  cache: Cache
+) {
   val logger = Logger(getClass)
   def apply(
     consumerKey: String, secretKey: String,
     accessToken: String, accessTokenSecret: String,
     cacheDurationInMilli: Long = 5 * 60 * 1000
   ) = new TwitterAdapter(
-    consumerKey, secretKey, accessToken, accessTokenSecret, cacheDurationInMilli
+    consumerKey, secretKey, accessToken, accessTokenSecret, cacheDurationInMilli, cache
   )
 }

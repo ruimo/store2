@@ -1,0 +1,76 @@
+@(
+  addr: Address,
+  currency: CurrencyInfo,
+  subTotal: BigDecimal,
+  paypalId: String,
+  paypalWebPaymentPlusUrl: String,
+  successUrl: String,
+  cancelUrl: String,
+  debug: Boolean
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("paypalWebPaymentStartTitle"), Some(loginSession)) {
+  <script>
+      @if(! debug) {
+        $(function() {
+          $("#startWebPaymentPlusForm").submit();
+        });
+      }
+  </script>
+} {
+  <h1 class="title">@Messages("paypalWebPaymentStartTitle")</h1>
+
+  <form action="@paypalWebPaymentPlusUrl" method="post" id="startWebPaymentPlusForm">
+    @if(debug) {
+      <label for="cmd">cmd</label><input id="cmd" type="text" name="cmd" value="_hosted-payment"><br>
+      <label for="subtotal">subtotal</label><input id="subtotal" type="text" name="subtotal" value="@subTotal"><br>
+      <label for="business">business</label><input id="business" type="text" name="business" value="@paypalId"><br>
+      <label for="paymentaction">paymentaction</label><input id="paymentaction" type="text" name="paymentaction" value="sale"><br>
+      <label for="return">return</label><input id="return" type="text" name="return" value="@successUrl"><br>
+      <label for="cbt">cbt</label><input id="cbt" type="text" name="cbt" value='@Messages("goBackToShoppingCart")'><br>
+      <label for="cancel_return">cancel_return</label><input id="cancel_return" type="text" name="cancel_return" value="@cancelUrl"><br>
+      <label for="currency_code">currency_code</label><input id="currency_code" type="text" name="currency_code" value="@currency.currencyCode"><br>
+      <label for="template">template</label><input id="template" type="text" name="template" value="templateA"><br>
+      <label for="address1">address1</label><input id="address1" type="text" name="address1" value="@addr.address2"><br>
+      <label for="address2">address2</label><input id="address2" type="text" name="address2" value="@addr.address3"><br>
+      <label for="first_name">first_name</label><input id="first_name" type="text" name="first_name" value="@addr.lastName"><br>
+      <label for="last_name">last_name</label><input id="last_name" type="text" name="last_name" value="@addr.firstName"><br>
+      <label for="country">country</label><input id="country" type="text" name="country" value='@PaypalCountry(addr.countryCode)'><br>
+      <label for="city">city</label><input id="city" type="text" name="city" value='@addr.address1'><br>
+      <label for="state">state</label><input id="state" type="text" name="state" value='@PaypalPrefecture(addr.prefecture).getOrElse("")'><br>
+      <label for="zip">zip</label><input id="zip" type="text" name="zip" value="@{addr.zip1+addr.zip2+addr.zip3}"><br>
+      <label for="buyer_email">buyer_email</label><input id="buyer_email" type="text" name="buyer_email" value="@addr.email"><br>
+      <label for="night_phone_c">night_phone_b</label><input id="night_phone_c" type="text" name="night_phone_c" value="@addr.tel1"><br>
+      <input type="submit" name="METHOD" value="Pay">
+    } else {
+      <input id="cmd" type="hidden" name="cmd" value="_hosted-payment">
+      <input id="subtotal" type="hidden" name="subtotal" value="@subTotal">
+      <input id="business" type="hidden" name="business" value="@paypalId">
+      <input id="paymentaction" type="hidden" name="paymentaction" value="sale">
+      <input id="return" type="hidden" name="return" value="@successUrl">
+      <input id="cbt" type="hidden" name="cbt" value='@Messages("goBackToShoppingCart")'>
+      <input id="cancel_return" type="hidden" name="cancel_return" value="@cancelUrl">
+      <input id="currency_code" type="hidden" name="currency_code" value="@currency.currencyCode">
+      <input type="hidden" name="template" value="templateA">
+      <input id="address1" type="hidden" name="address1" value="@addr.address2">
+      <input id="address2" type="hidden" name="address2" value="@addr.address3">
+      <input id="first_name" type="hidden" name="first_name" value="@addr.lastName">
+      <input id="last_name" type="hidden" name="last_name" value="@addr.firstName">
+      <input id="country" type="hidden" name="country" value='@PaypalCountry(addr.countryCode)'>
+      <input id="city" type="hidden" name="city" value='@addr.address1'>
+      <input id="state" type="hidden" name="state" value='@PaypalPrefecture(addr.prefecture).getOrElse("")'>
+      <input id="zip" type="hidden" name="zip" value="@{addr.zip1+addr.zip2+addr.zip3}">
+      <input id="buyer_email" type="hidden" name="buyer_email" value="@addr.email">
+      <input id="night_phone_c" type="hidden" name="night_phone_c" value="@addr.tel1">
+    }
+  </form>
+
+  @if(debug) {
+    <a href="@successUrl" id="paypalWebPaymentSkip">Skip paypal</a>
+    <a href="@cancelUrl" id="paypalWebPaymentCancel">Cancel paypal</a>
+  }
+}

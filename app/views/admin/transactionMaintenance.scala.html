@@ -1,0 +1,165 @@
+@(
+  tran: PagedRecords[TransactionSummaryEntry],
+  myForm: Form[ChangeTransactionStatus],
+  statusTable: Seq[(String, String)],
+  entryShippingInfoForms: scala.collection.immutable.Map[Long, Form[ChangeShippingInfo]],
+  transporterTable: Seq[(String, String)],
+  transporters: scala.collection.immutable.LongMap[String],
+  shippingDeliveryDateForms: scala.collection.immutable.Map[Long, Form[ShippingDeliveryDate]]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+
+@main(Messages("transactionMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+  <script src="@routes.Assets.versioned("javascripts/jquery.blockUI.js")"></script>
+  <script type="text/javascript">
+    $(function() {
+      @tran.records.map { e =>
+        @e.transactionType match {
+          case pp: PaypalTransactionType => {
+            @if(pp.status != PaypalStatus.COMPLETED) {
+              $('.status.t@e.transactionSiteId').block(({message: '@Messages("paypalNotCompleted")'}));
+            }
+          }
+          case _ => {}
+        }
+      }
+    });
+  </script>
+
+  <script type="text/javascript">
+    $(function() {
+      $("#submitDialog").dialog({
+        autoOpen: false,
+        title: '@Messages("cancelDialogTitle")',
+        modal: true,
+        buttons: {
+          '@Messages("doCancel")': function(e) {
+            $(this).prop("formToSubmit").submit();
+            $(this).dialog("close");
+          },
+          '@Messages("abortCancel")': function(e) {
+            $(this).dialog("close");
+          }
+        }
+      });
+    });
+
+    var cancelTran = function(btn) {
+      var dlg = $("#submitDialog");
+      dlg.prop("formToSubmit", btn.parentElement);
+      dlg.dialog("open");
+    };
+  </script>
+
+  <script type="text/javascript">
+    $(function() {
+      $("#shippingDateTextBox").datepicker({
+        dateFormat: 'yy年mm月dd日'
+      });
+      $("#deliveryDateTextBox").datepicker({
+        dateFormat: 'yy年mm月dd日'
+      });
+    });
+  </script>
+} {
+  <div id="submitDialog">
+    @Messages("confirmCancel")
+  </div>
+
+  <h1 class="title">@Messages("transactionMaintenanceTitle")</h1>
+
+  <table class="transactionSummaryTable" border="0">
+    <tr class="transactionSummaryHeader">
+      <th>@Messages("transaction.id")</th>
+      <th>@Messages("transaction.time")</th>
+      <th>@Messages("site")</th>
+      <th>@Messages("shipping.date")</th>
+      <th>@Messages("transaction.amount")</th>
+      <th>@Messages("shipping.fee")</th>
+      <th>@Messages("buyer")</th>
+      <th>@Messages("shipping.address")</th>
+      <th>@Messages("transactionType")</th>
+      <th>@Messages("transaction.status")</th>
+    </tr>
+    @tran.records.map { e =>
+      <tr class="transactionSummaryBody">
+        <td class="transactionId">
+          <a href="@routes.TransactionMaintenance.detail(e.transactionSiteId)">
+            @e.transactionId
+          </a>
+        </td>
+        <td class="transactionTime">@yyyymmddhhmmss(e.transactionTime)</td>
+        <td class="site">@e.siteName</td>
+        <td class="shippingDate">
+          @if(e.address.isDefined) {
+            @shippingDate(e.shippingDate.get)
+          }
+        </td>
+        <td class="transactionAmount">
+          @amount(e.totalAmount - e.shippingFee)
+        </td>
+        <td class="transactionShipping">
+          @if(e.address.isDefined) {
+            @amount(e.shippingFee)
+          }
+        </td>
+        <td class="buyer">
+          @buyer(e.buyer)
+        </td>
+        <td class="transactionAddress">
+          @if(e.address.isDefined) {
+            <table>
+            @addressBody(e.address.get)
+            </table>
+          }
+        </td>
+        <td>
+          @e.transactionType match {
+            case AccountingBillTransactionType => {
+              <div class="transactionType">
+                @Messages("transactionType.accountingBill")
+              </div>
+            }
+            case pp: PaypalTransactionType => {
+              <div class="transactionType">
+                @Messages("transactionType.paypal")
+              </div>
+              <div class="creditStatus">
+                @Messages("paypalStatus." + pp.status)
+              </div>
+            }
+            case _ => {
+              <div class="transactionType">
+                @Messages("transactionType.unknown")
+              </div>
+            }
+          }
+        </td>
+        <td class="status t@e.transactionSiteId">
+          @if(e.address.isDefined) {
+            @transactionStatusForm(e, e.transactionSiteId, e.status.ordinal, myForm, statusTable, entryShippingInfoForms, transporterTable, transporters, shippingDeliveryDateForms)
+            <a target="_blank" id="invoiceLink" href="@routes.Invoice.show(e.transactionSiteId)">@Messages("invoice")</a>
+          }
+        </td>
+      </tr>
+    }
+  </table>  
+  <br>
+  @defining(Some(loginSession)) { implicit login =>
+    @pagingPanel(
+      tran,
+      routes.TransactionMaintenance.index( _: Int, _: Int, _: String),
+      10, 25, 50
+    )
+  }
+
+  <div class="menuPanel">
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}

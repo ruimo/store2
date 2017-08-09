@@ -1,7 +1,9 @@
 package models
 
 import java.sql.Connection
-import helpers.{PasswordHash, TokenGenerator, RandomTokenGenerator}
+import javax.inject.{Inject, Singleton}
+
+import helpers.{PasswordHash, RandomTokenGenerator, TokenGenerator}
 
 case class EntryUserRegistration(
   userName: String,
@@ -21,18 +23,19 @@ case class EntryUserRegistration(
   firstNameKana: String,
   lastNameKana: String,
   email: String
+)(
+ implicit storeUserRepo: StoreUserRepo,
+ entryUserRegistrationRepo: EntryUserRegistrationRepo
 ) {
-  import EntryUserRegistration.tokenGenerator
-
   def isNaivePassword(implicit conn: Connection): Boolean =
     PasswordDictionary.isNaivePassword(passwords._1)
 
   def save(cc: CountryCode, stretchCount: Int)(implicit conn: Connection): StoreUser = {
-    val salt = tokenGenerator.next
+    val salt = entryUserRegistrationRepo.tokenGenerator.next
     val passwordHash = PasswordHash.generate(passwords._1, salt, stretchCount)
 
     val user = ExceptionMapper.mapException {
-      StoreUser.create(
+      storeUserRepo.create(
         userName, firstName, None, lastName,
         email, passwordHash, salt, UserRole.ENTRY_USER, None, stretchCount
       )
@@ -63,7 +66,10 @@ case class EntryUserRegistration(
   }
 }
 
-object EntryUserRegistration {
+@Singleton
+class EntryUserRegistrationRepo @Inject() (
+  storeUserRepo: StoreUserRepo
+) {
   val tokenGenerator: TokenGenerator = RandomTokenGenerator()
 
   def apply4Japan(
@@ -100,7 +106,7 @@ object EntryUserRegistration {
     firstNameKana,
     lastNameKana,
     email
-  )
+  )(storeUserRepo, this)
 
   def unapply4Japan(ue: EntryUserRegistration): Option[(
     String, // userName

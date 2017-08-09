@@ -1,0 +1,27 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("shippingBoxMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("shippingBoxMaintenanceTitle")</h1>
+
+  <div class="menuItem">
+    <a href="@routes.ShippingBoxMaintenance.startCreateShippingBox()">
+      @Messages("createNewShippingBoxMenu")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.ShippingBoxMaintenance.editShippingBox()">
+      @Messages("editShippingBoxMenu")
+    </a>
+  </div>
+
+  <div class="menuPanel">
+    @admin.backToAdminTop()
+  </div>
+}
+

@@ -11,9 +11,10 @@ import com.typesafe.config.ConfigValue
 import play.api.{Configuration, Logger}
 
 class AcceptableTender @Inject() (
-  conf: Configuration
+  conf: Configuration,
+  cache: Cache
 ) extends HasLogger {
-  val AcceptableTender: () => immutable.Map[UserTypeCode, immutable.Set[TenderType]] = Cache.config { cfg =>
+  val AcceptableTender: () => immutable.Map[UserTypeCode, immutable.Set[TenderType]] = cache.config { cfg =>
     val tendersByUserTypeCode = conf.getOptional[Configuration]("acceptableTenders").getOrElse(
       throw new IllegalStateException("Cannot find configuration 'acceptableTenders'")
     )

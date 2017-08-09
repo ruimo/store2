@@ -1,20 +1,24 @@
 package helpers
 
-import models.{OrderNotification, CreateQaSite, StoreUser, Site}
+import models._
 import play.api.Play
 import java.sql.Connection
+
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+
 import scala.concurrent.duration._
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import play.api.i18n.{Messages, MessagesProvider}
 import javax.inject._
-import akka.actor.{ActorSystem}
+
+import akka.actor.ActorSystem
 
 @Singleton
 class QaSiteMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient
+  system: ActorSystem, mailerClient: MailerClient,
+  orderNotificationRepo: OrderNotificationRepo
 ) extends HasLogger {
   val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
   val from = Play.current.configuration.getString("user.registration.email.from").get
@@ -23,10 +27,10 @@ class QaSiteMail @Inject() (
     implicit conn: Connection, mp: MessagesProvider
   ) {
     if (! disableMailer) {
-      OrderNotification.listAdmin.foreach { admin =>
+      orderNotificationRepo.listAdmin.foreach { admin =>
         sendTo(qa, site, admin.email, views.html.mail.qaSiteForAdmin(qa, site).toString)
       }
-      OrderNotification.listBySite(site.id.get).foreach { owner =>
+      orderNotificationRepo.listBySite(site.id.get).foreach { owner =>
         sendTo(qa, site, owner.email, views.html.mail.qaSiteForStoreOwner(qa, site).toString)
       }
       sendTo(qa, site, qa.email, views.html.mail.qaSiteForUser(qa, site).toString)

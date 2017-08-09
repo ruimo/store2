@@ -1,0 +1,145 @@
+@(users: PagedRecords[ListUserEntry])(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+@main(Messages("editUserTitle"), Some(loginSession), contentCssClass = "adminContents") {
+  <script>
+    $(function() {
+      $(".deleteButton").each(function(idx, b) {
+        $(b).click(function(e) {
+          var formId = "deleteUser" + $(b).data("user-id");
+          var dlg = $('<div>@Messages("deleteConfirm") ' + $(b).data("user-name") + '</div>');
+          dlg.dialog({
+            modal: true,
+            buttons: {
+              '@Messages("yes")': function() {
+                $('#' + formId).submit();
+              },
+              '@Messages("no")': function() {
+                $(this).dialog('close');
+              }
+            }
+          });
+          dlg.dialog('open');
+        });
+      });
+    });
+  </script>
+} {
+<h1 class="title">@Messages("editUserTitle")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+<table class="userTable">
+  <tr class="userTableHeader">
+    <th class="id">
+      @orderMark(
+        "id",
+        routes.UserMaintenance.editUser,
+        "store_user.store_user_id", users
+      )
+    </th>
+    <th class="name">
+      @orderMark(
+        Messages("userName"),
+        routes.UserMaintenance.editUser,
+        "store_user.user_name", users
+      )
+    </th>
+    <th class="fullName">
+      @orderMark(
+        Messages("name"),
+        routes.UserMaintenance.editUser,
+        "full_name", users
+      )
+    </th>
+    <th class="company">
+      @orderMark(
+        Messages("companyName"),
+        routes.UserMaintenance.editUser,
+        "store_user.company_name", users
+      )
+    </th>
+    <th class="email">
+      @orderMark(
+        Messages("email"),
+        routes.UserMaintenance.editUser,
+        "store_user.email", users
+      )
+    </th>
+    <th class="role">
+      @orderMark(
+        Messages("role"),
+        routes.UserMaintenance.editUser,
+        "store_user_role", users
+      )
+    </th>
+    <th class="action"></th>
+  </tr>
+  @users.records.map { user =>
+    <tr class="userTableBody">
+      <td class="id">
+        <a href="@routes.UserMaintenance.modifyUserStart(user.user.id.get)">
+          @user.user.id.get
+        </a>
+      </td>
+      <td class="name">@user.user.userName</td>
+      <td class="fullName">@name(user.user)</td>
+      <td class="company">@user.user.companyName.getOrElse("")</td>
+      <td class="email">@user.user.email</td>
+      <td class="role">
+        @{
+          if (user.user.userRole == UserRole.ANONYMOUS) {
+            Messages("anonymous.user")
+          } else if (user.user.userRole == UserRole.ADMIN) {
+            Messages("admin.user")
+          } else if (user.user.userRole == UserRole.ENTRY_USER) {
+            Messages("entry.user")
+          } else {
+            user.site match {
+              case None => Messages("normal.user")
+              case Some(site) => Messages("site.owner") + "(" + site.name + ")"
+            }
+          }
+       }
+      </td>
+      <td class="action">
+        @form(action = CSRF(routes.UserMaintenance.deleteUser(user.user.id.get)), 'id -> ("deleteUser" + user.user.id.get)) {
+        }
+        <button type="button" style="float: left;"
+                data-user-id="@user.user.id.get" data-user-name="@user.user.userName" class="deleteButton">
+          @Messages("remove")
+        </button>
+      </td>
+    </tr>
+  }
+</table>
+
+<br>
+@pagingPanel(
+  users,
+  routes.UserMaintenance.editUser,
+  10, 25, 50
+)
+
+<div class="menuPanel">
+  <br>
+  <a class="backLink" href="@routes.UserMaintenance.index">
+    @Messages("backTo", Messages("userMaintenanceTitle"))
+  </a>
+
+  <br>
+  @admin.backToAdminTop()
+</div>
+}

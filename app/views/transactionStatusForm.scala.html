@@ -1,0 +1,109 @@
+@(
+  entry: TransactionSummaryEntry,
+  transactionSiteId: Long,
+  status: Int,
+  myForm: Form[models.ChangeTransactionStatus],
+  statusTable: Seq[(String, String)],
+  entryShippingInfoForms: scala.collection.immutable.Map[Long, Form[ChangeShippingInfo]],
+  transporterTable: Seq[(String, String)],
+  transporters: scala.collection.immutable.LongMap[String],
+  shippingDeliveryDateForms: scala.collection.immutable.Map[Long, Form[ShippingDeliveryDate]]
+)(implicit request: MessagesRequest[AnyContent])
+
+@import helper._
+@import org.joda.time.format.DateTimeFormat
+
+<table class="shippingStatusTable">
+  <tr>
+    <td>
+      @form(action = helper.CSRF(routes.TransactionMaintenance.setStatus)) {
+        @defining(myForm.fill(ChangeTransactionStatus(entry.transactionSiteId, entry.status.ordinal))) { f =>
+          @inputText(f("transactionSiteId"), 'type -> "hidden", '_showConstraints -> false)(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+
+          @select(
+            f("status"), statusTable, '_showConstraints -> false, 'id -> ("status" + transactionSiteId)
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+          <input id="changeShippingStatusButton@transactionSiteId" type="submit" value=@Messages("update")> 
+        }
+      }
+    </td>
+  <tr>
+  <tr>
+    <td>
+      @Messages("lastUpdate"): <span class="lastUpdate">@lastUpdate(entry.statusLastUpdate)</span>
+    </td>
+  </tr>
+</table>
+@if(entry.plannedShippingDate.isDefined && entry.plannedDeliveryDate.isDefined) {
+  <table class="shippingDeliveryDateTable">
+    <tr>
+      <td class="shippingDate">@Messages("shippingDate")</td>
+      <td>@{DateTimeFormat.forPattern(Messages("shippingDateFormat")).print(entry.plannedShippingDate.get)}</td>
+    </tr>
+    <tr>
+      <td class="deliveryDate">@Messages("deliveryDate")</td>
+      <td>@{DateTimeFormat.forPattern(Messages("deliveryDateFormat")).print(entry.plannedDeliveryDate.get)}</td>
+    </tr>
+  </table>
+} else {
+  @form(action = helper.CSRF(routes.TransactionMaintenance.entryShippingDeliveryDate(entry.transactionId, entry.transactionSiteId))) {
+    <table class="shippingDeliveryDateTable">
+      <tr class="shippingDate">
+        <td>
+          @inputText(
+            shippingDeliveryDateForms(entry.transactionSiteId)("shippingDate"),
+            '_label -> Messages("shippingDate"), 'id -> "shippingDateTextBox"
+          )
+        </td>
+      </tr>
+      <tr class="deliveryDate">
+        <td>
+          @inputText(
+            shippingDeliveryDateForms(entry.transactionSiteId)("deliveryDate"),
+            '_label -> Messages("deliveryDate"), 'id -> "deliveryDateTextBox"
+          )
+        </td>
+      </tr>
+    </table>
+  
+    <input class="entryShippingDeliveryDateButton" type="submit" value="@Messages("registerShippingDelivery")">
+  }
+}
+
+@if(entry.mailSent) {
+  <table class="shippingStatusTable" id="shippingStatusTable@transactionSiteId">
+    <tr>
+      <td class="transporterHeader">@Messages("transporter")</td>
+      <td class="transporter">@{entry.shipStatus.map{info => transporters(info.transporterId)}.getOrElse("-")}</td>
+    </tr>
+    <tr>
+      <td class="slipCodeHeader">@Messages("slipCode")</td>
+      <td class="slipCode">@{entry.shipStatus.map{info => info.slipCode}.getOrElse("-")}</td>
+    </tr>
+  </table>
+} else {
+  @form(action = helper.CSRF(routes.TransactionMaintenance.entryShippingInfo(entry.transactionId, entry.transactionSiteId))) {
+    @select(
+      entryShippingInfoForms(entry.transactionSiteId)("transporterId"),
+      transporterTable,
+      'id -> ("transporter" + transactionSiteId),
+      '_label -> Messages("transporter"),
+      '_showConstraints -> false
+    )
+    @inputText(
+      entryShippingInfoForms(entry.transactionSiteId)("slipCode"),
+      'id -> ("slipCode" + transactionSiteId),
+      '_label -> Messages("slipCode"), 'size -> 16, 'maxlength -> 128
+    )
+
+    <input id="changeShippingInfoButton@transactionSiteId" type="submit" value="@Messages("entryShippingInfo")">
+}
+
+  @form(action = helper.CSRF(routes.TransactionMaintenance.cancelShipping(entry.transactionId, entry.transactionSiteId))) {
+    <button class="cancelShippingButton" type="button" onclick="cancelTran(this);">@Messages("cancelShipping")</button>
+  }
+}

@@ -1,20 +1,28 @@
 package models
 
 import helpers.Cache
+import javax.inject.Singleton
+
 import scala.concurrent.duration._
 import play.api.data.validation.Invalid
 import constraints.FormConstraints
 import play.api.data.validation.ValidationError
 import play.api.Logger
 import anorm._
+
 import scala.language.postfixOps
-import helpers.PasswordHash
 import java.sql.Connection
-import scala.util.{Try, Failure, Success}
+
+import scala.util.{Failure, Success, Try}
 import com.ruimo.csv.CsvRecord
-import helpers.{PasswordHash, TokenGenerator, RandomTokenGenerator}
+import helpers.{PasswordHash, RandomTokenGenerator, TokenGenerator}
 import java.sql.SQLException
-import scala.collection.{mutable, immutable}
+import javax.inject.Inject
+
+import com.google.inject
+import play.api.db.Database
+
+import scala.collection.{immutable, mutable}
 
 case class StoreUser(
   id: Option[Long] = None,
@@ -29,6 +37,8 @@ case class StoreUser(
   userRole: UserRole,
   companyName: Option[String],
   stretchCount: Int
+) (
+  implicit storeUserRepo: StoreUserRepo
 ) {
   def passwordMatch(password: String): Boolean =
     PasswordHash.generate(password, salt, stretchCount) == passwordHash
@@ -39,8 +49,8 @@ case class StoreUser(
   def promoteAnonymousUser(
     userName: String, password: String, firstName: String, middleName: Option[String], lastName: String, email: String
   )(implicit conn: Connection): Boolean = {
-    val salt = StoreUser.tokenGenerator.next
-    val stretchCount = StoreUser.PasswordHashStretchCount()
+    val salt = storeUserRepo.tokenGenerator.next
+    val stretchCount = storeUserRepo.PasswordHashStretchCount()
     val hash = PasswordHash.generate(password, salt, stretchCount)
 
     val updateCount = SQL(
@@ -108,9 +118,16 @@ case class SupplementalUserEmail(
   storeUserId: Long
 )
 
-object StoreUser {
-  val PasswordHashStretchCount: () => Int = Cache.config(
-    _.getInt("passwordHashStretchCount").getOrElse(1000)
+@Singleton
+class StoreUserRepo @Inject() (
+  siteUserRepo: SiteUserRepo,
+  siteRepo: SiteRepo,
+  db: Database,
+  cache: Cache,
+  fc: FormConstraints
+) {
+  val PasswordHashStretchCount: () => Int = cache.config(
+    _.getOptional[Int]("passwordHashStretchCount").getOrElse(1000)
   )
   val EmployeeUserNamePattern = """(\d+)-(.+)""".r
 
@@ -134,14 +151,14 @@ object StoreUser {
         StoreUser(
           id, userName, firstName, middleName, lastName, email, passwordHash, 
           salt, deleted, UserRole.byIndex(userRole), companyName, stretchCount
-        )
+        )(this)
     }
   }
 
   val withSiteUser = 
-    StoreUser.simple ~
-    (SiteUser.simple ?) ~
-    (Site.simple ?) ~
+    simple ~
+    (siteUserRepo.simple ?) ~
+    (siteRepo.simple ?) ~
     SqlParser.get[Option[Long]]("order_notification.order_notification_id") map {
       case storeUser~siteUser~site~notificationId => ListUserEntry(storeUser, siteUser, site, notificationId.isDefined)
     }
@@ -154,19 +171,19 @@ object StoreUser {
       "select * from store_user where store_user_id = {id} and deleted = FALSE"
     ).on(
       'id -> id
-    ).as(StoreUser.simple.single)
+    ).as(simple.single)
   
   def findByUserName(userName: String)(implicit conn: Connection): Option[StoreUser] =
     SQL(
       "select * from store_user where user_name = {user_name} and deleted = FALSE"
     ).on(
       'user_name -> userName
-    ).as(StoreUser.simple.singleOpt)
+    ).as(simple.singleOpt)
 
   def all(implicit conn: Connection): Seq[StoreUser] =
     SQL(
       "select * from store_user where deleted = FALSE"
-    ).as(StoreUser.simple *)
+    ).as(simple *)
 
   def create(
     userName: String, firstName: String, middleName: Option[String], lastName: String,
@@ -199,7 +216,7 @@ object StoreUser {
 
     val storeUserId = SQL("select currval('store_user_seq')").as(SqlParser.scalar[Long].single)
     StoreUser(Some(storeUserId), userName, firstName, middleName, lastName, email, passwordHash,
-              salt, deleted = false, userRole, companyName, stretchCount)
+              salt, deleted = false, userRole, companyName, stretchCount)(this)
   }
 
   def withSite(userId: Long)(implicit conn: Connection): ListUserEntry = {
@@ -327,7 +344,7 @@ object StoreUser {
     deleteSqlSupplemental: Option[String] = None,
     employeeCsvRegistration: Boolean = false
   ): (Int, Int) = {
-    DB.withConnection { implicit conn =>
+    db.withConnection { implicit conn =>
       try {
         SQL(
           """
@@ -446,10 +463,10 @@ object StoreUser {
       where store_user.user_name is null
       """
     ).as(
-      SqlParser.get[Option[String]]("site_name") ~
+      (SqlParser.get[Option[String]]("site_name") ~
       SqlParser.str("user_name") ~
       SqlParser.long("password_hash") ~
-      SqlParser.long("salt") map(SqlParser.flatten) *
+      SqlParser.long("salt") map(SqlParser.flatten)) *
     ).map { rec =>
       val companyName: Option[String] =
         if (employeeCsvRegistration) {
@@ -507,8 +524,8 @@ object StoreUser {
       where store_user.deleted = false and e.employee_id is null
       """
     ).as(
-      SqlParser.long("site_id") ~
-      SqlParser.long("store_user_id") map(SqlParser.flatten) *
+      (SqlParser.long("site_id") ~
+      SqlParser.long("store_user_id") map(SqlParser.flatten)) *
     )
 
     if (! csvRecs.isEmpty) {
@@ -548,7 +565,7 @@ object StoreUser {
   ).executeUpdate()
 
   def validateNormalUserName(userName: String) {
-    val errors: Seq[ValidationError] = FormConstraints.normalUserNameConstraint().map(_(userName)).collect {
+    val errors: Seq[ValidationError] = fc.normalUserNameConstraint().map(_(userName)).collect {
       case Invalid(errors: Seq[ValidationError]) => errors
     }.flatten
 
@@ -579,7 +596,7 @@ object StoreUser {
       and not exists (select * from site_user su where su.store_user_id = u.store_user_id)
       """
     ).as(
-      SqlParser.str("user_name") ~ SqlParser.str("first_name") map(SqlParser.flatten) *
+      (SqlParser.str("user_name") ~ SqlParser.str("first_name") map(SqlParser.flatten)) *
     ).foreach { t =>
       t._1 match {
         case EmployeeUserNamePattern(siteIdStr, employeeCode) =>
@@ -618,7 +635,10 @@ object StoreUser {
   ).executeUpdate()
 }
 
-object SiteUser {
+@Singleton
+class SiteUserRepo @Inject() (
+
+) {
   val simple = {
     SqlParser.get[Option[Long]]("site_user.site_user_id") ~
     SqlParser.get[Long]("site_user.site_id") ~
@@ -654,7 +674,7 @@ object SiteUser {
     ).on(
       'storeUserId -> storeUserId
     ).as(
-      SiteUser.simple.singleOpt
+      simple.singleOpt
     )
 }
 

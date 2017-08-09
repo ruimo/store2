@@ -2,9 +2,13 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import collection.immutable
 import java.sql.Connection
+import java.time.LocalDateTime
+import javax.inject.{Inject, Singleton}
+
 import helpers.RandomTokenGenerator
 
 case class TransactionLogHeader(
@@ -162,6 +166,8 @@ case class Transaction(
   shippingTotal: ShippingTotal,
   shippingDate: ShippingDate,
   now: Long = System.currentTimeMillis
+)(
+  implicit taxRepo: TaxRepo
 ) {
   lazy val total = itemTotal.total + shippingTotal.boxTotal  // Including inner tax excluding outer tax.
   lazy val taxAmount: BigDecimal = {
@@ -281,7 +287,9 @@ object TransactionLogHeader {
     )
 }
 
-object TransactionLogSite {
+@Singleton
+class TransactionLogSiteRepo @Inject() (
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transaction_site.transaction_site_id") ~
     SqlParser.get[Long]("transaction_site.transaction_id") ~
@@ -345,7 +353,10 @@ object TransactionLogSite {
   }
 }
 
-object TransactionLogShipping {
+@Singleton
+class TransactionLogShippingRepo @Inject() (
+
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transaction_shipping.transaction_shipping_id") ~
     SqlParser.get[Long]("transaction_shipping.transaction_site_id") ~
@@ -424,7 +435,9 @@ object TransactionLogShipping {
     )
 }
 
-object TransactionLogTax {
+@Singleton
+class TransactionLogTaxRepo @Inject() (
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transaction_tax.transaction_tax_id") ~
     SqlParser.get[Long]("transaction_tax.transaction_site_id") ~
@@ -481,7 +494,9 @@ object TransactionLogTax {
     )
 }
 
-object TransactionLogItem {
+@Singleton
+class TransactionLogItemRepo @Inject() (
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transaction_item.transaction_item_id") ~
     SqlParser.get[Long]("transaction_item.transaction_site_id") ~
@@ -765,7 +780,13 @@ object TransactionLogPaypalStatus {
   ).executeUpdate()
 }
 
-object TransactionLogCoupon {
+@Singleton
+class TransactionLogCouponRepo @Inject() (
+  siteRepo: SiteRepo,
+  taxRepo: TaxRepo,
+  transactionLogCouponRepo: TransactionLogCouponRepo,
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
   val TransactionLogCouponDefaultOrderBy = OrderBy("h.transaction_id", Desc)
   val DefaultOrderByMap = immutable.Map(
     "h.transaction_id" -> OrderBy("h.transaction_id", Desc),
@@ -816,7 +837,7 @@ object TransactionLogCoupon {
     SqlParser.get[Long]("transaction_coupon.coupon_id") map {
       case tranId~tranCouponId~siteId~time~itemId~itemName~couponId =>
         CouponDetail(
-          tranId, TransactionLogCouponId(tranCouponId), Site(siteId), time.getTime,
+          tranId, TransactionLogCouponId(tranCouponId), siteRepo(siteId), time.getTime,
           ItemId(itemId), itemName, CouponId(couponId)
         )
     }
@@ -902,7 +923,7 @@ object TransactionLogCoupon {
       c,
       ItemNumericMetadata.allById(c.itemId),
       ItemTextMetadata.allById(c.itemId),
-      SiteItemNumericMetadata.all(c.site.id.get, c.itemId),
+      siteItemNumericMetadataRepo.all(c.site.id.get, c.itemId),
       SiteItemTextMetadata.all(c.site.id.get, c.itemId)
     )
   }
@@ -917,6 +938,8 @@ case class PersistedTransaction(
   itemTable: Map[Long, Seq[(ItemName, TransactionLogItem, Option[TransactionLogCoupon])]], // First key = siteId
   creditTable: Option[TransactionLogCreditTender] = None,
   paypalStatus: Option[TransactionLogPaypalStatus] = None
+)(
+  implicit taxRepo: TaxRepo
 ) {
   lazy val outerTaxWhenCostPrice: Map[Long, BigDecimal] = {
     var result = immutable.LongMap[BigDecimal]()
@@ -940,7 +963,7 @@ case class PersistedTransaction(
       result = result.updated(
         site.id.get,
         amountByTaxId.foldLeft(BigDecimal(0)) { (sum, e) =>
-          sum + Tax.outerTax(e._2, TaxType.OUTER_TAX, taxByTaxId(e._1).rate / BigDecimal(100))
+          sum + taxRepo.outerTax(e._2, TaxType.OUTER_TAX, taxByTaxId(e._1).rate / BigDecimal(100))
         }
       )
     }
@@ -1121,7 +1144,7 @@ object TransactionShipStatus {
   ).executeUpdate()
 
   def updateShippingDeliveryDate(
-    siteUser: Option[SiteUser], transactionSiteId: Long, shippingDate: Long, deliveryDate: Long
+    siteUser: Option[SiteUser], transactionSiteId: Long, shippingDate: LocalDateTime, deliveryDate: LocalDateTime
   )(implicit conn: Connection): Int = SQL(
     """
     update transaction_status
@@ -1144,8 +1167,8 @@ object TransactionShipStatus {
     )
   ).on(
     'tranSiteId -> transactionSiteId,
-    'plannedShippingDate -> new java.util.Date(shippingDate),
-    'plannedDeliveryDate -> new java.util.Date(deliveryDate)
+    'plannedShippingDate -> shippingDate,
+    'plannedDeliveryDate -> deliveryDate
   ).executeUpdate()
 
   def getByTransactionSiteId(tranSiteId: Long)(implicit conn: Connection): Option[TransactionShipStatus] =
@@ -1402,7 +1425,10 @@ case class TransactionDetail(
   lazy val costPrice = costUnitPrice * quantity
 }
 
-object TransactionDetail {
+@Singleton
+class TransactionDetailRepo @Inject() (
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
   val parser = {
     SqlParser.get[String]("item_name.item_name") ~
     SqlParser.get[Int]("transaction_item.quantity") ~
@@ -1441,13 +1467,23 @@ object TransactionDetail {
     ).map { e =>
       val metadata = ItemNumericMetadata.allById(ItemId(e._5))
       val textMetadata = ItemTextMetadata.allById(ItemId(e._5))
-      val siteMetadata = SiteItemNumericMetadata.all(e._6, ItemId(e._5))
+      val siteMetadata = siteItemNumericMetadataRepo.all(e._6, ItemId(e._5))
       TransactionDetail(e._5, e._6, e._1, e._2, e._3, e._4, metadata, siteMetadata, textMetadata)
     }
   }
 }
 
-class TransactionPersister {
+@Singleton
+class TransactionPersister @Inject() (
+  transactionLogCouponRepo: TransactionLogCouponRepo,
+  taxRepo: TaxRepo,
+  siteRepo: SiteRepo,
+  itemNameRepo: ItemNameRepo,
+  transactionLogSiteRepo: TransactionLogSiteRepo,
+  transactionLogItemRepo: TransactionLogItemRepo,
+  transactionLogShippingRepo: TransactionLogShippingRepo,
+  transactionLogTaxRepo: TransactionLogTaxRepo
+) {
   def persistPaypal(
     tran: Transaction
   )(implicit conn: Connection): (Long, immutable.Map[Site, immutable.Seq[TransactionLogTax]], Long) = {
@@ -1525,7 +1561,7 @@ class TransactionPersister {
     site: Site,
     tran: Transaction
   )(implicit conn: Connection): immutable.Seq[TransactionLogTax] = {
-    val siteLog = TransactionLogSite.createNew(
+    val siteLog = transactionLogSiteRepo.createNew(
       header.id.get, site.id.get,
       tran.bySite(site).total,
       tran.bySite(site).taxAmount
@@ -1544,7 +1580,7 @@ class TransactionPersister {
   )(implicit conn: Connection) {
     tran.shippingTotal.table.foreach { e =>
       tran.shippingAddress.foreach { addr =>
-        TransactionLogShipping.createNew(
+        transactionLogShippingRepo.createNew(
           siteLog.id.get, e.boxTotal, e.boxCostTotal, addr.id.get, e.itemClass, e.shippingBox.boxSize,
           e.boxTaxInfo.taxId, e.boxQuantity, e.shippingBox.boxName, tran.shippingDate.tables(e.site.id.get).shippingDate
         )
@@ -1562,9 +1598,10 @@ class TransactionPersister {
       val taxHistory = e._2
 
       val targetAmount = tran.itemTotal.sumByTaxId(taxId) + tran.shippingTotal.sumByTaxId(taxId)
+      implicit val tr = taxRepo
       val taxAmount = taxHistory.taxAmount(targetAmount)
 
-      TransactionLogTax.createNew(
+      transactionLogTaxRepo.createNew(
         siteLog.id.get, taxHistory.id.get, taxId, taxHistory.taxType,
         taxHistory.rate, targetAmount, taxAmount
       )
@@ -1575,7 +1612,7 @@ class TransactionPersister {
     siteLog: TransactionLogSite, tran: Transaction
   )(implicit conn: Connection) {
     tran.itemTotal.table.foreach { e =>
-      val tranItem = TransactionLogItem.createNew(
+      val tranItem = transactionLogItemRepo.createNew(
         siteLog.id.get, e.shoppingCartItem.itemId, e.itemPriceHistory.id.get,
         e.quantity, e.itemPrice, e.costUnitPrice, e.itemPriceHistory.taxId
       )
@@ -1586,26 +1623,26 @@ class TransactionPersister {
       TransactionLogSiteItemTextMetadata.createNew(tranItem.id.get, e.siteItemTextMetadata.values)
 
       Coupon.getByItem(ItemId(e.shoppingCartItem.itemId)).foreach { coupon =>
-        TransactionLogCoupon.createNew(
+        transactionLogCouponRepo.createNew(
           tranItem.id.get, coupon.id.get
         )
       }
     }
   }
 
-  val siteWithShipping = TransactionLogSite.simple ~ TransactionLogShipping.simple map {
+  val siteWithShipping = transactionLogSiteRepo.simple ~ transactionLogShippingRepo.simple map {
     case site~shipping => (site, shipping)
   }
 
-  val siteWithTax = TransactionLogSite.simple ~ TransactionLogTax.simple map {
+  val siteWithTax = transactionLogSiteRepo.simple ~ transactionLogTaxRepo.simple map {
     case site~tax => (site, tax)
   }
 
   val siteWithItem = 
-    ItemName.simple ~ 
-    TransactionLogSite.simple ~ 
-    TransactionLogItem.simple ~
-    (TransactionLogCoupon.simple ?) map {
+    itemNameRepo.simple ~
+    transactionLogSiteRepo.simple ~
+    transactionLogItemRepo.simple ~
+    (transactionLogCouponRepo.simple ?) map {
     case name~site~item~coupon => (name, site, item, coupon)
   }
 
@@ -1622,7 +1659,7 @@ class TransactionPersister {
     ).on(
       'id -> tranId
     ).as(
-      (TransactionLogSite.simple ~ Site.simple) *
+      (transactionLogSiteRepo.simple ~ siteRepo.simple) *
     ).map {
       e => (e._1 -> e._2)
     }.unzip
@@ -1696,6 +1733,6 @@ class TransactionPersister {
     PersistedTransaction(
       header, tranSiteLog.map {e => (e.siteId -> e)}.toMap, siteLog, shippingLog, taxLog, itemLog, 
       credit, paypalStatus
-    )
+    )(taxRepo)
   }
 }

@@ -1,0 +1,14 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("qaCompleted"), loginSession) {
+} {
+  <h1 class="title">@Messages("qaCompleted")</h1>
+
+  <span id="qaCompletedMessage">
+    @Messages("qaCompletedMessage")
+  </span>
+}

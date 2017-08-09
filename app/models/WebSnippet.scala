@@ -1,11 +1,14 @@
 package models
 
 import java.time.Instant
+
 import helpers.Cache
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import java.sql.Connection
+import javax.inject.{Singleton, Inject}
 
 case class WebSnippetId(id: Long) extends AnyVal
 
@@ -20,8 +23,12 @@ case class WebSnippet(
 
 class MaxWebSnippetCountException(val siteId: Long) extends Exception
 
-object WebSnippet {
-  def MaxSnippetCountPerSite = Cache.Conf.getInt("maxSnippetCountPerSite").getOrElse(10)
+@Singleton
+class WebSnippetRepo @Inject() (
+  siteRepo: SiteRepo,
+  cache: Cache
+) {
+  def MaxSnippetCountPerSite = cache.Conf.getOptional[Int]("maxSnippetCountPerSite").getOrElse(10)
 
   val simple = {
     SqlParser.get[Option[Long]]("web_snippet.web_snippet_id") ~
@@ -83,7 +90,7 @@ object WebSnippet {
     simple *
   )
 
-  val withSite = simple ~ Site.simple map {
+  val withSite = simple ~ siteRepo.simple map {
     case webSnippet~site => (webSnippet, site)
   }
 

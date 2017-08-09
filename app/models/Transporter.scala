@@ -2,9 +2,12 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import play.api.i18n.Lang
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
+
 import collection.immutable.LongMap
 
 case class Transporter(id: Option[Long] = None)
@@ -16,18 +19,23 @@ case class TransporterName(
   transporterName: String
 )
 
-object Transporter {
+@Singleton
+class TransporterRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo,
+  transporterRepo: TransporterRepo,
+  transporterNameRepo: TransporterNameRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transporter.transporter_id") map {
       case id => Transporter(id)
     }
   }
 
-  val withName = Transporter.simple ~ TransporterName.simple map {
+  val withName = transporterRepo.simple ~ transporterNameRepo.simple map {
     case t~name => (t, name)
   }
 
-  val withNameOpt = Transporter.simple ~ (TransporterName.simple ?) map {
+  val withNameOpt = transporterRepo.simple ~ (transporterNameRepo.simple ?) map {
     case trans~name => (trans, name)
   }
 
@@ -50,13 +58,13 @@ object Transporter {
       order by transporter.transporter_id
       """
     ).on(
-      'localeId -> LocaleInfo.byLang(lang).id
+      'localeId -> localeInfoRepo.byLang(lang).id
     ).as(
       withNameOpt *
     )
 
   def tableForDropDown(implicit lang: Lang, conn: Connection): Seq[(String, String)] = 
-    tableForDropDown(LocaleInfo.byLang(lang))
+    tableForDropDown(localeInfoRepo.byLang(lang))
 
   def tableForDropDown(locale: LocaleInfo)(implicit conn: Connection): Seq[(String, String)] = {
     SQL(
@@ -105,7 +113,10 @@ object Transporter {
   }
 }
 
-object TransporterName {
+@Singleton
+class TransporterNameRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("transporter_name.transporter_name_id") ~
     SqlParser.get[Long]("transporter_name.locale_id") ~
@@ -154,7 +165,7 @@ object TransporterName {
     ).on(
       'id -> transporterId
     ).as(simple * ).map { e =>
-      LocaleInfo(e.localeId) -> e
+      localeInfoRepo(e.localeId) -> e
     }.toMap
 
   def update(transporterId: Long, localeId: Long, transporterName: String)(implicit conn: Connection) {

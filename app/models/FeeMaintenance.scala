@@ -1,8 +1,8 @@
 package models
 
-import org.joda.time.DateTime
+import java.time.LocalDateTime
 
 case class FeeMaintenance(
   boxId: Long,
-  now: DateTime
+  now: LocalDateTime
 )

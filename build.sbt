@@ -1,4 +1,4 @@
-name := """play-scala-starter-example"""
+name := """functional-store2"""
 
 version := "2.0-SNAPSHOT"
 
@@ -17,4 +17,6 @@ libraryDependencies += "com.typesafe.play" %% "anorm" % "2.5.3"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "3.0.0" % Test
 libraryDependencies += "com.h2database" % "h2" % "1.4.194"
 libraryDependencies += "com.ruimo" %% "recoengmodule26" % "0.1-SNAPSHOT"
+libraryDependencies += "com.ruimo" %% "csvparser" % "1.2"
 libraryDependencies += "org.twitter4j" % "twitter4j-core" % "4.0.6"
+libraryDependencies += "org.postgresql" % "postgresql" % "42.1.4"

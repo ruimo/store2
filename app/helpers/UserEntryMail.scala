@@ -1,6 +1,6 @@
 package helpers
 
-import models.{OrderNotification, UserRegistration}
+import models.{OrderNotification, OrderNotificationRepo, UserRegistration}
 import play.api.{Configuration, Play}
 import java.sql.Connection
 import javax.inject.{Inject, Singleton}
@@ -13,14 +13,15 @@ import akka.actor.ActorSystem
 
 @Singleton
 class UserEntryMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient, conf: Configuration
+  system: ActorSystem, mailerClient: MailerClient, conf: Configuration,
+  orderNotificationRepo: OrderNotificationRepo
 ) extends HasLogger {
   val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
   val from = conf.get[String]("user.registration.email.from")
 
   def sendUserRegistration(ur: UserRegistration)(implicit conn: Connection, mp: MessagesProvider) {
     if (! disableMailer) {
-      OrderNotification.listAdmin.foreach { admin =>
+      orderNotificationRepo.listAdmin.foreach { admin =>
         logger.info("Sending user registration mail to " + admin.email)
         val body = views.html.mail.userRegistration(admin, ur).toString
         system.scheduler.scheduleOnce(0.microsecond) {

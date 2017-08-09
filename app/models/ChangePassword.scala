@@ -11,10 +11,12 @@ import helpers.{PasswordHash, TokenGenerator, RandomTokenGenerator}
 case class ChangePassword(
   currentPassword: String,
   passwords: (String, String)
+)(
+  implicit storeUserRepo: StoreUserRepo
 ) {
   def changePassword(storeUserId: Long)(implicit conn: Connection): Boolean = {
     val salt = ChangePassword.tokenGenerator.next
-    StoreUser.changePassword(storeUserId, PasswordHash.generate(passwords._1, salt), salt) != 0
+    storeUserRepo.changePassword(storeUserId, PasswordHash.generate(passwords._1, salt), salt) != 0
   }
 }
 

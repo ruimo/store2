@@ -1,0 +1,27 @@
+@(
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: models.LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("categoryMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("categoryMaintenanceTitle")</h1>
+
+  <div class="menuItem">
+    <a href="@routes.CategoryMaintenance.startCreateNewCategory()">
+      @Messages("createNewCategoryMenu")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.CategoryMaintenance.editCategory(None)">
+      @Messages("editCategoryMenu")
+    </a>
+  </div>
+
+  <div class="menuPanel">
+    @admin.backToAdminTop()
+  </div>
+}

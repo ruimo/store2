@@ -1,0 +1,12 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+
+@main(Messages("enter.shipping.address"), Some(loginSession)) {
+} {
+
+}

@@ -5,7 +5,7 @@ import java.sql.Connection
 case class RemoveCategoryName(
   categoryId: Long, localeId: Long
 ) {
-  def remove()(implicit conn: Connection) {
-    CategoryName.remove(categoryId, localeId)
+  def remove()(implicit conn: Connection, categoryNameRepo: CategoryNameRepo) {
+    categoryNameRepo.remove(categoryId, localeId)
   }
 }

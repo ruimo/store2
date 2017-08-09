@@ -2,12 +2,278 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# An example controller showing a sample home page
-GET     /                           controllers.HomeController.index
-# An example controller showing how to use dependency injection
-GET     /count                      controllers.CountController.count
-# An example controller showing how to write asynchronous code
-GET     /message                    controllers.AsyncController.message
+# Home page
+GET     /                                controllers.Application.index
+
+# Admin
+GET     /admin                           controllers.Admin.index
+GET     /admin/startFirstSetup           controllers.Admin.startFirstSetup
+POST    /admin/firstSetup                controllers.Admin.firstSetup
+GET     /admin/startLogin                controllers.Admin.startLogin(uriOnLoginSuccess: String)
+POST    /admin/login                     controllers.Admin.login
+GET     /admin/logoff                    controllers.Admin.logoff(uriOnLogoffSuccess: String)
+POST    /admin/anonymousLogin            controllers.Admin.anonymousLogin
+POST    /admin/registerAsEntryUser       controllers.EntryUserEntry.startRegistrationAsEntryUser(url: String)
+POST    /admin/entryUserSubmitUserJa     controllers.EntryUserEntry.submitUserJa(url: String)
+POST    /admin/promoteAnonymousUser      controllers.EntryUserEntry.promoteAnonymousUser
+GET     /startRegisterCurrentUserAsEntryUser controllers.EntryUserEntry.startRegisterCurrentUserAsEntryUser
+
+GET     /admin/itemMaintenance           controllers.ItemMaintenance.index
+GET     /admin/startCreateNewItem        controllers.ItemMaintenance.startCreateNewItem
+POST    /admin/createNewItem             controllers.ItemMaintenance.createNewItem
+GET     /admin/editItem                  controllers.ItemMaintenance.editItem(q: List[String], page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "item_name.item_name")
+GET     /admin/startChangeItem           controllers.ItemMaintenance.startChangeItem(id: Long)
+
+POST    /admin/changeItemName            controllers.ItemMaintenance.changeItemName(id: Long)
+POST    /admin/addItemName               controllers.ItemMaintenance.addItemName(id: Long)
+GET     /admin/removeItemName            controllers.ItemMaintenance.removeItemName(itemId: Long, localeId: Long)
+
+POST    /admin/addItemMetadata           controllers.ItemMaintenance.addItemMetadata(id: Long)
+POST    /admin/addItemTextMetadata       controllers.ItemMaintenance.addItemTextMetadata(id: Long)
+POST    /admin/addSiteItemMetadata       controllers.ItemMaintenance.addSiteItemMetadata(id: Long)
+POST    /admin/addSiteItemTextMetadata   controllers.ItemMaintenance.addSiteItemTextMetadata(id: Long)
+POST    /admin/changeItemMetadata        controllers.ItemMaintenance.changeItemMetadata(id: Long)
+POST    /admin/changeItemTextMetadata    controllers.ItemMaintenance.changeItemTextMetadata(id: Long)
+POST    /admin/changeSiteItemMetadata    controllers.ItemMaintenance.changeSiteItemMetadata(id: Long)
+POST    /admin/changeSiteItemTextMetadata controllers.ItemMaintenance.changeSiteItemTextMetadata(id: Long)
+GET     /admin/removeItemMetadata        controllers.ItemMaintenance.removeItemMetadata(itemId: Long, metadataType: Int)
+GET     /admin/removeItemTextMetadata    controllers.ItemMaintenance.removeItemTextMetadata(itemId: Long, metadataType: Int)
+GET     /admin/removeSiteItemMetadata    controllers.ItemMaintenance.removeSiteItemMetadata(itemId: Long, id: Long)
+GET     /admin/removeSiteItemTextMetadata controllers.ItemMaintenance.removeSiteItemTextMetadata(itemId: Long, siteId: Long, metadataType: Int)
+POST    /admin/addSupplementalCategory   controllers.ItemMaintenance.addSupplementalCategory(itemId: Long)
+POST    /removeSupplementalCategory      controllers.ItemMaintenance.removeSupplementalCategory(itemId: Long, categoryId: Long)
+
+POST    /admin/addSiteItem               controllers.ItemMaintenance.addSiteItem(id: Long)
+GET     /admin/removeSiteItem            controllers.ItemMaintenance.removeSiteItem(itemId: Long, siteId: Long)
+POST    /admin/updateItemCategory        controllers.ItemMaintenance.updateItemCategory(id: Long)
+
+POST    /admin/updateItemAsCoupon        controllers.ItemMaintenance.updateItemAsCoupon(id: Long)
+
+POST    /admin/addItemDescription        controllers.ItemMaintenance.addItemDescription(id: Long)
+POST    /admin/changeItemDescription     controllers.ItemMaintenance.changeItemDescription(id: Long)
+GET     /admin/removeItemDescription     controllers.ItemMaintenance.removeItemDescription(siteId: Long, itemId: Long, localeId: Long)
+
+POST    /admin/addItemPrice              controllers.ItemMaintenance.addItemPrice(id: Long)
+POST    /admin/changeItemPrice           controllers.ItemMaintenance.changeItemPrice(id: Long)
+GET     /admin/removeItemPrice           controllers.ItemMaintenance.removeItemPrice(itemId: Long, siteId: Long, itemPriceHistoryId: Long)
+
+GET     /admin/categoryMaintenance       controllers.CategoryMaintenance.index
+GET     /admin/startCreateNewCategory    controllers.CategoryMaintenance.startCreateNewCategory
+POST    /admin/createNewCategory         controllers.CategoryMaintenance.createNewCategory
+GET     /admin/editCategory              controllers.CategoryMaintenance.editCategory(langSpec: Option[Long], start: Int ?= 0, size: Int ?= 10, orderBySpec ?= "category.category_id")
+GET     /admin/categoryPathTree          controllers.CategoryMaintenance.categoryPathTree
+POST    /admin/categoryMove              controllers.CategoryMaintenance.moveCategory
+GET     /admin/editCategoryName          controllers.CategoryMaintenance.editCategoryName(categoryId: Long)
+GET     /admin/editCategoryCode          controllers.CategoryMaintenance.editCategoryCode(categoryId: Long)
+POST    /admin/updateCategoryCode        controllers.CategoryMaintenance.updateCategoryCode(categoryId: Long)
+POST    /admin/updateCategoryName        controllers.CategoryMaintenance.updateCategoryName(categoryId: Long)
+POST    /admin/createCategoryName        controllers.CategoryMaintenance.createCategoryName(categoryId: Long)
+POST    /admin/removeCategoryName        controllers.CategoryMaintenance.removeCategoryName(categoryId: Long)
+
+GET     /admin/siteMaintenance           controllers.SiteMaintenance.index
+GET     /admin/startCreateNewSite        controllers.SiteMaintenance.startCreateNewSite
+POST    /admin/createNewSite             controllers.SiteMaintenance.createNewSite
+GET     /admin/editSite                  controllers.SiteMaintenance.editSite
+POST    /admin/deleteSite                controllers.SiteMaintenance.deleteSite(id: Long)
+GET     /admin/changeSiteStart           controllers.SiteMaintenance.changeSiteStart(siteId: Long)
+POST    /admin/changeSite                controllers.SiteMaintenance.changeSite
+
+GET     /admin/taxMaintenance            controllers.TaxMaintenance.index
+GET     /admin/startCreateNewTax         controllers.TaxMaintenance.startCreateNewTax
+POST    /admin/createNewTax              controllers.TaxMaintenance.createNewTax
+GET     /admin/editTax                   controllers.TaxMaintenance.editTax
+
+GET     /admin/transporterMaintenance    controllers.TransporterMaintenance.index
+GET     /admin/startCreateNewTransporter controllers.TransporterMaintenance.startCreateNewTransporter
+POST    /admin/createNewTransporter      controllers.TransporterMaintenance.createNewTransporter
+GET     /admin/editTransporter           controllers.TransporterMaintenance.editTransporter
+GET     /admin/startChangeTransporter    controllers.TransporterMaintenance.startChangeTransporter(id: Long)
+GET     /admin/removeTransporterName     controllers.TransporterMaintenance.removeTransporterName(id: Long, localeId: Long)
+POST    /admin/changeTransporterName     controllers.TransporterMaintenance.changeTransporterName(id: Long)
+POST    /admin/addTransporterName        controllers.TransporterMaintenance.addTransporterName(id: Long)
+
+GET     /admin/userMaintenance           controllers.UserMaintenance.index
+GET     /admin/startCreateNewSuperUser   controllers.UserMaintenance.startCreateNewSuperUser
+POST    /admin/createNewSuperUser        controllers.UserMaintenance.createNewSuperUser
+GET     /admin/editUser                  controllers.UserMaintenance.editUser(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "store_user.user_name")
+POST    /admin/deleteUser                controllers.UserMaintenance.deleteUser(id: Long)
+GET     /admin/modifyUserStart           controllers.UserMaintenance.modifyUserStart(id: Long)
+POST    /admin/modifyUser                controllers.UserMaintenance.modifyUser(id: Long)
+GET     /admin/startCreateNewSiteOwner   controllers.UserMaintenance.startCreateNewSiteOwner
+POST    /admin/createNewSiteOwner        controllers.UserMaintenance.createNewSiteOwner
+GET     /admin/startCreateNewNormalUser  controllers.UserMaintenance.startCreateNewNormalUser
+POST    /admin/createNewNormalUser       controllers.UserMaintenance.createNewNormalUser
+
+POST    /admin/uploadItemPicture         controllers.ItemPictures.upload(id: Long, no: Int)
+POST    /admin/removeItemPicture         controllers.ItemPictures.remove(id: Long, no: Int)
+GET     /admin/getItemPicture            controllers.ItemPictures.getPicture(id: Long, no: Int)
+
+POST    /admin/uploadItemAttachment      controllers.ItemPictures.uploadItemAttachment(itemId: Long, no: Int)
+POST    /admin/removeItemAttachment      controllers.ItemPictures.removeAttachment(id: Long, no: Int, fileName: String)
+
+POST    /admin/uploadItemDetailPicture   controllers.ItemPictures.uploadDetail(id: Long)
+POST    /admin/removeItemDetailPicture   controllers.ItemPictures.removeDetail(id: Long)
+GET     /admin/getItemDetailPicture      controllers.ItemPictures.getDetailPicture(id: Long)
+GET     /admin/getItemAttachment         controllers.ItemPictures.getItemAttachment(itemId: Long, no: Int, fileName: String)
+
+GET     /admin/transactionMaintenance    controllers.TransactionMaintenance.index(page: Int ?= 0, pageSize: Int ?= 999, orderBySpec: String ?= "transaction_site_id desc")
+POST    /admin/setStatus                 controllers.TransactionMaintenance.setStatus
+GET     /admin/transactionDetail         controllers.TransactionMaintenance.detail(tranSiteId: Long)
+POST    /admin/entryShippingInfo         controllers.TransactionMaintenance.entryShippingInfo(tranId: Long, tranSiteId: Long)
+POST    /admin/cancelShipping            controllers.TransactionMaintenance.cancelShipping(tranId: Long, tranSiteId: Long)
+GET     /admin/downloadCsv               controllers.TransactionMaintenance.downloadCsv(tranId: Long, tranSiteId: Long)
+POST    /admin/entryShippingDeliveryDate controllers.TransactionMaintenance.entryShippingDeliveryDate(tranId: Long, tranSiteId: Long)
+
+GET     /admin/shippingBoxMaintenance    controllers.ShippingBoxMaintenance.index
+GET     /admin/startCreateShippingBox    controllers.ShippingBoxMaintenance.startCreateShippingBox
+POST    /admin/createNewShippingBox      controllers.ShippingBoxMaintenance.createNewShippingBox
+GET     /admin/editShippingBox           controllers.ShippingBoxMaintenance.editShippingBox(page: Int ?= 0, pageSize: Int ?= 100)
+GET     /admin/startChangeShippingBox    controllers.ShippingBoxMaintenance.startChangeShippingBox(id: Long)
+POST    /admin/changeShippingBox         controllers.ShippingBoxMaintenance.changeShippingBox
+POST    /admin/removeShippingBox         controllers.ShippingBoxMaintenance.removeShippingBox
+
+GET     /admin/startFeeMentenance        controllers.ShippingFeeMaintenance.startFeeMaintenance
+GET     /admin/startFeeMentenanceNow     controllers.ShippingFeeMaintenance.startFeeMaintenanceNow(boxId: Long)
+GET     /admin/editShippingFeeHistory    controllers.ShippingFeeMaintenance.editHistory(feeId: Long)
+POST    /admin/removeShippingFeeHistory  controllers.ShippingFeeMaintenance.removeHistory
+POST    /admin/changeHistory             controllers.ShippingFeeMaintenance.changeHistory(feeId: Long)
+POST    /admin/addHistory                controllers.ShippingFeeMaintenance.addHistory(feeId: Long)
+GET     /admin/startCreateShippingFee    controllers.ShippingFeeMaintenance.startCreateShippingFee
+POST    /admin/createShippingFee         controllers.ShippingFeeMaintenance.createShippingFee(boxId: Long)
+POST    /admin/removeFee                 controllers.ShippingFeeMaintenance.removeFee(boxId: Long)
+
+GET     /query                           controllers.ItemQuery.query(q: List[String], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item_name.item_name", templateNo:Int ?= 0)
+GET     /queryByCategory                 controllers.ItemQuery.queryByCategory(q: List[String], c: Option[Long], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item_name.item_name", templateNo:Int ?= 0)
+GET     /queryBySite                     controllers.ItemQuery.queryBySite(q: List[String], sid: Option[Long], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item_name.item_name", templateNo:Int ?= 0)
+GET     /queryBySiteAndCategory          controllers.ItemQuery.queryBySiteAndCategory(q: List[String], sid: Option[Long], c: Option[Long], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item_name.item_name", templateNo:Int ?= 0)
+GET     /queryByCheckBox                 controllers.ItemQuery.queryByCheckBox(page:Int ?= 0, pageSize:Int ?= 10, templateNo:Int ?= 0)
+GET     /queryBySelect                   controllers.ItemQuery.queryBySelect(page:Int ?= 0, pageSize:Int ?= 10, templateNo:Int ?= 0)
+GET     /queryByRadio                    controllers.ItemQuery.queryByRadio(page:Int ?= 0, pageSize:Int ?= 10, templateNo:Int ?= 0)
+GET     /queryAdvanced                   controllers.ItemQuery.queryAdvanced(qs: List[String], cs: String ?= "", ccs: String ?= "", sid: Option[Long], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item.item_id", templateNo:Int ?= 0)
+GET     /queryAdvancedContent            controllers.ItemQuery.queryAdvancedContent(qs: List[String] ?= List(), cs: String ?= "", ccs: String ?= "", sid: Option[Long] ?= None, page: Int, pageSize: Int, orderBySpec: String, templateNo: Int ?= 0)
+POST    /categoryNameJson                controllers.ItemQuery.categoryNameJson()
+GET     /itemDetail                      controllers.ItemDetail.show(itemId: Long, siteId: Long)
+GET     /itemDetailAsJson                controllers.ItemDetail.showAsJson(itemId: Long, siteId: Long)
+GET     /addToCart                       controllers.Purchase.addToCart(siteId: Long, itemId: Long, quantity: Int)
+GET     /showShoppingCart                controllers.Purchase.showShoppingCart
+GET     /changeItemQuantity              controllers.Purchase.changeItemQuantity(cartId: Long ?= 0, quantity: Int ?= 1)
+GET     /deleteItemFromCart              controllers.Purchase.deleteItemFromCart(cartId: Long ?= 0)
+GET     /clearShoppingCart               controllers.Purchase.clear()
+GET     /quantityInShoppingCart          controllers.ShoppingCart.quantityInShoppingCartJson
+
+GET     /startEnterShippingAddress       controllers.Shipping.startEnterShippingAddress()
+POST    /enterShippingAddressJa          controllers.Shipping.enterShippingAddressJa()
+GET     /confirmShippingAddressJa        controllers.Shipping.confirmShippingAddressJa()
+POST    /finalizeTransactionJa           controllers.Shipping.finalizeTransactionJa()
+
+GET     /orderHistory                    controllers.OrderHistory.index()
+GET     /showOrderHistoryList            controllers.OrderHistory.showOrderHistoryList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec ?= "base.transaction_time DESC", tranId: Option[Long] ?= None)
+GET     /showOrderHistory                controllers.OrderHistory.showOrderHistory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec ?= "base.transaction_time DESC", tranId: Option[Long] ?= None)
+GET     /showMonthlyOrderHistory         controllers.OrderHistory.showMonthly()
+GET     /invoice                         controllers.Invoice.show(tranSiteId: Long)
+GET     /accountingBill                  controllers.AccountingBill.index()
+GET     /showAccountingBill              controllers.AccountingBill.show()
+GET     /showAccountingStoreBill         controllers.AccountingBill.showForStore()
+GET     /userEntry                       controllers.UserEntry.index()
+POST    /submitUserJa                    controllers.UserEntry.submitUserJa()
+GET     /qa                              controllers.Qa.index()
+POST    /submitQaJa                      controllers.Qa.submitQaJa()
+POST    /addToCartJson                   controllers.ShoppingCart.addToCartJson()
+POST    /addOrderHistoryJson             controllers.ShoppingCart.addOrderHistoryJson()
+
+GET     /directSql                       controllers.DirectSql.index()
+POST    /executeSql                      controllers.DirectSql.execute()
+POST    /querySql                        controllers.DirectSql.query()
+
+GET     /recommendByItemJson             controllers.Recommendation.byItemJson(siteId: Long, itemId: Long)
+GET     /recommendByShoppingCartJson     controllers.Recommendation.byShoppingCartJson()
+
+GET     /admin/recommend                 controllers.Recommendation.index
+GET     /admin/startEditRecommendByAdmin controllers.RecommendationByAdmin.startEditRecommendByAdmin
+GET     /admin/startUpdateRecommendByAdmin controllers.RecommendationByAdmin.startUpdate(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "recommend_by_admin.score")
+GET     /admin/createRecommendByAdmin    controllers.RecommendationByAdmin.selectItem(q: List[String], page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "item_name.item_name")
+POST    /admin/addRecommendationByAdmin  controllers.RecommendationByAdmin.addRecommendation(siteId: Long, itemId: Long)
+POST    /admin/removeRecommendationByAdmin controllers.RecommendationByAdmin.removeRecommendation(id: Long)
+POST    /admin/changeRecommendationByAdmin controllers.RecommendationByAdmin.changeRecommendation(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "score")
+GET     /admin/startAddUsersByCsv        controllers.UserMaintenance.startAddUsersByCsv()
+POST    /admin/addUsersByCsv             controllers.UserMaintenance.addUsersByCsv()
+GET     /registerUserInformation         controllers.UserEntry.registerUserInformation(userId: Long)
+POST    /submitUserInformation           controllers.UserEntry.submitUserInfo(userId: Long)
+GET     /showPurchasedCouponList         controllers.CouponHistory.showPurchasedCouponList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "h.transaction_id DESC")
+GET     /showPurchasedCoupon             controllers.CouponHistory.showPurchasedCoupon(tranCouponId: Long)
+GET     /updateUserInfoStart             controllers.UserEntry.updateUserInfoStart()
+POST    /updateUserInfo                  controllers.UserEntry.updateUserInfo()
+GET     /resetPasswordStart              controllers.UserEntry.resetPasswordStart()
+POST    /resetPassword                   controllers.UserEntry.resetPassword()
+GET     /resetPasswordConfirm            controllers.UserEntry.resetPasswordConfirm(u: Long, t: Long)
+POST    /resetWithNewPassword            controllers.UserEntry.resetWithNewPassword()
+GET     /resetPasswordCompleted          controllers.UserEntry.resetPasswordCompleted()
+GET     /changePasswordStart             controllers.UserEntry.changePasswordStart()
+POST    /changePassword                  controllers.UserEntry.changePassword()
+
+GET     /sitesAsJson                     controllers.SiteMaintenance.sitesAsJson()
+GET     /startItemInquiry                controllers.ItemInquiryReserve.startItemInquiry(siteId: Long, itemId: Long)
+POST    /confirmItemInquiry              controllers.ItemInquiryReserve.confirmItemInquiry(siteId: Long, itemId: Long)
+GET     /amendItemInquiryStart           controllers.ItemInquiryReserve.amendItemInquiryStart(inqId: Long)
+POST    /amendItemInquiry                controllers.ItemInquiryReserve.amendItemInquiry(inqId: Long)
+GET     /submitItemInquiry               controllers.ItemInquiryReserve.submitItemInquiryStart(inqId: Long)
+POST    /itemInquiry                     controllers.ItemInquiryReserve.submitItemInquiry(inqId: Long)
+GET     /startItemReservation            controllers.ItemInquiryReserve.startItemReservation(siteId: Long, itemId: Long)
+POST    /confirmItemReservation          controllers.ItemInquiryReserve.confirmItemReservation(siteId: Long, itemId: Long)
+GET     /amendItemReservationStart       controllers.ItemInquiryReserve.amendItemReservationStart(inqId: Long)
+POST    /amendItemReservation            controllers.ItemInquiryReserve.amendItemReservation(inqId: Long)
+GET     /submitItemReservation           controllers.ItemInquiryReserve.submitItemReservationStart(inqId: Long)
+POST    /itemReservation                 controllers.ItemInquiryReserve.submitItemReservation(inqId: Long)
+
+GET     /prize                           controllers.Prize.entry(itemName: String)
+POST    /confirmPrize                    controllers.Prize.confirm(itemName: String)
+POST    /confirmPrizeJa                  controllers.Prize.confirmJa(itemName: String)
+POST    /submitPrize                     controllers.Prize.submit(itemName: String)
+POST    /submitPrizeJa                   controllers.Prize.submitJa(itemName: String)
+
+GET     /showInstantCoupon               controllers.CouponHistory.showInstantCoupon(siteId: Long, itemId: Long)
+
+GET     /qaSite                          controllers.Qa.qaSiteStart(siteId: Long, backLink: String)
+POST    /submitQaSiteJa                  controllers.Qa.submitQaSiteJa(siteId: Long, backLink: String)
+
+GET     /createNewEmployeeStart          controllers.UserMaintenance.startCreateNewEmployeeUser()
+POST    /createNewEmployee               controllers.UserMaintenance.createNewEmployeeUser()
+
+GET     /showRegisteredEmployeeCount     controllers.UserMaintenance.showRegisteredEmployeeCount()
+POST    /removeExpiredItems              controllers.ShoppingCart.removeExpiredItems
+
+GET     /facebook/latestPostId           controllers.FacebookFeed.latestPostId(pageId: String)
+GET     /twitter/latestTweet             controllers.TwitterFeed.latestTweet(screenName: String)
+GET     /twitter/latestTweetJson         controllers.TwitterFeed.latestTweetJson(screenName: String, omitScript: Boolean ?= true, maxWidth: Option[Int] ?= Some(300))
+
+GET     /paypalSuccess                   controllers.Paypal.onSuccess(transactionId: Long, token: Long)
+GET     /paypalCancel                    controllers.Paypal.onCancel(transactionId: Long, token: Long)
+GET     /fakePaypal                      controllers.Paypal.fakePaypal(cmd: String, token: String)
+GET     /paypalWebPaymentSuccess/:tid/:token controllers.Paypal.onWebPaymentPlusSuccess(tid: Long, token: Long)
+GET     /paypalWebPaymentCancel/:tid/:token controllers.Paypal.onWebPaymentPlusCancel(tid: Long, token: Long)
+
+GET     /profile                         controllers.ProfileMaintenance.index()
+GET     /changeProfile                   controllers.ProfileMaintenance.changeProfile()
+POST    /doChangeProfile                 controllers.ProfileMaintenance.doChangeProfile()
+
+GET     /mypage                          controllers.MyPage.index()
+
+GET     /admin/newsMaintenance           controllers.NewsMaintenance.index()
+GET     /admin/startCreateNews           controllers.NewsMaintenance.startCreateNews()
+POST    /admin/createNews                controllers.NewsMaintenance.createNews()
+GET     /admin/editNews                  controllers.NewsMaintenance.editNews(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
+GET     /admin/modifyNewsStart           controllers.NewsMaintenance.modifyNewsStart(id: Long)
+POST    /admin/modifyNews                controllers.NewsMaintenance.modifyNews(id: Long)
+POST    /admin/deleteNews                controllers.NewsMaintenance.deleteNews(id: Long)
+POST    /admin/uploadNewsPicture         controllers.NewsPictures.upload(id: Long, no: Int)
+POST    /admin/removeNewsPicture         controllers.NewsPictures.remove(id: Long, no: Int)
+GET     /getNewsPicture                  controllers.NewsPictures.getPicture(id: Long, no: Int)
+GET     /newsList                        controllers.NewsQuery.list(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
+GET     /showNews                        controllers.NewsQuery.show(id: Long)
+GET     /pagedNewsList                   controllers.NewsQuery.pagedList(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
+
+GET     /itemzip                         controllers.ItemMaintenanceByCsv.index
+POST    /itemzip/upload                  controllers.ItemMaintenanceByCsv.uploadZip()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

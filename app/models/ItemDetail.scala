@@ -1,5 +1,7 @@
 package models
 
+import javax.inject.Singleton
+import javax.inject.Inject
 import anorm._
 import anorm.SqlParser
 import scala.language.postfixOps
@@ -21,7 +23,12 @@ case class ItemDetail(
   siteName: String
 )
 
-object ItemDetail {
+@Singleton
+class ItemDetailRepo @Inject() (
+  itemPriceHistoryRepo: ItemPriceHistoryRepo,
+  siteRepo: SiteRepo,
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
   val nameDesc = {
     SqlParser.get[String]("item_name.item_name") ~
     SqlParser.get[String]("item_description.description") map {
@@ -51,18 +58,18 @@ object ItemDetail {
     ).as(
       nameDesc.singleOpt
     ).map { t =>
-      val priceHistory = ItemPriceHistory.atBySiteAndItem(siteId, ItemId(itemId), now)
+      val priceHistory = itemPriceHistoryRepo.atBySiteAndItem(siteId, ItemId(itemId), now)
 
       ItemDetail(
         siteId, itemId,
         t._1, t._2,
         ItemNumericMetadata.allById(ItemId(itemId)),
         ItemTextMetadata.allById(ItemId(itemId)),
-        SiteItemNumericMetadata.all(siteId, ItemId(itemId)),
+        siteItemNumericMetadataRepo.all(siteId, ItemId(itemId)),
         SiteItemTextMetadata.all(siteId, ItemId(itemId)),
         itemPriceStrategy.price(ItemPriceStrategyInput(priceHistory)),
         priceHistory.listPrice,
-        Site(siteId).name
+        siteRepo(siteId).name
       )
     }
 }

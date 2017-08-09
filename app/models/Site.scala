@@ -1,5 +1,7 @@
 package models
 
+import javax.inject.Inject
+import javax.inject.Singleton
 import anorm._
 import anorm.SqlParser
 import scala.language.postfixOps
@@ -15,7 +17,9 @@ case class Site(
   }
 }
 
-object Site {
+@Singleton
+class SiteRepo @Inject() (
+) {
   val simple = {
     SqlParser.get[Option[Long]]("site.site_id") ~
     SqlParser.get[Long]("site.locale_id") ~

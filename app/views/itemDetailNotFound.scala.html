@@ -1,0 +1,16 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("item.detail"), loginSession) {
+} {
+  <div class="itemDetailNotFound">
+    @Messages("itemDetailNotFound")
+  </div>
+
+  <div class="gotoTopLink">
+    <a href="/">@Messages("gotoTop")</a>
+  </div>
+}

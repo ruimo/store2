@@ -1,9 +1,10 @@
 package models
 
 import anorm._
-
-import collection.immutable
-import java.sql.{Timestamp, Connection}
+import java.sql.{Connection, Timestamp}
+import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 case class NewsId(id: Long) extends AnyVal
 
@@ -12,25 +13,28 @@ case class News(
   siteId: Option[Long],
   title: String,
   contents: String,
-  releaseTime: Long,
-  updatedTime: Long
+  releaseTime: LocalDateTime,
+  updatedTime: LocalDateTime
 )
 
-object News {
+@Singleton
+class NewsRepo @Inject() (
+  siteRepo: SiteRepo
+) {
   val MaxDate: Long = java.sql.Date.valueOf("9999-12-31").getTime
   val simple = {
     SqlParser.get[Option[Long]]("news_id") ~
     SqlParser.get[Option[Long]]("site_id") ~
     SqlParser.get[String]("title") ~
     SqlParser.get[String]("contents") ~
-    SqlParser.get[java.time.Instant]("release_time") ~
-    SqlParser.get[java.time.Instant]("updated_time") map {
+    SqlParser.get[java.time.LocalDateTime]("release_time") ~
+    SqlParser.get[java.time.LocalDateTime]("updated_time") map {
       case id~siteId~title~contents~releaseTime~updatedTime =>
-        News(id.map(NewsId.apply), siteId, title, contents, releaseTime.toEpochMilli, updatedTime.toEpochMilli)
+        News(id.map(NewsId.apply), siteId, title, contents, releaseTime, updatedTime)
     }
   }
 
-  val withSite = simple ~ (Site.simple ?) map {
+  val withSite = simple ~ (siteRepo.simple ?) map {
     case news~site => (news, site)
   }
 
@@ -76,7 +80,7 @@ object News {
   }
 
   def createNew(
-    siteId: Option[Long], title: String, contents: String, releaseTime: Long, updatedTime: Long = System.currentTimeMillis
+    siteId: Option[Long], title: String, contents: String, releaseTime: LocalDateTime, updatedTime: LocalDateTime = LocalDateTime.now()
   )(implicit conn: Connection): News = {
     SQL(
       """
@@ -88,8 +92,8 @@ object News {
       'siteId -> siteId,
       'title -> title,
       'contents -> contents,
-      'releaseTime -> java.time.Instant.ofEpochMilli(releaseTime),
-      'updatedTime -> java.time.Instant.ofEpochMilli(updatedTime)
+      'releaseTime -> releaseTime,
+      'updatedTime -> updatedTime
     ).executeUpdate()
 
     val newsId = SQL("select currval('news_seq')").as(SqlParser.scalar[Long].single)
@@ -98,7 +102,7 @@ object News {
   }
 
   def update(
-    id: NewsId, siteId: Option[Long], title: String, contents: String, releaseTime: Long, updatedTime: Long = System.currentTimeMillis
+    id: NewsId, siteId: Option[Long], title: String, contents: String, releaseTime: LocalDateTime, updatedTime: LocalDateTime = LocalDateTime.now()
   )(implicit conn: Connection): Int =
     SQL(
       """
@@ -115,8 +119,8 @@ object News {
       'siteId -> siteId,
       'title -> title,
       'contents -> contents,
-      'releaseTime -> java.time.Instant.ofEpochMilli(releaseTime),
-      'updatedTime -> java.time.Instant.ofEpochMilli(updatedTime)
+      'releaseTime -> releaseTime,
+      'updatedTime -> updatedTime
     ).executeUpdate()
 
   def delete(newsId: NewsId)(implicit conn: Connection): Int =

@@ -7,7 +7,7 @@ import play.api.db.Database
 case class ChangeItemNameTable(
   itemNames: Seq[ChangeItemName]
 ) {
-  def update(itemId: Long)(implicit conn: Connection) {
+  def update(itemId: Long)(implicit conn: Connection, itemNameRepo: ItemNameRepo) {
     itemNames.foreach {
       _.update(itemId)
     }
@@ -17,14 +17,14 @@ case class ChangeItemNameTable(
 case class ChangeItemName(
   localeId: Long, itemName: String
 ) {
-  def update(itemId: Long)(implicit conn: Connection) {
-    ItemName.update(ItemId(itemId), localeId, itemName)
+  def update(itemId: Long)(implicit conn: Connection, itemNameRepo: ItemNameRepo) {
+    itemNameRepo.update(ItemId(itemId), localeId, itemName)
   }
 
-  def add(itemId: Long)(implicit db: Database) {
+  def add(itemId: Long)(implicit db: Database, itemNameRepo: ItemNameRepo) {
     ExceptionMapper.mapException {
       db.withTransaction { implicit conn =>
-        ItemName.add(ItemId(itemId), localeId, itemName)
+        itemNameRepo.add(ItemId(itemId), localeId, itemName)
       }
     }
   }

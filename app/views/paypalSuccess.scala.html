@@ -1,0 +1,10 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("paypalSuccessTitle"), Some(loginSession)) {
+} {
+  <h1 class="title">@Messages("paypalSuccessTitle")</h1>
+}

@@ -1,14 +1,16 @@
 package models
 
+import javax.inject.Singleton
+
 import anorm._
 import anorm.SqlParser
 
 import scala.language.postfixOps
 import collection.immutable
 import java.sql.{Connection, Timestamp}
+import java.time.LocalDateTime
 import javax.inject.Inject
 
-import play.api.data.Form
 import org.joda.time.DateTime
 
 import annotation.tailrec
@@ -35,7 +37,7 @@ case class ItemPriceHistory(
   unitPrice: BigDecimal,
   listPrice: Option[BigDecimal],
   costPrice: BigDecimal,
-  validUntil: Long
+  validUntil: LocalDateTime
 )
 
 case class ItemNumericMetadata(
@@ -50,15 +52,26 @@ case class SiteItem(itemId: ItemId, siteId: Long, created: Long)
 
 case class SiteItemNumericMetadata(
   id: Option[Long] = None, itemId: ItemId, siteId: Long, metadataType: SiteItemNumericMetadataType, metadata: Long,
-  validUntil: Long
+  validUntil: LocalDateTime
 )
 
 case class SiteItemTextMetadata(
   id: Option[Long] = None, itemId: ItemId, siteId: Long, metadataType: SiteItemTextMetadataType, metadata: String
 )
 
+@Singleton
 class ItemRepo @Inject() (
-  itemPriceHistoryRepo: ItemPriceHistoryRepo, db: Database
+  localeInfoRepo: LocaleInfoRepo,
+  taxRepo: TaxRepo,
+  siteItemRepo: SiteItemRepo,
+  siteRepo: SiteRepo,
+  itemNameRepo: ItemNameRepo,
+  itemPriceRepo: ItemPriceRepo,
+  itemPriceHistoryRepo: ItemPriceHistoryRepo,
+  itemDescriptionRepo: ItemDescriptionRepo,
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo,
+  db: Database,
+  currencyRegistry: CurrencyRegistry
 ) {
   val ItemListDefaultOrderBy = OrderBy("item_name.item_name", Asc)
   val ItemListQueryColumnsToAdd = Play.current.configuration.getString("item.list.query.columns.add").get
@@ -70,20 +83,20 @@ class ItemRepo @Inject() (
     }
   }
 
-  val itemParser = simple~ItemName.simple~ItemDescription.simple~ItemPrice.simple~Site.simple map {
+  val itemParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~siteRepo.simple map {
     case item~itemName~itemDescription~itemPrice~site => (
       item, itemName, itemDescription, itemPrice, site
     )
   }
 
-  val itemListParser = simple~ItemName.simple~ItemDescription.simple~itemPriceHistoryRepo.simple~Site.simple map {
+  val itemListParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceHistoryRepo.simple~siteRepo.simple map {
     case item~itemName~itemDescription~itemPrice~site => (
       item, itemName, itemDescription, itemPrice, site
     )
   }
 
   val itemListForMaintenanceParser = 
-    simple~(ItemName.simple ?)~(ItemDescription.simple ?)~(itemPriceHistoryRepo.simple ?)~(Site.simple ?) map {
+    simple~(itemNameRepo.simple ?)~(itemDescriptionRepo.simple ?)~(itemPriceHistoryRepo.simple ?)~(siteRepo.simple ?) map {
       case item~itemName~itemDescription~itemPrice~site => (
         item, itemName, itemDescription, itemPrice, site
       )
@@ -208,7 +221,7 @@ class ItemRepo @Inject() (
         val itemId = e._1.id.get
         val metadata = ItemNumericMetadata.allById(itemId)
         val textMetadata = ItemTextMetadata.allById(itemId)
-        val siteMetadata = e._5.map {md => SiteItemNumericMetadata.all(md.id.get, itemId)}
+        val siteMetadata = e._5.map {md => siteItemNumericMetadataRepo.all(md.id.get, itemId)}
 
         (e._1, e._2, e._3, e._5, e._4, metadata, siteMetadata, textMetadata)
       }}
@@ -302,7 +315,7 @@ class ItemRepo @Inject() (
         val itemId = e._1.id.get
         val metadata = ItemNumericMetadata.allById(itemId)
         val textMetadata = ItemTextMetadata.allById(itemId)
-        val siteMetadata = SiteItemNumericMetadata.all(e._5.id.get, itemId)
+        val siteMetadata = siteItemNumericMetadataRepo.all(e._5.id.get, itemId)
         val siteItemTextMetadata = SiteItemTextMetadata.all(e._5.id.get, itemId)
 
         (e._1, e._2, e._3, e._5, e._4, metadata, siteMetadata, textMetadata, siteItemTextMetadata)
@@ -455,17 +468,17 @@ class ItemRepo @Inject() (
   def createItem(prototype: CreateItem, hide: Boolean) {
     db.withConnection { implicit conn =>
       val item = createNew(prototype.categoryId)
-      val name = ItemName.createNew(item, Map(LocaleInfo(prototype.localeId) -> prototype.itemName))
-      val site = Site(prototype.siteId)
-      val desc = ItemDescription.createNew(item, site, prototype.description)
-      val price = ItemPrice.createNew(item, site)
-      val tax = Tax(prototype.taxId)
-      val priceHistory = itemPriceHistoryRepo.createNew(price, tax, prototype.currency, prototype.price, prototype.listPrice, prototype.costPrice, Until.Ever)
-      val siteItem = SiteItem.createNew(site, item)
+      val name = itemNameRepo.createNew(item, Map(localeInfoRepo(prototype.localeId) -> prototype.itemName))
+      val site = siteRepo(prototype.siteId)
+      val desc = itemDescriptionRepo.createNew(item, site, prototype.description)
+      val price = itemPriceRepo.createNew(item, site)
+      val tax = taxRepo(prototype.taxId)
+      val priceHistory = itemPriceHistoryRepo.createNew(price, tax, currencyRegistry(prototype.currencyId), prototype.price, prototype.listPrice, prototype.costPrice, Until.EverLocalDateTime)
+      val siteItem = siteItemRepo.createNew(site, item)
       if (prototype.isCoupon)
         Coupon.updateAsCoupon(item.id.get)
       if (hide) {
-        SiteItemNumericMetadata.createNew(site.id.get, item.id.get, SiteItemNumericMetadataType.HIDE, 1)
+        siteItemNumericMetadataRepo.createNew(site.id.get, item.id.get, SiteItemNumericMetadataType.HIDE, 1)
       }
     }
   }
@@ -482,7 +495,10 @@ class ItemRepo @Inject() (
   }
 }
 
-object ItemName {
+@Singleton
+class ItemNameRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo
+) {
   val simple = {
     SqlParser.get[Long]("item_name.locale_id") ~
     SqlParser.get[Long]("item_name.item_id") ~
@@ -521,7 +537,7 @@ object ItemName {
     ).on(
       'itemId -> itemId.id
     ).as(simple *).map { e =>
-      LocaleInfo(e.localeId) -> e
+      localeInfoRepo(e.localeId) -> e
     }.toMap
   }
 
@@ -577,7 +593,10 @@ object ItemName {
   }
 }
 
-object ItemDescription {
+@Singleton
+class ItemDescriptionRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo
+) {
   val simple = {
     SqlParser.get[Long]("item_description.locale_id") ~
     SqlParser.get[Long]("item_description.item_id") ~
@@ -621,7 +640,7 @@ object ItemDescription {
     ).on(
       'itemId -> itemId.id
     ).as(simple *).map { e =>
-      (e.siteId, LocaleInfo(e.localeId), e)
+      (e.siteId, localeInfoRepo(e.localeId), e)
     }.toSeq
 
   def add(siteId: Long, itemId: ItemId, localeId: Long, itemDescription: String)(implicit conn: Connection) {
@@ -673,7 +692,10 @@ object ItemDescription {
   }
 }
 
-object ItemPrice {
+@Singleton
+class ItemPriceRepo @Inject() (
+  itemPriceRepo: ItemPriceRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("item_price.item_price_id") ~
     SqlParser.get[Long]("item_price.site_id") ~
@@ -708,7 +730,7 @@ object ItemPrice {
       'itemId -> item.id.get.id,
       'siteId -> site.id.get
     ).as(
-      ItemPrice.simple.singleOpt
+      itemPriceRepo.simple.singleOpt
     )
   }
 
@@ -723,7 +745,9 @@ object ItemPrice {
 }
 
 class ItemPriceHistoryRepo @Inject() (
-  currencyRegistry: CurrencyRegistry, db: Database
+  currencyRegistry: CurrencyRegistry,
+  itemPriceRepo: ItemPriceRepo,
+  db: Database
 ) {
   val simple = {
     SqlParser.get[Option[Long]]("item_price_history.item_price_history_id") ~
@@ -733,14 +757,14 @@ class ItemPriceHistoryRepo @Inject() (
     SqlParser.get[java.math.BigDecimal]("item_price_history.unit_price") ~
     SqlParser.get[Option[java.math.BigDecimal]]("item_price_history.list_price") ~
     SqlParser.get[java.math.BigDecimal]("item_price_history.cost_price") ~
-    SqlParser.get[java.util.Date]("item_price_history.valid_until") map {
+    SqlParser.get[java.time.LocalDateTime]("item_price_history.valid_until") map {
       case id~itemPriceId~taxId~currencyId~unitPrice~listPrice~costPrice~validUntil
-        => ItemPriceHistory(id, itemPriceId, taxId, currencyRegistry(currencyId), unitPrice, listPrice.map(BigDecimal.apply), costPrice, validUntil.getTime)
+        => ItemPriceHistory(id, itemPriceId, taxId, currencyRegistry(currencyId), unitPrice, listPrice.map(BigDecimal.apply), costPrice, validUntil)
     }
   }
 
   def createNew(
-    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal, listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: Long
+    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal, listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: LocalDateTime
   ): ItemPriceHistory = db.withConnection { implicit conn =>
     SQL(
       """
@@ -758,7 +782,7 @@ class ItemPriceHistoryRepo @Inject() (
       'unitPrice -> unitPrice.bigDecimal,
       'listPrice -> listPrice.map(_.bigDecimal),
       'costPrice -> costPrice.bigDecimal,
-      'validUntil -> new java.sql.Timestamp(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
 
     val id = SQL("select currval('item_price_history_seq')").as(SqlParser.scalar[Long].single)
@@ -767,7 +791,7 @@ class ItemPriceHistoryRepo @Inject() (
   }
 
   def update(
-    id: Long, taxId: Long, currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: DateTime
+    id: Long, taxId: Long, currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: LocalDateTime
   ) {
     db.withConnection { implicit conn =>
       SQL(
@@ -787,7 +811,7 @@ class ItemPriceHistoryRepo @Inject() (
         'unitPrice -> unitPrice.bigDecimal,
         'listPrice -> listPrice.map(_.bigDecimal),
         'costPrice -> costPrice.bigDecimal,
-        'validUntil -> new java.sql.Timestamp(validUntil.getMillis),
+        'validUntil -> validUntil,
         'id -> id
       ).executeUpdate()
     }
@@ -795,7 +819,7 @@ class ItemPriceHistoryRepo @Inject() (
 
   def add(
     itemId: ItemId, siteId: Long, taxId: Long, currencyId: Long, 
-    unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: DateTime
+    unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: LocalDateTime
   ) {
     db.withConnection { implicit conn =>
       val priceId = SQL(
@@ -825,7 +849,7 @@ class ItemPriceHistoryRepo @Inject() (
         'unitPrice -> unitPrice.bigDecimal,
         'listPrice -> listPrice.map(_.bigDecimal),
         'costPrice -> costPrice.bigDecimal,
-        'validUntil -> new java.sql.Timestamp(validUntil.getMillis)
+        'validUntil -> validUntil
       ).executeUpdate()
     }
   }
@@ -892,7 +916,7 @@ class ItemPriceHistoryRepo @Inject() (
     )
   }
 
-  val withItemPrice = ItemPrice.simple~simple map {
+  val withItemPrice = itemPriceRepo.simple~simple map {
     case price~priceHistory => (price, priceHistory)
   }
 
@@ -1116,22 +1140,25 @@ object ItemTextMetadata {
   }
 }
 
-object SiteItemNumericMetadata {
+@Singleton
+class SiteItemNumericMetadataRepo @Inject() (
+  implicit val siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("site_item_numeric_metadata.site_item_numeric_metadata_id") ~
     SqlParser.get[Long]("site_item_numeric_metadata.item_id") ~
     SqlParser.get[Long]("site_item_numeric_metadata.site_id") ~
     SqlParser.get[Int]("site_item_numeric_metadata.metadata_type") ~
     SqlParser.get[Long]("site_item_numeric_metadata.metadata") ~
-    SqlParser.get[java.util.Date]("site_item_numeric_metadata.valid_until") map {
+    SqlParser.get[java.time.LocalDateTime]("site_item_numeric_metadata.valid_until") map {
       case id~itemId~siteId~metadataType~metadata~validUntil =>
-        SiteItemNumericMetadata(id, ItemId(itemId), siteId, SiteItemNumericMetadataType.byIndex(metadataType), metadata, validUntil.getTime)
+        SiteItemNumericMetadata(id, ItemId(itemId), siteId, SiteItemNumericMetadataType.byIndex(metadataType), metadata, validUntil)
     }
   }
 
   def createNew(
     siteId: Long, itemId: ItemId, metadataType: SiteItemNumericMetadataType, metadata: Long,
-    validUntil: Long = Until.Ever
+    validUntil: LocalDateTime = Until.EverLocalDateTime
   )(implicit conn: Connection): SiteItemNumericMetadata = {
     SQL(
       """
@@ -1147,7 +1174,7 @@ object SiteItemNumericMetadata {
       'itemId -> itemId.id,
       'metadataType -> metadataType.ordinal,
       'metadata -> metadata,
-      'validUntil -> new java.util.Date(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
 
     val id = SQL("select currval('site_item_numeric_metadata_seq')").as(SqlParser.scalar[Long].single)
@@ -1172,7 +1199,7 @@ object SiteItemNumericMetadata {
     'metadataType -> metadataType.ordinal,
     'now -> new java.sql.Timestamp(now)
   ).as(
-    SiteItemNumericMetadata.simple.single
+    siteItemNumericMetadataRepo.simple.single
   )
 
   def all(
@@ -1194,13 +1221,13 @@ object SiteItemNumericMetadata {
     'itemId -> itemId.id,
     'now -> new java.sql.Timestamp(now)
   ).as(
-    SiteItemNumericMetadata.simple *
+    (siteItemNumericMetadataRepo.simple) *
   ).foldLeft(new immutable.HashMap[SiteItemNumericMetadataType, SiteItemNumericMetadata]) {
     (map, e) => map.updated(e.metadataType, e)
   }
 
   def update(
-    id: Long, metadata: Long, validUntil: Long = Until.Ever
+    id: Long, metadata: Long, validUntil: LocalDateTime = Until.EverLocalDateTime
   )(implicit conn: Connection) {
     SQL(
       """
@@ -1210,7 +1237,7 @@ object SiteItemNumericMetadata {
     ).on(
       'id -> id,
       'metadata -> metadata,
-      'validUntil -> new java.util.Date(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
   }
 
@@ -1232,7 +1259,7 @@ object SiteItemNumericMetadata {
   ).on(
     'itemId -> itemId.id
   ).as(
-    SiteItemNumericMetadata.simple *
+    siteItemNumericMetadataRepo.simple *
   )
 }
 
@@ -1367,7 +1394,13 @@ object SiteItemTextMetadata {
   }
 }
 
-object SiteItem {
+@Singleton
+class SiteItemRepo @Inject() (
+  itemNameRepo: ItemNameRepo,
+  siteRepo: SiteRepo,
+  siteItemRepo: SiteItemRepo,
+  itemPriceRepo: ItemPriceRepo
+) {
   val simple = {
     SqlParser.get[Long]("site_item.item_id") ~
     SqlParser.get[Long]("site_item.site_id") ~
@@ -1376,11 +1409,11 @@ object SiteItem {
     }
   }
 
-  val withSiteAndItemName = Site.simple ~ ItemName.simple map {
+  val withSiteAndItemName = siteRepo.simple ~ itemNameRepo.simple map {
     case site~itemName => (site, itemName)
   }
 
-  val withSite = Site.simple ~ SiteItem.simple map {
+  val withSite = siteRepo.simple ~ siteItemRepo.simple map {
     case site~siteItem => (site, siteItem)
   }
 

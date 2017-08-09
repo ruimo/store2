@@ -1,0 +1,5 @@
+@(amount: BigDecimal)(
+  implicit request: MessagesRequest[AnyContent]
+)
+
+@helpers.ViewHelpers.toAmount(amount)(request.acceptLanguages.head)

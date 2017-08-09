@@ -2,6 +2,7 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
+import java.time.LocalDateTime
 
 case class ChangeSiteItemMetadataTable(
   siteItemMetadata: Seq[ChangeSiteItemMetadata]
@@ -14,9 +15,11 @@ case class ChangeSiteItemMetadataTable(
 }
 
 case class ChangeSiteItemMetadata(
-  id: Long, siteId: Long, metadataType: Int, metadata: Long, validUntil: DateTime
+  id: Long, siteId: Long, metadataType: Int, metadata: Long, validUntil: LocalDateTime
+)(
+  implicit siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) {
   def update(itemId: Long)(implicit conn: Connection) {
-    SiteItemNumericMetadata.update(id, metadata, validUntil.getMillis)
+    siteItemNumericMetadataRepo.update(id, metadata, validUntil)
   }
 }

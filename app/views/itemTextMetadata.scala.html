@@ -1,0 +1,9 @@
+@(t: ItemTextMetadataType, v: String)(implicit request: MessagesRequest[AnyContent])
+
+@import java.util.Locale
+
+@{
+  t match {
+    case ItemTextMetadataType.ABOUT_HEIGHT => v
+  }
+}

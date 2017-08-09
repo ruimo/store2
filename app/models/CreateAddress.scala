@@ -1,7 +1,7 @@
 package models
 
-import org.joda.time.DateTime
 import java.sql.Connection
+import java.time.LocalDateTime
 
 case class CreateAddress(
   countryCode: CountryCode,
@@ -22,7 +22,7 @@ case class CreateAddress(
   tel1: String,
   tel2: String,
   tel3: String,
-  shippingDate: DateTime,
+  shippingDate: LocalDateTime,
   comment: String,
   email: String
 ) {
@@ -30,7 +30,7 @@ case class CreateAddress(
   lazy val hasKanaName: Boolean = !firstNameKana.isEmpty || !lastNameKana.isEmpty
   lazy val hasZip: Boolean = !zip1.isEmpty || !zip2.isEmpty || !zip3.isEmpty
 
-  def save(userId: Long)(implicit conn: Connection): Address = {
+  def save(userId: Long)(implicit shoppingCartItemRepo: ShoppingCartItemRepo, conn: Connection): Address = {
     val addr = Address(
       countryCode = this.countryCode,
       firstName = this.firstName,
@@ -54,8 +54,8 @@ case class CreateAddress(
       email = this.email
     )
 
-    ShoppingCartItem.sites(userId).foreach { siteId =>
-      ShoppingCartShipping.updateOrInsert(userId, siteId, shippingDate.getMillis)
+    shoppingCartItemRepo.sites(userId).foreach { siteId =>
+      ShoppingCartShipping.updateOrInsert(userId, siteId, shippingDate)
     }
 
     ShippingAddressHistory.createNew(userId, addr)
@@ -64,7 +64,7 @@ case class CreateAddress(
 }
 
 object CreateAddress {
-  def fromAddress(addr: Address, shippingDate: DateTime) =
+  def fromAddress(addr: Address, shippingDate: LocalDateTime) =
     CreateAddress(
       addr.countryCode,
       addr.firstName,
@@ -105,7 +105,7 @@ object CreateAddress {
     tel1: String,
     tel2: String,
     tel3: String,
-    shippingDate: DateTime,
+    shippingDate: LocalDateTime,
     comment: String,
     email: String
   ) = CreateAddress(
@@ -138,7 +138,7 @@ object CreateAddress {
     String, String,
     Int,
     String, String, String, String, String,
-    String, String, String, DateTime, String, String
+    String, String, String, LocalDateTime, String, String
   )] = Some((addr.firstName, addr.lastName,
              addr.firstNameKana, addr.lastNameKana,
              addr.zip1, addr.zip2,

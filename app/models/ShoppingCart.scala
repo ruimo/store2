@@ -1,17 +1,17 @@
 package models
 
-import java.time.Instant
+import java.time.{Instant, LocalDateTime}
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import scala.collection.immutable._
 import java.sql.Connection
-import play.api.data.Form
-import org.joda.time.DateTime
+import javax.inject.{Inject, Singleton}
+
 import collection.immutable
 import com.ruimo.recoeng.json.SalesItem
-import helpers.Cache
 
 case class ShoppingCartTotalEntry(
   shoppingCartItem: ShoppingCartItem,
@@ -51,6 +51,8 @@ case class ShoppingCartTotalEntry(
 
 case class ShoppingCartTotal(
   table: immutable.Seq[ShoppingCartTotalEntry] = List()
+)(
+  implicit taxRepo: TaxRepo
 ) {
   def +(e: ShoppingCartTotalEntry) = ShoppingCartTotal(table :+ e)
   lazy val size: Int = table.size
@@ -132,7 +134,18 @@ case class ShoppingCartShipping(
   shippingDate: Long
 )
 
-object ShoppingCartItem {
+@Singleton
+class ShoppingCartItemRepo @Inject() (
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  itemNameRepo: ItemNameRepo,
+  itemDescriptionRepo: ItemDescriptionRepo,
+  itemPriceRepo: ItemPriceRepo,
+  siteRepo: SiteRepo,
+  itemPriceHistoryRepo: ItemPriceHistoryRepo,
+  taxHistoryRepo: TaxHistoryRepo,
+  itemPriceStrategyRepo: ItemPriceStrategyRepo,
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("shopping_cart_item.shopping_cart_item_id") ~
     SqlParser.get[Long]("shopping_cart_item.store_user_id") ~
@@ -243,7 +256,7 @@ object ShoppingCartItem {
     ).executeUpdate()
   }
 
-  val listParser = ShoppingCartItem.simple~ItemName.simple~ItemDescription.simple~ItemPrice.simple~Site.simple map {
+  val listParser = shoppingCartItemRepo.simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~siteRepo.simple map {
     case cart~itemName~itemDescription~itemPrice~site => (
       cart, itemName, itemDescription, itemPrice, site
     )
@@ -266,9 +279,9 @@ object ShoppingCartItem {
     locale: LocaleInfo, loginSession: LoginSession,
     page: Int = 0, pageSize: Int = 100, now: Long = System.currentTimeMillis
   )(
-    implicit conn: Connection
+    implicit taxRepo: TaxRepo, conn: Connection
   ): (ShoppingCartTotal, Seq[ItemExpiredException]) = {
-    val itemPriceStrategy: ItemPriceStrategy = ItemPriceStrategy(ItemPriceStrategyContext(loginSession))
+    val itemPriceStrategy: ItemPriceStrategy = itemPriceStrategyRepo(ItemPriceStrategyContext(loginSession))
 
     var error = new VectorBuilder[ItemExpiredException]()
     var total = new VectorBuilder[ShoppingCartTotalEntry]()
@@ -296,12 +309,12 @@ object ShoppingCartItem {
     ).foreach { e =>
       val itemId = ItemId(e._1.itemId)
       val itemPriceId = e._4.id.get
-      ItemPriceHistory.getAt(itemPriceId, now) match {
+      itemPriceHistoryRepo.getAt(itemPriceId, now) match {
         case Some(priceHistory) =>
-          val taxHistory: TaxHistory = TaxHistory.at(priceHistory.taxId, now)
+          val taxHistory: TaxHistory = taxHistoryRepo.at(priceHistory.taxId, now)
           val metadata = ItemNumericMetadata.allById(itemId)
           val textMetadata = ItemTextMetadata.allById(itemId)
-          val siteMetadata = SiteItemNumericMetadata.all(e._5.id.get, itemId)
+          val siteMetadata = siteItemNumericMetadataRepo.all(e._5.id.get, itemId)
           val siteTextMetadata = SiteItemTextMetadata.all(e._5.id.get, itemId)
           total += ShoppingCartTotalEntry(
             e._1, e._2, e._3, e._5, priceHistory, taxHistory, metadata, siteMetadata,
@@ -405,12 +418,12 @@ object ShoppingCartItem {
     'uid -> storeUserId,
     'localeId -> locale.id
   ).as(
-    SqlParser.get[String]("site_name") ~
+    (SqlParser.get[String]("site_name") ~
     SqlParser.get[String]("itnm") ~
     SqlParser.get[Long]("itid") ~
     SqlParser.get[Long]("sid") ~
     SqlParser.get[Int]("qtotal") ~
-    SqlParser.get[Long]("qmax") map (SqlParser.flatten) *
+    SqlParser.get[Long]("qmax") map (SqlParser.flatten)) *
   ).foldLeft(immutable.HashMap[(ItemId, Long), (String, String, Int, Long)]()) { (sum, e) =>
     sum + ((ItemId(e._3) -> e._4) -> ((e._1, e._2, e._5, e._6)))
   }
@@ -428,7 +441,7 @@ object ShoppingCartShipping {
   }
 
   // Not atomic.
-  def updateOrInsert(userId: Long, siteId: Long, shippingDate: Long)(implicit conn: Connection) {
+  def updateOrInsert(userId: Long, siteId: Long, shippingDate: LocalDateTime)(implicit conn: Connection) {
     val updateCount = SQL(
       """
       update shopping_cart_shipping
@@ -436,7 +449,7 @@ object ShoppingCartShipping {
       where store_user_id = {userId} and site_id = {siteId}
       """
     ).on(
-      'shippingDate -> new java.sql.Timestamp(shippingDate),
+      'shippingDate -> shippingDate,
       'userId -> userId,
       'siteId -> siteId
     ).executeUpdate()
@@ -452,7 +465,7 @@ object ShoppingCartShipping {
         )
         """
       ).on(
-        'shippingDate -> new java.sql.Timestamp(shippingDate),
+        'shippingDate -> shippingDate,
         'userId -> userId,
         'siteId -> siteId
       ).executeUpdate()
@@ -472,7 +485,7 @@ object ShoppingCartShipping {
       SqlParser.scalar[java.util.Date].single
     ).getTime
 
-  def find(userId: Long)(implicit conn: Connection): Option[Long] =
+  def find(userId: Long)(implicit conn: Connection): Option[LocalDateTime] =
     SQL(
       """
       select min(shipping_date) from shopping_cart_shipping
@@ -481,9 +494,7 @@ object ShoppingCartShipping {
     ).on(
       'userId -> userId
     ).as(
-      SqlParser.scalar[java.util.Date].singleOpt
-    ).map(
-      _.getTime
+      SqlParser.scalar[LocalDateTime].singleOpt
     )
 
   def clear(userId: Long)(implicit conn: Connection): Unit =

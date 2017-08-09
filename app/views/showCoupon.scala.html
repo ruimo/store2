@@ -1,0 +1,65 @@
+@(
+  itemId: ItemId,
+  time: Long,
+  tranId: Option[Long]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  login: LoginSession
+)
+
+@import helper._
+@implicitLoginSessionOpt = @{Some(login)}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>@Messages("commonTitle", Messages("coupon.title"))</title>
+    <link rel="stylesheet" media="all" href="@routes.Assets.versioned("stylesheets/coupon.css")">
+  </head>
+  <body>
+    <button type="button" class="printButton" onclick="window.print();">@Messages("print")</button>
+    <h1 class="title">@Messages("coupon.title")</h1>
+
+    <table class="showCouponTable">
+      <tr>
+        <td class="couponImage">
+          <img class="itemDetailPhoto" src="@routes.ItemPictures.getPicture(itemId.id, 0)">
+        </td>
+        <td class="couponDetail">
+          <table>
+            <tr>
+              <td class="date">
+                <span>@Messages("publishedDate")</span><span>@publishedDate(time)</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="siteName">
+                @Messages(
+                  "coupon.user.company.name",
+                  login.storeUser.companyName.getOrElse("")
+                )
+              </td>
+            </tr>
+            <tr>
+              <td class="name">
+                @Messages(
+                  "coupon.user.name",
+                  login.storeUser.firstName,
+                  login.storeUser.middleName.getOrElse(""),
+                  login.storeUser.lastName
+                )
+              </td>
+            </tr>
+            @tranId.map { id =>
+              <tr>
+                <td class="tranId">@id</td>
+              </tr>
+            }
+          </table>
+        </td>
+      </tr>
+    </table>
+    
+    <button type="button" class="closeButton" onclick="window.close(); return false;">@Messages("close")</button>
+  </body>
+</html>

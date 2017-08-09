@@ -2,10 +2,14 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
-import play.api.i18n.{Messages, Lang}
+import play.api.i18n.{Lang, Messages, MessagesProvider}
 import java.sql.Connection
+
 import math.BigDecimal.RoundingMode
+import javax.inject.Inject
+import javax.inject.Singleton
 
 case class Tax(id: Option[Long] = None)
 
@@ -13,13 +17,17 @@ case class TaxHistory(
   id: Option[Long] = None, taxId: Long, taxType: TaxType, rate: BigDecimal, validUntil: Long
 ) {
   lazy val realRate = rate / BigDecimal(100)
-  def taxAmount(target: BigDecimal): BigDecimal = Tax.taxAmount(target, taxType, realRate)
-  def outerTax(target: BigDecimal): BigDecimal = Tax.outerTax(target, taxType, realRate)
+  def taxAmount(target: BigDecimal)(implicit taxRepo: TaxRepo): BigDecimal = taxRepo.taxAmount(target, taxType, realRate)
+  def outerTax(target: BigDecimal)(implicit taxRepo: TaxRepo): BigDecimal = taxRepo.outerTax(target, taxType, realRate)
 }
 
 case class TaxName(id: Option[Long] = None, taxId: Long, locale: LocaleInfo, taxName: String)
 
-object Tax {
+@Singleton
+class TaxRepo @Inject() (
+  taxNameRepo: TaxNameRepo,
+  localeInfoRepo: LocaleInfoRepo
+) {
   def taxAmount(target: BigDecimal, taxType: TaxType, rate: BigDecimal): BigDecimal = (taxType match {
     case TaxType.OUTER_TAX => target * rate
     case TaxType.INNER_TAX => rate * target / (rate + 1)
@@ -38,7 +46,7 @@ object Tax {
     }
   }
 
-  val withName = Tax.simple ~ TaxName.simple map {
+  val withName = simple ~ taxNameRepo.simple map {
     case tax~name => (tax, name)
   }
 
@@ -63,20 +71,18 @@ object Tax {
 
   def list(implicit conn: Connection): Seq[Tax] = SQL(
     "select * from tax order by tax_id"
-  ).as(Tax.simple *)
+  ).as(simple *)
 
   val allTaxType = classOf[TaxType].getEnumConstants().toList
 
-  def taxTypeTable(implicit lang: Lang): Seq[(String, String)] = {
-    val locale = LocaleInfo.byLang(lang)
-
+  def taxTypeTable(implicit mp: MessagesProvider): Seq[(String, String)] = {
     allTaxType.map {
       e => e.ordinal.toString -> Messages("tax." + e)
     }
   }
 
   def tableForDropDown(implicit lang: Lang, conn: Connection): Seq[(String, String)] = {
-    val locale = LocaleInfo.byLang(lang)
+    val locale = localeInfoRepo.byLang(lang)
 
     SQL(
       """
@@ -95,14 +101,17 @@ object Tax {
   }
 }
 
-object TaxName {
+@Singleton
+class TaxNameRepo @Inject() (
+  localeInfoRepo: LocaleInfoRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("tax_name.tax_name_id") ~
     SqlParser.get[Long]("tax_name.tax_id") ~
     SqlParser.get[Long]("tax_name.locale_id") ~
     SqlParser.get[String]("tax_name.tax_name") map {
       case id~taxId~localeId~taxName =>
-        TaxName(id, taxId, LocaleInfo(localeId), taxName)
+        TaxName(id, taxId, localeInfoRepo(localeId), taxName)
     }
   }
 
@@ -140,7 +149,9 @@ object TaxName {
   }
 }
 
-object TaxHistory {
+@Singleton
+class TaxHistoryRepo @Inject() (
+) {
   val simple = {
     SqlParser.get[Option[Long]]("tax_history.tax_history_id") ~
     SqlParser.get[Long]("tax_history.tax_id") ~
@@ -186,6 +197,6 @@ object TaxHistory {
     'taxId -> taxId,
     'now -> new java.sql.Timestamp(now)
   ).as(
-    TaxHistory.simple.single
+    simple.single
   )
 }

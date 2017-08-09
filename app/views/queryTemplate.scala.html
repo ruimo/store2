@@ -1,0 +1,108 @@
+@(
+  message: String,
+  queryString: helpers.QueryString,
+  list: PagedRecords[(
+    models.Item,
+    models.ItemName,
+    models.ItemDescription,
+    models.Site,
+    models.ItemPriceHistory,
+    Map[ItemNumericMetadataType, ItemNumericMetadata],
+    Map[SiteItemNumericMetadataType, SiteItemNumericMetadata],
+    Map[ItemTextMetadataType, ItemTextMetadata],
+    Map[SiteItemTextMetadataType, SiteItemTextMetadata]
+  )],
+  templateNo: Int,
+  query: (Int, Int, Int, String) => Call,
+  itemPriceStrategy: ItemPriceStrategy
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+
+@main(Messages("item.list"), loginSession) {
+  @shoppingCartDialogDeclaration()
+  @itemQueryOrderDropDown(query, list, templateNo, itemPriceStrategy)
+  <script>
+    $(function() {
+      $("#queryTemplateBody").load("/static/templates/itemQueries/" + @templateNo + ".html");
+    });
+  </script>
+} {
+  @shoppingCartDialogImplementation()
+
+  <table style="width: 100%;">
+    <tr>
+      <td>
+        @helper.form(action=routes.ItemQuery.query(queryString.table.toList)) {
+          <input type="search" id="searchbox" name="q" placeholder="@Messages("search.placeholder")"
+                 value="@queryString.toString">
+          <input type="submit" id="searchsubmit" value="@Messages("search.button.title")">
+        }
+      </td>
+      <td halign="right">
+        <select id="sortDropDown" onchange="onSortOrderChanged(this);">
+          <option value="older" @{if(list.orderBy == OrderBy("site_item.created", Asc)) "selected" else ""}>
+            新着順(古い順)
+          </option>
+          <option value="newer" @{if(list.orderBy == OrderBy("site_item.created", Desc)) "selected" else ""}>
+            新着順(新しい順)
+          </option>
+          <option value="name" @{if(list.orderBy == OrderBy("item_name.item_name", Asc)) "selected" else ""}>
+            名前順
+          </option>
+          <option value="nameReverse" @{if(list.orderBy == OrderBy("item_name.item_name", Desc)) "selected" else ""}>
+            名前順(逆順)
+          </option>
+          <option value="price" @{if(list.orderBy == OrderBy("item_price_history." + itemPriceStrategy.columnName, Asc)) "selected" else ""}>
+            価格順(安い順)
+          </option>
+          <option value="priceReverse" @{if(list.orderBy == OrderBy("item_price_history." + itemPriceStrategy.columnName, Desc)) "selected" else ""}>
+            価格順(高い順)
+          </option>
+        </select>
+      </td>
+    </tr>
+  </table>
+
+  <br>
+
+  <div id="queryTemplateBody">
+  </div>
+
+  <table style="display:none;" class="queryItemTable">
+    <tr class="queryItemTableHeader">
+      <th></th>
+      <th id="itemNameHeader">
+        @orderMark(
+          Messages("itemName"),
+          query(_: Int, _: Int, templateNo, _: String),
+          "item_name.item_name", list
+        )
+      </th>
+      <th id="siteHeader">
+        @orderMark(
+          Messages("site"),
+          query(_: Int, _: Int, templateNo, _: String),
+          "site.site_name", list
+        )
+      </th>
+      <th id="unitPriceHeader">
+        @orderMark(
+          Messages("unitPrice"),
+          query(_: Int, _: Int, templateNo, _: String),
+          "item_price_history." + itemPriceStrategy.columnName, list
+        )
+      </th>
+      <th></th>
+    </tr>
+    @queryItemTableBody(list, itemPriceStrategy)
+  </table>
+  <br>
+  @if(! list.records.isEmpty) {
+    @pagingPanel(list, query(_, _, templateNo, _), 10, 25, 50)
+  }
+}

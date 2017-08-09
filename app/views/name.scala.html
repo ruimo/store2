@@ -1,0 +1,5 @@
+@(user: StoreUser)(implicit request: MessagesRequest[AnyContent])
+
+@{
+  user.firstName + " " + user.middleName.getOrElse("") + " " + user.lastName
+}

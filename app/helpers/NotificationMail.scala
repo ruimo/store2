@@ -1,26 +1,34 @@
 package helpers
 
 import models._
-import play.api.i18n.{MessagesProvider, Messages}
+import play.api.i18n.{Messages, MessagesProvider}
 import play.api.libs.concurrent.Akka
 import play.api.libs.concurrent.Execution.Implicits._
+
 import scala.concurrent.duration._
 import play.api.Play.current
 import play.api.i18n.Messages
 import models.PersistedTransaction
 import java.sql.Connection
-import play.api.Play
+
+import play.api.{Configuration, Play}
+
 import collection.immutable
 import javax.inject._
+
 import play.api.libs.mailer._
-import akka.actor.{ActorSystem}
+import akka.actor.ActorSystem
 
 @Singleton
 class NotificationMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient
+  storeUserRepo: StoreUserRepo,
+  orderNotificationRepo: OrderNotificationRepo,
+  system: ActorSystem, mailerClient: MailerClient,
+  conf: Configuration,
+  implicit val siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) extends HasLogger {
-  val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
-  val from = Play.current.configuration.getString("order.email.from").get
+  val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
+  val from = conf.get[String]("order.email.from")
 
   def orderCompleted(
     login: LoginSession, tran: PersistedTransaction, addr: Option[Address]
@@ -94,7 +102,7 @@ class NotificationMail @Inject() (
           it =>
             val tranItem = it._2
             val itemId = tranItem.itemId
-            buf.update(siteId -> itemId, SiteItemNumericMetadata.all(siteId, ItemId(tranItem.itemId)))
+            buf.update(siteId -> itemId, siteItemNumericMetadataRepo.all(siteId, ItemId(tranItem.itemId)))
         }
     }
     val metadata = buf.toMap
@@ -135,7 +143,7 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     val primaryEmail = if (addr.email.isEmpty) buyer.email else addr.email
     val supplementalEmails = SupplementalUserEmail.load(tran.header.userId).map(_.email)
 
@@ -167,7 +175,7 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     val primaryEmail = if (addr.email.isEmpty) buyer.email else addr.email
     val supplementalEmails = SupplementalUserEmail.load(tran.header.userId).map(_.email)
 
@@ -199,7 +207,7 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     val primaryEmail = if (addr.email.isEmpty) buyer.email else addr.email
     val supplementalEmails = SupplementalUserEmail.load(tran.header.userId).map(_.email)
 
@@ -231,7 +239,7 @@ class NotificationMail @Inject() (
     implicit conn: Connection, mp: MessagesProvider
   ) {
     tran.siteTable.foreach { site =>
-      OrderNotification.listBySite(site.id.get).foreach { owner =>
+      orderNotificationRepo.listBySite(site.id.get).foreach { owner =>
         logger.info("Sending ordering confirmation for site owner " + site + " sent to " + owner.email)
         val body = views.html.mail.forSiteOwner(login, site, owner, tran, addr, metadata).toString
         if (! disableMailer) {
@@ -257,10 +265,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listBySite(site.id.get).foreach { owner =>
+        orderNotificationRepo.listBySite(site.id.get).foreach { owner =>
           logger.info("Sending shipping prepared confirmation for site owner " + site + " sent to " + owner.email)
           val body = views.html.mail.shippingPreparedNotificationForSiteOwner(
             login, site, owner, tran, addr, metadata, buyer, status, transporters
@@ -289,10 +297,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listBySite(site.id.get).foreach { owner =>
+        orderNotificationRepo.listBySite(site.id.get).foreach { owner =>
           logger.info("Sending shipping confirmation for site owner " + site + " sent to " + owner.email)
           val body = views.html.mail.shippingNotificationForSiteOwner(
             login, site, owner, tran, addr, metadata, buyer, status, transporters
@@ -321,10 +329,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listBySite(site.id.get).foreach { owner =>
+        orderNotificationRepo.listBySite(site.id.get).foreach { owner =>
           logger.info("Sending cancel confirmation for site owner " + site + " sent to " + owner.email)
           val body = views.html.mail.cancelNotificationForSiteOwner(
             login, site, owner, tran, addr, metadata, buyer, status, transporters
@@ -352,7 +360,7 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    OrderNotification.listAdmin.foreach { admin =>
+    orderNotificationRepo.listAdmin.foreach { admin =>
       logger.info("Sending ordering confirmation for admin sent to " + admin.email)
       val body = views.html.mail.forAdmin(login, admin, tran, addr, metadata).toString
       if (! disableMailer) {
@@ -377,10 +385,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listAdmin.foreach { admin =>
+        orderNotificationRepo.listAdmin.foreach { admin =>
           logger.info("Sending shipping prepared notification for admin sent to " + admin.email)
           val body = views.html.mail.shippingPreparedNotificationForAdmin(
             login, site, admin, tran, addr, metadata, buyer, status, transporters
@@ -409,10 +417,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listAdmin.foreach { admin =>
+        orderNotificationRepo.listAdmin.foreach { admin =>
           logger.info("Sending shipping notification for admin sent to " + admin.email)
           val body = views.html.mail.shippingNotificationForAdmin(
             login, site, admin, tran, addr, metadata, buyer, status, transporters
@@ -441,10 +449,10 @@ class NotificationMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val buyer = StoreUser(tran.header.userId)
+    val buyer = storeUserRepo(tran.header.userId)
     tran.siteTable.foreach { site =>
       if (site.id.get == siteId) {
-        OrderNotification.listAdmin.foreach { admin =>
+        orderNotificationRepo.listAdmin.foreach { admin =>
           logger.info("Sending cancel notification for admin sent to " + admin.email)
           val body = views.html.mail.cancelNotificationForAdmin(
             login, site, admin, tran, addr, metadata, buyer, status, transporters

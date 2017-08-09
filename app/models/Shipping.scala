@@ -2,9 +2,13 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
-import collection.immutable.{TreeMap, LongMap, HashMap, IntMap}
+import collection.immutable.{HashMap, IntMap, LongMap, TreeMap}
 import java.sql.Connection
+import java.time.LocalDateTime
+import javax.inject.{Inject, Singleton}
+
 import collection.mutable
 import collection.mutable.ListBuffer
 
@@ -18,6 +22,8 @@ case class ShippingTotalEntry (
   boxUnitPrice: BigDecimal,
   boxUnitCostPrice: Option[BigDecimal],
   boxTaxInfo: TaxHistory
+)(
+  implicit taxRepo: TaxRepo
 ) {
   lazy val boxTotal = boxUnitPrice * boxQuantity
   lazy val boxCostTotal = boxUnitCostPrice.map(_ * boxQuantity)
@@ -27,6 +33,8 @@ case class ShippingTotalEntry (
 
 case class ShippingTotal(
   table: Seq[ShippingTotalEntry] = List()
+)(
+  implicit taxRepo: TaxRepo
 ) {
   lazy val size = table.size
   lazy val boxQuantity = table.foldLeft(0)(_ + _.boxQuantity)
@@ -90,7 +98,7 @@ case class ShippingFee(
 )
 
 case class ShippingFeeHistory(
-  id: Option[Long] = None, shippingFeeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Long
+  id: Option[Long] = None, shippingFeeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
 )
 
 case class ShippingFeeEntries(
@@ -107,7 +115,11 @@ case class ShippingFeeEntries(
   )
 }
 
-object ShippingBox {
+@Singleton
+class ShippingBoxRepo @Inject() (
+  siteRepo: SiteRepo,
+  shippingFeeHistoryRepo: ShippingFeeHistoryRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_box.shipping_box_id") ~
     SqlParser.get[Long]("shipping_box.site_id") ~
@@ -119,7 +131,7 @@ object ShippingBox {
     }
   }
 
-  val withSite = Site.simple ~ simple map {
+  val withSite = siteRepo.simple ~ simple map {
     case site~shippingBox => (site, shippingBox)
   }
 
@@ -251,7 +263,10 @@ object ShippingBox {
   }
 }
 
-object ShippingFee {
+@Singleton
+class ShippingFeeRepo @Inject() (
+  shippingFeeHistoryRepo: ShippingFeeHistoryRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_fee.shipping_fee_id") ~
     SqlParser.get[Long]("shipping_fee.shipping_box_id") ~
@@ -273,7 +288,7 @@ object ShippingFee {
       simple.single
     )
 
-  val withHistory = simple ~ (ShippingFeeHistory.simple ?) map {
+  val withHistory = simple ~ (shippingFeeHistoryRepo.simple ?) map {
     case fee~feeHistory => (fee, feeHistory)
   }
 
@@ -319,7 +334,7 @@ object ShippingFee {
     )
 
   def listWithHistory(
-    boxId: Long, now: Long
+    boxId: Long, now: LocalDateTime
   )(implicit conn: Connection): Seq[(ShippingFee, Option[ShippingFeeHistory])] =
     SQL(
       """
@@ -336,7 +351,7 @@ object ShippingFee {
       order by sf.shipping_fee_id, sf.country_code, sf.location_code
       """
     ).on(
-      'now -> new java.sql.Timestamp(now),
+      'now -> now,
       'boxId -> boxId
     ).as(
       withHistory *
@@ -375,16 +390,21 @@ object ShippingFee {
   }
 }
 
-object ShippingFeeHistory {
+@Singleton
+class ShippingFeeHistoryRepo @Inject() (
+  shippingFeeRepo: ShippingFeeRepo,
+  shippingBoxRepo: ShippingBoxRepo,
+  taxHistoryRepo: TaxHistoryRepo
+) {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_fee_history.shipping_fee_history_id") ~
     SqlParser.get[Long]("shipping_fee_history.shipping_fee_id") ~
     SqlParser.get[Long]("shipping_fee_history.tax_id") ~
     SqlParser.get[java.math.BigDecimal]("shipping_fee_history.fee") ~
     SqlParser.get[Option[java.math.BigDecimal]]("shipping_fee_history.cost_fee") ~
-    SqlParser.get[java.util.Date]("shipping_fee_history.valid_until") map {
+    SqlParser.get[java.time.LocalDateTime]("shipping_fee_history.valid_until") map {
       case id~feeId~taxId~fee~costFee~validUntil => ShippingFeeHistory(
-        id, feeId, taxId, fee, costFee.map {(b: java.math.BigDecimal) => BigDecimal(b)}, validUntil.getTime
+        id, feeId, taxId, fee, costFee.map {(b: java.math.BigDecimal) => BigDecimal(b)}, validUntil
       )
     }
   }
@@ -401,7 +421,7 @@ object ShippingFeeHistory {
   )
 
   def update(
-    historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Long
+    historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
   )(implicit conn: Connection) {
     SQL(
       """
@@ -417,7 +437,7 @@ object ShippingFeeHistory {
       'taxId -> taxId,
       'fee -> fee.bigDecimal,
       'costFee -> costFee.map(_.bigDecimal),
-      'validUntil -> new java.sql.Timestamp(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
   }
 
@@ -433,7 +453,7 @@ object ShippingFeeHistory {
   }
 
   def createNew(
-    feeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Long
+    feeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
   )(implicit conn: Connection): ShippingFeeHistory = {
     SQL(
       """
@@ -447,7 +467,7 @@ object ShippingFeeHistory {
       'taxId -> taxId,
       'fee -> fee.bigDecimal,
       'costFee -> costFee.map(_.bigDecimal),
-      'validUntil -> new java.sql.Timestamp(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
 
     val id = SQL("select currval('shipping_fee_history_seq')").as(SqlParser.scalar[Long].single)
@@ -497,7 +517,7 @@ object ShippingFeeHistory {
     simple.singleOpt
   )
 
-  val withFee = ShippingFee.simple ~ simple map {
+  val withFee = shippingFeeRepo.simple ~ simple map {
     case shippingFee~shippingFeeHistory => (shippingFee, shippingFeeHistory)
   }
 
@@ -518,7 +538,7 @@ object ShippingFeeHistory {
       withFee *
     ).toSeq
 
-  val withBoxFee = ShippingBox.simple ~ ShippingFee.simple map {
+  val withBoxFee = shippingBoxRepo.simple ~ shippingFeeRepo.simple map {
     case box~fee => (box, fee)
   }
 
@@ -526,7 +546,7 @@ object ShippingFeeHistory {
     countryCode: CountryCode, locationCode: Int, entries: ShippingFeeEntries,
     now: Long = System.currentTimeMillis
   )(
-    implicit conn: Connection
+    implicit taxRepo: TaxRepo, conn: Connection
   ): ShippingTotal = {
     var result = List[ShippingTotalEntry]()
 
@@ -575,7 +595,7 @@ object ShippingFeeHistory {
     map: Map[Long, (ShippingBox, ShippingFee, Int)], // The key is itemClass.
     now: Long
   )(
-    implicit conn: Connection
+    implicit taxRepo: TaxRepo, conn: Connection
   ): Seq[ShippingTotalEntry] = {
     val ret = ListBuffer[ShippingTotalEntry]()
 
@@ -590,7 +610,7 @@ object ShippingFeeHistory {
           "shipping_fee_history record not found(shipping_fee_id = " + feeId + ")"
         )
         case Some(boxFeeHistory) => {
-          val taxHistory = TaxHistory.at(boxFeeHistory.taxId)
+          val taxHistory = taxHistoryRepo.at(boxFeeHistory.taxId)
           ret.append(
             ShippingTotalEntry(
               site, e._1, e._2._1, e._2._2, quantity, boxCount, boxFeeHistory.fee, boxFeeHistory.costFee, taxHistory

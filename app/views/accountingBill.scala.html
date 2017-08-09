@@ -1,0 +1,107 @@
+@(
+  accountingBillForm: Form[YearMonthUser],
+  accountingStoreBillForm: Form[YearMonthSite],
+  summaries: Seq[TransactionSummaryEntry],
+  detailByTranSiteId: scala.collection.immutable.LongMap[Seq[TransactionDetail]],
+  boxBySiteAndItemSize: scala.collection.immutable.LongMap[scala.collection.immutable.LongMap[TransactionLogShipping]],
+  siteTranByTranId: scala.collection.immutable.LongMap[PersistedTransaction],
+  useCostPrice: Boolean,
+  siteDropDown: Seq[(String, String)],
+  addresses: Map[Long, Address],
+  userDropDown: Seq[(String, String)]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+@import views.fieldctors.FieldConstructors.showOnlyRequired
+@import scala.collection.immutable.LongMap
+
+@main(Messages("accountingBillTitle"), Some(loginSession)) {
+} {
+  <h1 class="title">@Messages("accountingBillTitle")</h1>
+
+  <table>
+    @form(action = CSRF(routes.AccountingBill.show()), 'id -> "showAccountingBillForm") {
+      <tr valign="top">
+        @if(loginSession.isSuperUser) {
+          <td>@Messages("user")</td>
+        }
+        <td>
+          @select(
+            accountingStoreBillForm("user"), userDropDown, '_showConstraints -> false, 'id -> "userDropDown"
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>
+          @inputText(
+            accountingBillForm("year"),
+            'size -> 4, 'maxLength -> 4, '_showConstraints -> false,
+            'id -> "userYear"
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>@Messages("year")</td>
+        <td>
+          @inputText(
+            accountingBillForm("month"),
+            'size -> 2, 'maxLength -> 2, '_showConstraints -> false,
+            'id -> "userMonth"
+          )(
+            helper.FieldConstructor(simpleField.f), implicitly
+          )
+        </td>
+        <td>@Messages("month")</td>
+        <td>
+          <button type="submit" name="command" id="userSubmit" value="show">@Messages("showAccountingBill")</button>
+          <button type="submit" name="command" id="userSubmitCsv" value="csv">@Messages("showAccountingBillCsv")</button>
+        </td>
+      </tr>
+    }
+
+    @if(loginSession.isSuperUser) {
+      @form(action = CSRF(routes.AccountingBill.showForStore()), 'id -> "showAccountingStoreBillForm") {
+        <tr valign="top">
+          <td>@Messages("site")</td>
+          <td>
+            @select(
+              accountingStoreBillForm("site"), siteDropDown, '_showConstraints -> false, 'id -> "siteDropDown"
+            )(
+              helper.FieldConstructor(simpleField.f), implicitly
+            )
+          </td>
+          <td>
+            @inputText(
+              accountingStoreBillForm("year"),
+              'size -> 4, 'maxLength -> 4, '_showConstraints -> false,
+              'id -> "storeYear"
+            )(
+              helper.FieldConstructor(simpleField.f), implicitly
+            )
+          </td>
+          <td>@Messages("year")</td>
+          <td>
+            @inputText(
+              accountingStoreBillForm("month"),
+              'size -> 2, 'maxLength -> 2, '_showConstraints -> false,
+              'id -> "storeMonth"
+            )(
+              helper.FieldConstructor(simpleField.f), implicitly
+            )
+          </td>
+          <td>@Messages("month")</td>
+          <td>
+            <button type="submit" name="command" id="storeSubmit" value="show">@Messages("showAccountingBill")</button>
+            <button type="submit" name="command" id="storeSubmitCsv" value="csv">@Messages("showAccountingBillCsv")</button>
+          </td>
+        </tr>
+      }
+    }
+  </table>
+
+  @accountingBillTable(summaries, detailByTranSiteId, boxBySiteAndItemSize, siteTranByTranId, useCostPrice, addresses)
+}

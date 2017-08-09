@@ -1,0 +1,26 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@main(Messages("taxMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("taxMaintenanceTitle")</h1>
+
+  <div class="menuItem">
+    <a href="@routes.TaxMaintenance.startCreateNewTax()">
+      @Messages("createNewTaxMenu")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.TaxMaintenance.editTax()">
+      @Messages("editTaxMenu")
+    </a>
+  </div>
+
+  <div class="menuPanel">
+    @admin.backToAdminTop()
+  </div>
+}

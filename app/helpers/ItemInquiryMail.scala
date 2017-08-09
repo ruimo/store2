@@ -1,22 +1,28 @@
 package helpers
 
 import play.api.Play
+
 import scala.collection.immutable
-import models.{ItemInquiry, ItemInquiryField, Site, OrderNotification, LocaleInfo, ItemName, SiteItem, StoreUser, ItemInquiryType}
+import models._
 import java.sql.Connection
+
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
+
 import scala.concurrent.duration._
 import play.api.i18n.{Messages, MessagesProvider}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import akka.actor._
 import javax.inject._
+
 import play.api.libs.mailer._
 
 @Singleton
 class ItemInquiryMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient
+  system: ActorSystem, mailerClient: MailerClient,
+  siteItemRepo: SiteItemRepo,
+  orderNotificationRepo: OrderNotificationRepo
 ) extends HasLogger {
   val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
   val from = Play.current.configuration.getString("user.registration.email.from").get
@@ -26,7 +32,7 @@ class ItemInquiryMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    val itemInfo: (Site, ItemName) = SiteItem.getWithSiteAndItem(inq.siteId, inq.itemId, locale).get
+    val itemInfo: (Site, ItemName) = siteItemRepo.getWithSiteAndItem(inq.siteId, inq.itemId, locale).get
 
     sendToBuyer(user, locale, itemInfo, inq, fields)
     sendToStoreOwner(user, locale, itemInfo, inq, fields)
@@ -71,7 +77,7 @@ class ItemInquiryMail @Inject() (
   )(
     implicit conn: Connection, mp: MessagesProvider
   ) {
-    OrderNotification.listBySite(inq.siteId).foreach { owner =>
+    orderNotificationRepo.listBySite(inq.siteId).foreach { owner =>
       logger.info("Sending item inquiry to site owner " + itemInfo._1 + " sent to " + inq.email)
       val body = inq.inquiryType match {
         case ItemInquiryType.QUERY =>
@@ -107,7 +113,7 @@ class ItemInquiryMail @Inject() (
     implicit conn: Connection, mp: MessagesProvider
   ) {
     if (! disableMailer) {
-      OrderNotification.listAdmin.foreach { admin =>
+      orderNotificationRepo.listAdmin.foreach { admin =>
         logger.info("Sending item inquiry for admin to " + admin.email)
         val body = inq.inquiryType match {
           case ItemInquiryType.QUERY =>

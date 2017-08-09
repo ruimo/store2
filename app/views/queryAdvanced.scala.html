@@ -1,0 +1,213 @@
+@(
+  templateNo: Int,
+  contentUrl: String
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo
+)
+
+@import helper._
+
+@mainWithoutMenu(Messages("item.list"), loginSession) {
+  <script src='@routes.Assets.versioned("javascripts/URI.js")'></script>
+
+  @javascriptRouter("jsRoutes")(
+      routes.javascript.ItemQuery.queryAdvancedContent,
+      routes.javascript.ItemQuery.queryAdvanced,
+      routes.javascript.ItemQuery.categoryNameJson
+  )
+
+  @shoppingCartDialogDeclaration()
+  <script>
+    var onConditionChanged;
+
+    var applyCurrentCondition = function() {
+        renderResult(currentContentUrl());
+    };
+
+    var changeHistory = function(f) {
+        normalizeCondition();
+        var bodyUrl = jsRoutes.controllers.ItemQuery.queryAdvanced(
+            currentCondition.qs,
+            currentCondition.cs,
+            currentCondition.ccs,
+            currentCondition.sid,
+            currentCondition.page,
+            currentCondition.pageSize,
+            currentCondition.orderBySpec,
+            @templateNo
+        ).url
+
+        f(bodyUrl, bodyUrl);
+    }
+
+    var pushCurrentState = function() {
+        changeHistory(function(id, url) {window.history.pushState(id, null, url);});
+    };
+
+    var replaceCurrentState = function() {
+        changeHistory(function(id, url) {window.history.replaceState(id, null, url);});
+    };
+
+    var currentCondition;
+
+    var currentContentUrl = function() {
+        normalizeCondition();
+        
+        return jsRoutes.controllers.ItemQuery.queryAdvancedContent(
+            currentCondition.qs,
+            currentCondition.cs,
+            currentCondition.ccs,
+            currentCondition.sid,
+            currentCondition.page,
+            currentCondition.pageSize,
+            currentCondition.orderBySpec
+        ).url;
+    };
+
+    var query = function(url, onLoad) {
+        $("#queryItemTable").empty();
+        $("#queryItemTable").load(url, onLoad);
+    };
+ 
+    var normalizeCondition = function() {
+        if (currentCondition.cs) {
+            if (currentCondition.cs.length === 0) {
+                currentCondition.cs = undefind;
+            }
+        }
+        if (currentCondition.ccs) {
+            if (currentCondition.ccs.length === 0) {
+                currentCondition.ccs = undefind;
+            }
+        }
+        if (currentCondition.qs && ! $.isArray(currentCondition.qs))
+            currentCondition.qs = [currentCondition.qs];
+        if (currentCondition.page < 0) currentCondition.page = 0;
+    }
+
+    var renderResult = function(contentUrl) {
+        if (@templateNo === 0) {
+            query(contentUrl, function(data, status) {
+                $("#queryTemplateBody").load('@routes.Assets.versioned("templates/itemQueryAdvanced/0.html")');
+            });
+        }
+        else {
+            query(contentUrl, function() {
+                $("#queryTemplateBody").load("/static/templates/itemQueryAdvanced/" + @templateNo + ".html");
+            });
+        }
+    };
+
+    var setSearchText = function() {
+        var txt = "";
+        if (currentCondition) {
+            if ($.isArray(currentCondition.qs)) {
+                $.each(currentCondition.qs, function(i, s) {
+                    if (i !== 0) txt += " ";
+                    txt += s;
+                });
+            }
+            else {
+                txt = currentCondition.qs;
+            }
+        }
+        
+        $("#searchTextBox").val(txt);
+    }
+
+    var search = function() {
+        currentCondition.page = 0;
+        currentCondition.qs = [$("#searchTextBox").val()];
+        applyCurrentCondition();
+        pushCurrentState();
+    };
+
+    var goNextPage = function() {
+        ++currentCondition.page;
+        applyCurrentCondition();
+        pushCurrentState();
+    };
+
+    var goPrevPage = function() {
+        --currentCondition.page;
+        applyCurrentCondition();
+        pushCurrentState();
+    };
+
+    var changePageSize = function(newPageSize) {
+        currentCondition.page = 0;
+        currentCondition.pageSize = newPageSize;
+        applyCurrentCondition();
+        pushCurrentState();
+    };
+
+    var orderbyChanged = function(value) {
+        currentCondition.page = 0;
+        currentCondition.orderBySpec = value;
+        applyCurrentCondition();
+        pushCurrentState();
+    };
+
+    var changeCategories = function() {
+        currentCondition.page = 0;
+        applyCurrentCondition();
+    }
+
+    $(function() {
+        var uri = new URI('@contentUrl'.replace(/&amp;/g, '&'));
+        currentCondition = uri.search(true);
+        setSearchText();
+        
+        if (@templateNo == 0) {
+            $("#advancedQueryMenu").load('@routes.Assets.versioned("templates/itemQueryMenu/0.html")');
+        }
+        else {
+            $("#advancedQueryMenu").load("/static/templates/itemQueryMenu/" + @templateNo + ".html");
+        }
+        renderResult('@contentUrl');
+        replaceCurrentState();
+        window.onpopstate = function(e) {
+            if (e.state) {
+                var prevUri = new URI(e.state);
+                currentCondition = prevUri.search(true);
+                setSearchText();
+                if (onConditionChanged)
+                    onConditionChanged();
+                applyCurrentCondition();
+            }
+        };
+    });
+  </script>
+} {
+  @shoppingCartDialogImplementation()
+
+  <div id="searchWordPanel">
+    <label for="searchTextBox">@Messages("advancedQuerySearchTitle")</label><br>
+    <input id="searchTextBox" type="text" style="float:left;" placeholder='@Messages("itemSearchPlaceHolder")'>
+    <button id="searchButton" type="button" style="float: left;" onclick="search();">検索</div>
+    <div style="clear: both;"></div>
+  </div>
+
+  <div id="advancedQueryBody">
+    <div id="advancedQueryMenu">
+    </div>
+
+    <div id="my_contents_without_menu">
+      <div id="mymain">
+        <div class="contents">
+          <div id="queryTemplateBody">
+          </div>
+          <div id="pagingPanel">
+          </div>
+
+          <table style="display:none;" id="queryItemTable">
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div style="clear: both;"></div>
+  </div>
+}

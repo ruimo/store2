@@ -1,6 +1,7 @@
 package models
 
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
 
 case class RegisterUserInfo(
   firstName: String, middleName: Option[String], lastName: String,
@@ -15,19 +16,24 @@ case class RegisterUserInfo(
   address2: String,
   address3: String,
   tel1: String
+)(
+  implicit storeUserRepo: StoreUserRepo
 ) {
   def currentPasswordNotMatch(storeUser: StoreUser)(implicit conn: Connection): Boolean =
     storeUser.passwordMatch(currentPassword)
 
   def currentPasswordNotMatch(userId: Long)(implicit conn: Connection): Boolean = {
-    StoreUser(userId).passwordMatch(currentPassword)
+    storeUserRepo(userId).passwordMatch(currentPassword)
   }
 
   def isNaivePassword(implicit conn: Connection): Boolean =
     PasswordDictionary.isNaivePassword(passwords._1)
 }
 
-object RegisterUserInfo {
+@Singleton
+class RegisterUserInfoRepo @Inject() (
+  storeUserRepo: StoreUserRepo
+) {
   def apply4Japan(
     firstName: String, middleName: Option[String], lastName: String,
     firstNameKana: String, lastNameKana: String,
@@ -48,7 +54,7 @@ object RegisterUserInfo {
     JapanPrefecture.byIndex(prefecture),
     address1, address2, address3,
     tel1
-  )
+  )(storeUserRepo)
 
   def unapply4Japan(info: RegisterUserInfo): Option[(
     String, // firstName

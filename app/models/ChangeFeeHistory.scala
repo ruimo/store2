@@ -2,11 +2,12 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
+import java.time.LocalDateTime
 
 case class ChangeFeeHistoryTable(
   histories: Seq[ChangeFeeHistory]
 ) {
-  def update(feeId: Long)(implicit conn: Connection) {
+  def update(feeId: Long)(implicit shippingFeeHistoryRepo: ShippingFeeHistoryRepo, conn: Connection) {
     histories.foreach {
       _.update()
     }
@@ -14,16 +15,16 @@ case class ChangeFeeHistoryTable(
 }
 
 case class ChangeFeeHistory(
-  historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: DateTime
+  historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
 ) {
-  def update()(implicit conn: Connection) {
-    ShippingFeeHistory.update(historyId, taxId, fee, costFee, validUntil.getMillis)
+  def update()(implicit shippingFeeHistoryRepo: ShippingFeeHistoryRepo, conn: Connection) {
+    shippingFeeHistoryRepo.update(historyId, taxId, fee, costFee, validUntil)
   }
 
-  def add(feeId: Long)(implicit conn: Connection) {
+  def add(feeId: Long)(implicit shippingFeeHistoryRepo: ShippingFeeHistoryRepo, conn: Connection) {
     ExceptionMapper.mapException {
-      ShippingFeeHistory.createNew(
-        feeId, taxId, fee, costFee, validUntil.getMillis
+      shippingFeeHistoryRepo.createNew(
+        feeId, taxId, fee, costFee, validUntil
       )
     }
   }

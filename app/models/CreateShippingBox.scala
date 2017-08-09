@@ -8,9 +8,9 @@ case class CreateShippingBox(
   boxSize: Int,
   boxName: String
 ) {
-  def save(implicit conn: Connection) {
+  def save(implicit shippingBoxRepo: ShippingBoxRepo, conn: Connection) {
     ExceptionMapper.mapException {
-      ShippingBox.createNew(siteId, itemClass, boxSize, boxName)
+      shippingBoxRepo.createNew(siteId, itemClass, boxSize, boxName)
     }
   }
 }

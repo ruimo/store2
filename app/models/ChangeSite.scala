@@ -3,8 +3,8 @@ package models
 import java.sql.Connection
 
 case class ChangeSite(siteId: Long, localeId: Long, siteName: String) {
-  def update()(implicit conn: Connection) {
-    Site.update(siteId, LocaleInfo(localeId), siteName)
+  def update()(implicit conn: Connection, localeInfoRepo: LocaleInfoRepo, siteRepo: SiteRepo) {
+    siteRepo.update(siteId, localeInfoRepo(localeId), siteName)
   }
 }
 

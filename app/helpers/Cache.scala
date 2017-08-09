@@ -1,12 +1,15 @@
 package helpers
 
-import play.api.Configuration
-import play.api.Application
-import play.api.Play
-import play.api.Mode
+import play.api._
 import java.time.Duration
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object Cache {
+@Singleton
+class Cache @Inject() (
+  env: Environment,
+  conf: Configuration
+) {
   def expiringCache[T](expirationInMillis: Long, gen: () => T, genTime: () => Long): () => T = {
     trait CacheEntry
 
@@ -29,7 +32,7 @@ object Cache {
       }
     }
 
-    var current: CacheEntryHolder = new CacheEntryHolder
+    val current: CacheEntryHolder = new CacheEntryHolder
 
     () => current.cacheEntry match {
       case InitCacheEntry => {
@@ -71,10 +74,9 @@ object Cache {
     else () => gen()
   }
 
-  def cacheOnProd[T](gen: () => T): () => T = mayBeCached(Play.maybeApplication.get.mode == Mode.Prod, gen)
+  def cacheOnProd[T](gen: () => T): () => T = mayBeCached(env.mode == Mode.Prod, gen)
 
-  def App: Application = cacheOnProd(() => Play.maybeApplication.get)()
-  def Conf: Configuration = cacheOnProd(() => App.configuration)()
+  def Conf: Configuration = cacheOnProd(() => conf)()
   def config[T](f: Configuration => T): () => T = cacheOnProd(() => f(Conf))
 }
 

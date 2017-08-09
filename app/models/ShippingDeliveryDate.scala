@@ -1,17 +1,17 @@
 package models
 
-import org.joda.time.DateTime
 import java.sql.Connection
+import java.time.LocalDateTime
 
 case class ShippingDeliveryDate(
-  shippingDate: DateTime, deliveryDate: DateTime
+  shippingDate: LocalDateTime, deliveryDate: LocalDateTime
 ) {
   def save(
     siteUser: Option[SiteUser], transactionSiteId: Long
   )(
     implicit conn: Connection
   ) {
-    TransactionShipStatus.updateShippingDeliveryDate(siteUser, transactionSiteId, shippingDate.getMillis, deliveryDate.getMillis)
+    TransactionShipStatus.updateShippingDeliveryDate(siteUser, transactionSiteId, shippingDate, deliveryDate)
     TransactionShipStatus.update(siteUser, transactionSiteId, TransactionStatus.CONFIRMED)
   }
 }

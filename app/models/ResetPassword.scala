@@ -2,10 +2,13 @@ package models
 
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import java.sql.Connection
+import javax.inject.{Inject, Singleton}
+
 import helpers.RandomTokenGenerator
-import helpers.{PasswordHash, TokenGenerator, RandomTokenGenerator}
+import helpers.{PasswordHash, RandomTokenGenerator, TokenGenerator}
 
 case class ResetPasswordId(id: Long) extends AnyVal
 
@@ -16,7 +19,10 @@ case class ResetPassword(
   resetTime: Long
 )
 
-object ResetPassword {
+@Singleton
+class ResetPasswordRepo @Inject() (
+  storeUserRepo: StoreUserRepo
+) {
   val tokenGenerator: TokenGenerator = RandomTokenGenerator()
 
   val simple = {
@@ -117,7 +123,7 @@ object ResetPassword {
     ).executeUpdate() != 0
   ) {
     val salt = tokenGenerator.next
-    StoreUser.changePassword(storeUserId, PasswordHash.generate(password, salt), salt) != 0
+    storeUserRepo.changePassword(storeUserId, PasswordHash.generate(password, salt), salt) != 0
   }
   else {
     false
