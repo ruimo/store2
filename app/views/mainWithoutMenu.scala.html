@@ -3,7 +3,9 @@
   loginSession: Option[LoginSession],
   contentCssClass: String = "contents"
 )(header: Html)(content: Html)(
-  implicit request: MessagesRequest[AnyContent]
+  implicit request: MessagesRequest[AnyContent],
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 <!DOCTYPE html>

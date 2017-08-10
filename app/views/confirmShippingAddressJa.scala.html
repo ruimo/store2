@@ -4,7 +4,8 @@
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
   acceptableTender: AcceptableTender,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import helper._

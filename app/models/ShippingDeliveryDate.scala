@@ -1,10 +1,10 @@
 package models
 
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class ShippingDeliveryDate(
-  shippingDate: LocalDateTime, deliveryDate: LocalDateTime
+  shippingDate: Instant, deliveryDate: Instant
 ) {
   def save(
     siteUser: Option[SiteUser], transactionSiteId: Long

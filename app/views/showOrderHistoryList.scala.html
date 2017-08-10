@@ -9,7 +9,8 @@
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import helper._
@@ -36,7 +37,7 @@
             @e.transactionId
           </a>
         </td>
-        <td class="transactionDate">@yyyymmddhhmm(e.transactionTime)</td>
+        <td class="transactionDate">@yyyymmddhhmm(e.transactionTime)(implicitly, request.acceptLanguages.head)</td>
         <td class="siteName">@e.siteName</td>
         <td class="buyerName">@name(e.buyer)</td>
         <td class="price">@amount(e.totalWithTax)</td>

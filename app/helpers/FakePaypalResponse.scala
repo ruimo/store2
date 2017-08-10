@@ -35,7 +35,7 @@ case class FakePaypalResponse(
   status: Int
 ) extends WSResponse {
   def allHeaders: Map[String, Seq[String]] = Map()
-  def bodyAsBytes: Array[Byte] = body.getBytes
+  def bodyAsBytes: ByteString = ByteString(body.getBytes)
   def cookie(name: String): Option[WSCookie] = None
   def cookies: Seq[WSCookie] = Seq()
   override def header(key: String): Option[String] = None

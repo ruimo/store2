@@ -2,10 +2,10 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class CreateSiteItemMetadata(
-  siteId: Long, metadataType: Int, metadata: Long, validUntil: LocalDateTime
+  siteId: Long, metadataType: Int, metadata: Long, validUntil: Instant
 ) (
   implicit siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) {

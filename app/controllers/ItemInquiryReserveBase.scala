@@ -18,7 +18,7 @@ class ItemInquiryReserveBase(
   cc: MessagesControllerComponents,
   fc: FormConstraints,
   authenticated: Authenticated,
-  db: Database,
+  implicit val db: Database,
   itemInquiryMail: ItemInquiryMail,
   implicit val localeInfoRepo: LocaleInfoRepo,
   implicit val siteItemRepo: SiteItemRepo,

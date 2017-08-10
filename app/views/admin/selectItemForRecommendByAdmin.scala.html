@@ -15,7 +15,8 @@
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   login: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("createNewRecommendationByAdminTitle"), Some(login), contentCssClass = "adminContents") {

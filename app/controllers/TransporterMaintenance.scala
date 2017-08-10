@@ -27,7 +27,8 @@ class TransporterMaintenance @Inject() (
   implicit val localeInfoRepo: LocaleInfoRepo,
   implicit val db: Database,
   implicit val transporterRepo: TransporterRepo,
-  implicit val transporterNameRepo: TransporterNameRepo
+  implicit val transporterNameRepo: TransporterNameRepo,
+  implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
   val createTransporterForm = Form(
     mapping(

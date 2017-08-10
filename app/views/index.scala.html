@@ -3,7 +3,8 @@
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   loginSession: Option[LoginSession],
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("company.name"), loginSession) {

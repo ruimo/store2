@@ -13,7 +13,8 @@
 )(
   implicit request: MessagesRequest[AnyContent],
   login: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("editItemTitle"), Some(login), contentCssClass = "adminContents") {

@@ -1,8 +1,8 @@
 package models
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class FeeMaintenance(
   boxId: Long,
-  now: LocalDateTime
+  now: Instant
 )

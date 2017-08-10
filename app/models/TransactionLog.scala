@@ -6,7 +6,7 @@ import anorm.SqlParser
 import scala.language.postfixOps
 import collection.immutable
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 
 import helpers.RandomTokenGenerator
@@ -14,7 +14,7 @@ import helpers.RandomTokenGenerator
 case class TransactionLogHeader(
   id: Option[Long] = None,
   userId: Long,
-  transactionTime: Long,
+  transactionTime: Instant,
   currencyId: Long,
   // Item total and shipping total. Excluding outer tax, including inner tax.
   totalAmount: BigDecimal,
@@ -44,7 +44,7 @@ case class TransactionLogShipping(
   taxId: Long,
   boxCount: Int,
   boxName: String,
-  shippingDate: Long
+  shippingDate: Instant
 )
 
 case class TransactionLogTax(
@@ -139,16 +139,16 @@ case class TransactionShipStatus(
   id: Option[Long] = None,
   transactionSiteId: Long,
   status: TransactionStatus,
-  lastUpdate: Long,
+  lastUpdate: Instant,
   shippingInfo: Option[ShippingInfo],
   mailSent: Boolean,
-  plannedShippingDate: Option[Long],
-  plannedDeliveryDate: Option[Long]
+  plannedShippingDate: Option[Instant],
+  plannedDeliveryDate: Option[Instant]
 )
 
 case class ShippingDateEntry(
   siteId: Long,
-  shippingDate: Long
+  shippingDate: Instant
 )
 
 case class ShippingDate(
@@ -165,7 +165,7 @@ case class Transaction(
   shippingAddress: Option[Address],
   shippingTotal: ShippingTotal,
   shippingDate: ShippingDate,
-  now: Long = System.currentTimeMillis
+  now: Instant = Instant.now()
 )(
   implicit taxRepo: TaxRepo
 ) {
@@ -200,7 +200,7 @@ case class CouponDetail(
   tranHeaderId: Long,
   tranCouponId: TransactionLogCouponId,
   site: Site,
-  time: Long,
+  time: Instant,
   itemId: ItemId,
   itemName: String,
   couponId: CouponId
@@ -218,13 +218,13 @@ object TransactionLogHeader {
   val simple = {
     SqlParser.get[Option[Long]]("transaction_header.transaction_id") ~
     SqlParser.get[Long]("transaction_header.store_user_id") ~
-    SqlParser.get[java.util.Date]("transaction_header.transaction_time") ~
+    SqlParser.get[java.time.Instant]("transaction_header.transaction_time") ~
     SqlParser.get[Long]("transaction_header.currency_id") ~
     SqlParser.get[java.math.BigDecimal]("transaction_header.total_amount") ~
     SqlParser.get[java.math.BigDecimal]("transaction_header.tax_amount") ~
     SqlParser.get[Int]("transaction_header.transaction_type") map {
       case transactionId~userId~transactionTime~currencyId~totalAmount~taxAmount~transactionType =>
-        TransactionLogHeader(transactionId, userId, transactionTime.getTime, currencyId, totalAmount,
+        TransactionLogHeader(transactionId, userId, transactionTime, currencyId, totalAmount,
                              taxAmount, TransactionTypeCode.byIndex(transactionType))
     }
   }
@@ -233,7 +233,7 @@ object TransactionLogHeader {
     userId: Long, currencyId: Long,
     totalAmount: BigDecimal, taxAmount: BigDecimal,
     transactionType: TransactionTypeCode,
-    now: Long = System.currentTimeMillis
+    now: Instant = Instant.now()
   )(implicit conn: Connection): TransactionLogHeader = {
     SQL(
       """
@@ -248,7 +248,7 @@ object TransactionLogHeader {
       """
     ).on(
       'userId -> userId,
-      'transactionTime -> new java.util.Date(now),
+      'transactionTime -> now,
       'currencyId -> currencyId,
       'totalAmount -> totalAmount.bigDecimal,
       'taxAmount -> taxAmount.bigDecimal,
@@ -368,15 +368,15 @@ class TransactionLogShippingRepo @Inject() (
     SqlParser.get[Long]("transaction_shipping.tax_id") ~
     SqlParser.get[Int]("transaction_shipping.box_count") ~
     SqlParser.get[String]("transaction_shipping.box_name") ~
-    SqlParser.get[java.util.Date]("transaction_shipping.shipping_date") map {
+    SqlParser.get[java.time.Instant]("transaction_shipping.shipping_date") map {
       case id~transactionId~amount~costAmount~addressId~itemClass~boxSize~taxId~boxCount~boxName~shippingDate =>
-        TransactionLogShipping(id, transactionId, amount, costAmount.map {BigDecimal.apply}, addressId, itemClass, boxSize, taxId, boxCount, boxName, shippingDate.getTime)
+        TransactionLogShipping(id, transactionId, amount, costAmount.map {BigDecimal.apply}, addressId, itemClass, boxSize, taxId, boxCount, boxName, shippingDate)
     }
   }
 
   def createNew(
     transactionSiteId: Long, amount: BigDecimal, costAmount: Option[BigDecimal], addressId: Long,
-    itemClass: Long, boxSize: Int, taxId: Long, boxCount: Int, boxName: String, shippingDate: Long
+    itemClass: Long, boxSize: Int, taxId: Long, boxCount: Int, boxName: String, shippingDate: Instant
   )(implicit conn: Connection): TransactionLogShipping = {
     SQL(
       """
@@ -399,7 +399,7 @@ class TransactionLogShippingRepo @Inject() (
       'taxId -> taxId,
       'boxCount -> boxCount,
       'boxName -> boxName,
-      'shippingDate -> new java.util.Date(shippingDate)
+      'shippingDate -> shippingDate
     ).executeUpdate()
 
     val id = SQL("select currval('transaction_shipping_seq')").as(SqlParser.scalar[Long].single)
@@ -831,13 +831,13 @@ class TransactionLogCouponRepo @Inject() (
     SqlParser.get[Long]("transaction_header.transaction_id") ~
     SqlParser.get[Long]("transaction_coupon.transaction_coupon_id") ~
     SqlParser.get[Long]("transaction_site.site_id") ~
-    SqlParser.get[java.util.Date]("transaction_header.transaction_time") ~
+    SqlParser.get[java.time.Instant]("transaction_header.transaction_time") ~
     SqlParser.get[Long]("transaction_item.item_id") ~
     SqlParser.get[String]("item_name.item_name") ~
     SqlParser.get[Long]("transaction_coupon.coupon_id") map {
       case tranId~tranCouponId~siteId~time~itemId~itemName~couponId =>
         CouponDetail(
-          tranId, TransactionLogCouponId(tranCouponId), siteRepo(siteId), time.getTime,
+          tranId, TransactionLogCouponId(tranCouponId), siteRepo(siteId), time,
           ItemId(itemId), itemName, CouponId(couponId)
         )
     }
@@ -1040,14 +1040,14 @@ object TransactionShipStatus {
     SqlParser.get[Option[Long]]("transaction_status.transporter_id") ~
     SqlParser.get[Option[String]]("transaction_status.slip_code") ~
     SqlParser.get[Boolean]("transaction_status.mail_sent") ~
-    SqlParser.get[java.util.Date]("transaction_status.last_update") ~
-    SqlParser.get[Option[java.util.Date]]("transaction_status.planned_shipping_date") ~
-    SqlParser.get[Option[java.util.Date]]("transaction_status.planned_delivery_date") map {
+    SqlParser.get[java.time.Instant]("transaction_status.last_update") ~
+    SqlParser.get[Option[java.time.Instant]]("transaction_status.planned_shipping_date") ~
+    SqlParser.get[Option[java.time.Instant]]("transaction_status.planned_delivery_date") map {
       case id~tranSiteId~status~transporterId~slipCode~mailSent~lastUpdate~plannedShippingDate~plannedDeliveryDate =>
         TransactionShipStatus(
-          id, tranSiteId, TransactionStatus.byIndex(status), lastUpdate.getTime,
+          id, tranSiteId, TransactionStatus.byIndex(status), lastUpdate,
           transporterId.map {tid => ShippingInfo(tid, slipCode.get)}, mailSent,
-          plannedShippingDate.map(_.getTime), plannedDeliveryDate.map(_.getTime)
+          plannedShippingDate, plannedDeliveryDate
         )
     }
   }
@@ -1064,7 +1064,7 @@ object TransactionShipStatus {
     )
   
   def createNew(
-    transactionSiteId: Long, status: TransactionStatus, lastUpdate: Long, shippingInfo: Option[ShippingInfo]
+    transactionSiteId: Long, status: TransactionStatus, lastUpdate: Instant, shippingInfo: Option[ShippingInfo]
   )(implicit conn: Connection): TransactionShipStatus = {
     SQL(
       """
@@ -1082,7 +1082,7 @@ object TransactionShipStatus {
       'status -> status.ordinal,
       'transporterId -> shippingInfo.map(_.transporterId),
       'slipCode -> shippingInfo.map(_.slipCode),
-      'lastUpdate -> new java.util.Date(lastUpdate)
+      'lastUpdate -> lastUpdate
     ).executeUpdate()
 
     val id = SQL("select currval('transaction_status_seq')").as(SqlParser.scalar[Long].single)
@@ -1144,7 +1144,7 @@ object TransactionShipStatus {
   ).executeUpdate()
 
   def updateShippingDeliveryDate(
-    siteUser: Option[SiteUser], transactionSiteId: Long, shippingDate: LocalDateTime, deliveryDate: LocalDateTime
+    siteUser: Option[SiteUser], transactionSiteId: Long, shippingDate: Instant, deliveryDate: Instant
   )(implicit conn: Connection): Int = SQL(
     """
     update transaction_status
@@ -1567,7 +1567,7 @@ class TransactionPersister @Inject() (
       tran.bySite(site).taxAmount
     )
 
-    TransactionShipStatus.createNew(siteLog.id.get, TransactionStatus.ORDERED, System.currentTimeMillis, None)
+    TransactionShipStatus.createNew(siteLog.id.get, TransactionStatus.ORDERED, Instant.now(), None)
     saveShippingTotal(siteLog, tran.bySite(site))
     val taxes: immutable.Seq[TransactionLogTax] = saveTax(siteLog, tran.bySite(site))
     saveItem(siteLog, tran.bySite(site))

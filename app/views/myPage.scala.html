@@ -1,7 +1,8 @@
 @(
 )(
   implicit request: MessagesRequest[AnyContent],
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("myPageTitle"), None) {

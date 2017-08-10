@@ -2,7 +2,8 @@
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
   flash: Flash,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("profileMaintenanceTitle"), Some(loginSession)) {

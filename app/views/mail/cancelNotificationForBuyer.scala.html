@@ -10,7 +10,7 @@
 )(
   implicit mp: MessagesProvider
 )
-@import org.joda.time.format.DateTimeFormat
+@import java.time.format.DateTimeFormatter
 @login.storeUser.companyName.getOrElse("")
 @login.storeUser.firstName @login.storeUser.lastName 様
 
@@ -29,7 +29,7 @@
 <送料>
 @tran.shippingTable(site.id.get).map { shipping => @{shipping.boxName}/@{"%,.0f".format(shipping.amount / shipping.boxCount)}円/@{shipping.boxCount}点/小計 @{"%,.0f".format(shipping.amount)}円
 }
-配送希望日 @{DateTimeFormat.forPattern(Messages("shipping.date.format")).print(tran.shippingTable(site.id.get).head.shippingDate)}
+配送希望日 @{DateTimeFormatter.ofPattern(Messages("shipping.date.format")).format(tran.shippingTable(site.id.get).head.shippingDate)}
 
 }
 <合計>
@@ -47,7 +47,7 @@
 @addr.address2
 @addr.address3
 電話番号：@addr.tel1
-配送希望日：@{DateTimeFormat.forPattern(Messages("shipping.date.format")).print(tran.shippingTable(tran.siteTable.head.id.get).head.shippingDate)}
+配送希望日：@{DateTimeFormatter.ofPattern(Messages("shipping.date.format")).format(tran.shippingTable(tran.siteTable.head.id.get).head.shippingDate)}
 コメント：@addr.comment
 
 ---

@@ -33,7 +33,7 @@ class ItemPictures @Inject() (
 ) extends MessagesAbstractController(cc) with Pictures {
   def isTesting = configForTesting.getOptional[Boolean]("item.picture.fortest").getOrElse(false)
   def picturePathForTesting: Path = {
-    val ret = config.getString("item.picture.path").map {
+    val ret = config.getOptional[String]("item.picture.path").map {
       s => Paths.get(s)
     }.getOrElse {
       Paths.get(System.getProperty("user.home"), "itemPictures")
@@ -43,7 +43,7 @@ class ItemPictures @Inject() (
     ret
   }
   def detailNotfoundPath = picturePath.resolve("detailnotfound.jpg")
-  lazy val attachmentCount = config.getInt("item.attached.file.count").getOrElse(5)
+  lazy val attachmentCount = config.getOptional[Int]("item.attached.file.count").getOrElse(5)
 
   def upload(itemId: Long, no: Int) = uploadPicture(itemId, no, routes.ItemMaintenance.startChangeItem(_))
 
@@ -107,7 +107,7 @@ class ItemPictures @Inject() (
   def onPictureNotFound(id: Long, no: Int): Result = readPictureFromClasspath(id, no)
 
   def readPictureFromClasspath(itemId: Long, no: Int, contentType: String = "image/jpeg"): Result = {
-    val result = if (config.getBoolean("item.picture.for.demo").getOrElse(false)) {
+    val result = if (config.getOptional[Boolean]("item.picture.for.demo").getOrElse(false)) {
       val fileName = "public/images/itemPictures/" + pictureName(itemId, no)
       readFileFromClasspath(fileName, contentType)
     }
@@ -122,7 +122,7 @@ class ItemPictures @Inject() (
   }
 
   def readDetailPictureFromClasspath(itemId: Long, contentType: String = "image/jpeg"): Result = {
-    val result = if (config.getBoolean("item.picture.for.demo").getOrElse(false)) {
+    val result = if (config.getOptional[Boolean]("item.picture.for.demo").getOrElse(false)) {
       val fileName = "public/images/itemPictures/" + detailPictureName(itemId)
       readFileFromClasspath(fileName, contentType)
     }

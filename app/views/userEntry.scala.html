@@ -3,7 +3,8 @@
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: Option[LoginSession],
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import views.fieldctors.FieldConstructors.showOnlyRequired

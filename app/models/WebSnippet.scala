@@ -17,7 +17,7 @@ case class WebSnippet(
   siteId: Long,
   contentCode: String,
   content: String,
-  updatedTime: Long
+  updatedTime: Instant
 )
 
 
@@ -35,9 +35,9 @@ class WebSnippetRepo @Inject() (
     SqlParser.get[Long]("web_snippet.site_id") ~
     SqlParser.get[String]("web_snippet.content_code") ~
     SqlParser.get[String]("web_snippet.content") ~
-    SqlParser.get[java.util.Date]("web_snippet.updated_time") map {
+    SqlParser.get[java.time.Instant]("web_snippet.updated_time") map {
       case id~siteId~contentCode~content~updatedTime =>
-        WebSnippet(id.map(WebSnippetId.apply), siteId, contentCode, content, updatedTime.getTime)
+        WebSnippet(id.map(WebSnippetId.apply), siteId, contentCode, content, updatedTime)
     }
   }
 

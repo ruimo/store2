@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.Configuration
 import javax.inject._
 
 import models._
@@ -17,12 +18,13 @@ import play.api.Logger
 @Singleton
 class Admin @Inject() (
   cc: MessagesControllerComponents,
-  db: Database,
+  implicit val db: Database,
   cache: Cache,
   fc: FormConstraints,
   authenticated: NeedLogin.Authenticated,
   implicit val loginSessionRepo: LoginSessionRepo,
-  val storeUserRepo: StoreUserRepo,
+  implicit val storeUserRepo: StoreUserRepo,
+  conf: Configuration,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
   val anonymousCanPurchase: () => Boolean = cache.config(
@@ -99,7 +101,7 @@ class Admin @Inject() (
     implicit val login: LoginSession = request.login
 
     NeedLogin.assumeAdmin(login) {
-      Ok(views.html.admin.index())
+      Ok(views.html.admin.index(conf))
     }
   }
 

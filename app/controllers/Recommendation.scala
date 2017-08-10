@@ -1,9 +1,9 @@
 package controllers
 
+import scala.concurrent.ExecutionContext
 import play.api.i18n.Lang
 import play.api.mvc._
 import helpers.RecommendEngine
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.Json
 import models._
 import play.api.libs.json.{JsValue, Json}
@@ -30,7 +30,8 @@ class Recommendation @Inject() (
   implicit val itemDetailRepo: ItemDetailRepo,
   implicit val itemPriceStrategyRepo: ItemPriceStrategyRepo,
   implicit val recommendByAdminRepo: RecommendByAdminRepo,
-  implicit val shoppingCartItemRepo: ShoppingCartItemRepo
+  implicit val shoppingCartItemRepo: ShoppingCartItemRepo,
+  implicit val ec: ExecutionContext
 ) extends MessagesAbstractController(cc) {
   def maxRecommendCount: Int = config.getOptional[Int]("recommend.maxCount").getOrElse(5)
 

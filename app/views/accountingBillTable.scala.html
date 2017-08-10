@@ -9,7 +9,8 @@
   implicit loginSession: LoginSession,
   request: MessagesRequest[AnyContent],
   mp: MessagesProvider,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import scala.collection.immutable.LongMap
@@ -38,7 +39,7 @@
         <table class="accountingBillHeaderTable">
           <tr>
             <td class="tranId">@e.transactionId</td>
-            <td class="tranDateTime">@yyyymmddhhmm(e.transactionTime)</td>
+            <td class="tranDateTime">@yyyymmddhhmm(e.transactionTime)(implicitly, request.acceptLanguages.head)</td>
             <td class="tranBuyer">@name(e.buyer)</td>
           </tr>
         </table>

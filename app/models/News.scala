@@ -2,7 +2,7 @@ package models
 
 import anorm._
 import java.sql.{Connection, Timestamp}
-import java.time.LocalDateTime
+import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,8 +13,8 @@ case class News(
   siteId: Option[Long],
   title: String,
   contents: String,
-  releaseTime: LocalDateTime,
-  updatedTime: LocalDateTime
+  releaseTime: Instant,
+  updatedTime: Instant
 )
 
 @Singleton
@@ -27,8 +27,8 @@ class NewsRepo @Inject() (
     SqlParser.get[Option[Long]]("site_id") ~
     SqlParser.get[String]("title") ~
     SqlParser.get[String]("contents") ~
-    SqlParser.get[java.time.LocalDateTime]("release_time") ~
-    SqlParser.get[java.time.LocalDateTime]("updated_time") map {
+    SqlParser.get[java.time.Instant]("release_time") ~
+    SqlParser.get[java.time.Instant]("updated_time") map {
       case id~siteId~title~contents~releaseTime~updatedTime =>
         News(id.map(NewsId.apply), siteId, title, contents, releaseTime, updatedTime)
     }
@@ -80,7 +80,7 @@ class NewsRepo @Inject() (
   }
 
   def createNew(
-    siteId: Option[Long], title: String, contents: String, releaseTime: LocalDateTime, updatedTime: LocalDateTime = LocalDateTime.now()
+    siteId: Option[Long], title: String, contents: String, releaseTime: Instant, updatedTime: Instant = Instant.now()
   )(implicit conn: Connection): News = {
     SQL(
       """
@@ -102,7 +102,7 @@ class NewsRepo @Inject() (
   }
 
   def update(
-    id: NewsId, siteId: Option[Long], title: String, contents: String, releaseTime: LocalDateTime, updatedTime: LocalDateTime = LocalDateTime.now()
+    id: NewsId, siteId: Option[Long], title: String, contents: String, releaseTime: Instant, updatedTime: Instant = Instant.now()
   )(implicit conn: Connection): Int =
     SQL(
       """

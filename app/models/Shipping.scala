@@ -6,7 +6,7 @@ import anorm.SqlParser
 import scala.language.postfixOps
 import collection.immutable.{HashMap, IntMap, LongMap, TreeMap}
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 import javax.inject.{Inject, Singleton}
 
 import collection.mutable
@@ -98,7 +98,7 @@ case class ShippingFee(
 )
 
 case class ShippingFeeHistory(
-  id: Option[Long] = None, shippingFeeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
+  id: Option[Long] = None, shippingFeeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Instant
 )
 
 case class ShippingFeeEntries(
@@ -334,7 +334,7 @@ class ShippingFeeRepo @Inject() (
     )
 
   def listWithHistory(
-    boxId: Long, now: LocalDateTime
+    boxId: Long, now: Instant
   )(implicit conn: Connection): Seq[(ShippingFee, Option[ShippingFeeHistory])] =
     SQL(
       """
@@ -402,7 +402,7 @@ class ShippingFeeHistoryRepo @Inject() (
     SqlParser.get[Long]("shipping_fee_history.tax_id") ~
     SqlParser.get[java.math.BigDecimal]("shipping_fee_history.fee") ~
     SqlParser.get[Option[java.math.BigDecimal]]("shipping_fee_history.cost_fee") ~
-    SqlParser.get[java.time.LocalDateTime]("shipping_fee_history.valid_until") map {
+    SqlParser.get[java.time.Instant]("shipping_fee_history.valid_until") map {
       case id~feeId~taxId~fee~costFee~validUntil => ShippingFeeHistory(
         id, feeId, taxId, fee, costFee.map {(b: java.math.BigDecimal) => BigDecimal(b)}, validUntil
       )
@@ -421,7 +421,7 @@ class ShippingFeeHistoryRepo @Inject() (
   )
 
   def update(
-    historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
+    historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Instant
   )(implicit conn: Connection) {
     SQL(
       """
@@ -453,7 +453,7 @@ class ShippingFeeHistoryRepo @Inject() (
   }
 
   def createNew(
-    feeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
+    feeId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Instant
   )(implicit conn: Connection): ShippingFeeHistory = {
     SQL(
       """

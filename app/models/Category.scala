@@ -557,7 +557,7 @@ class SupplementalCategoryRepo @Inject() (
   cache: Cache
 ) {
   def MaxSupplementalCategoryCountPerItem =
-    cache.Conf.getInt("maxSupplementalCategoryCountPerItem").getOrElse(10)
+    cache.Conf.getOptional[Int]("maxSupplementalCategoryCountPerItem").getOrElse(10)
 
   val simple = {
     SqlParser.get[Long]("supplemental_category.category_id") ~

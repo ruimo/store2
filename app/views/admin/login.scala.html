@@ -4,7 +4,8 @@
   uri: String
 )(
   implicit request: MessagesRequest[AnyContent],
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("loginTitle"), None) {

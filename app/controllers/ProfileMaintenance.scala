@@ -24,7 +24,7 @@ class ProfileMaintenance @Inject() (
   implicit val entryUserRegistrationRepo: EntryUserRegistrationRepo,
   implicit val storeUserRepo: StoreUserRepo,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
-) extends MessagesAbstractController(cc) {
+) extends MessagesAbstractController(cc) with I18n {
   val changeProfileForm = Form(
     mapping(
       "firstName" -> text.verifying(fc.firstNameConstraint: _*),
@@ -45,9 +45,9 @@ class ProfileMaintenance @Inject() (
     val form = changeProfileForm.fill(modifyUserProfileRepo(login))
     
     request.acceptLanguages.head match {
-      case japanese =>
+      case `japanese` =>
         Ok(views.html.changeUserProfileJa(form))
-      case japan =>
+      case `japan` =>
         Ok(views.html.changeUserProfileJa(form))
       case _ =>
         Ok(views.html.changeUserProfileJa(form))

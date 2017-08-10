@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import constraints.FormConstraints
 import controllers.NeedLogin.Authenticated
 import helpers.ItemInquiryMail
-import models.{LocaleInfoRepo, SiteItemRepo}
+import models.{LocaleInfoRepo, SiteItemRepo, ShoppingCartItemRepo}
 import play.api.db.Database
 import play.api.mvc.MessagesControllerComponents
 

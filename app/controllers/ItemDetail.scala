@@ -14,7 +14,7 @@ class ItemDetail @Inject() (
   cc: MessagesControllerComponents,
   optAuthenticated: OptAuthenticated,
   itemDetailRepo: ItemDetailRepo,
-  db: Database,
+  implicit val db: Database,
   localeInfoRepo: LocaleInfoRepo,
   itemPriceStrategyRepo: ItemPriceStrategyRepo,
   loginSessionRepo: LoginSessionRepo,

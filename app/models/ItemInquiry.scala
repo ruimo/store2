@@ -1,5 +1,6 @@
 package models
 
+import java.time.Instant
 import scala.collection.immutable
 import anorm._
 import scala.language.postfixOps
@@ -19,7 +20,7 @@ case class ItemInquiry(
   submitUserName: String,
   email: String,
   status: ItemInquiryStatusType,
-  created: Long
+  created: Instant
 )
 
 case class ItemInquiryField(
@@ -39,12 +40,12 @@ object ItemInquiry {
     SqlParser.get[String]("item_inquiry.submit_user_name") ~
     SqlParser.get[String]("item_inquiry.email") ~
     SqlParser.get[Int]("item_inquiry.status") ~
-    SqlParser.get[java.util.Date]("item_inquiry.created") map {
+    SqlParser.get[java.time.Instant]("item_inquiry.created") map {
       case id~siteId~itemId~userId~inquiryType~submitUserName~email~status~created =>
         ItemInquiry(
           id.map(ItemInquiryId.apply), siteId, ItemId(itemId), userId,
           ItemInquiryType.byIndex(inquiryType), 
-          submitUserName, email, ItemInquiryStatus.byIndex(status), created.getTime
+          submitUserName, email, ItemInquiryStatus.byIndex(status), created
         )
     }
   }
@@ -58,7 +59,7 @@ object ItemInquiry {
 
   def createNew(
     siteId: Long, itemId: ItemId, userId: Long, inquiryType: ItemInquiryType, 
-    submitUserName: String, email: String, created: Long
+    submitUserName: String, email: String, created: Instant
   )(implicit conn: Connection): ItemInquiry = {
     SQL(
       """
@@ -78,7 +79,7 @@ object ItemInquiry {
       'inquiryType -> inquiryType.ordinal,
       'submitUserName -> submitUserName,
       'email -> email,
-      'created -> new java.util.Date(created)
+      'created -> created
     ).executeUpdate()
 
     val id = SQL("select currval('item_inquiry_seq')").as(SqlParser.scalar[Long].single)

@@ -8,7 +8,7 @@ import java.io.{BufferedReader, StringReader}
 import scala.collection.immutable
 import scala.annotation.tailrec
 import java.time.format.DateTimeFormatter
-import java.time.{Instant, LocalDateTime}
+import java.time.Instant
 
 import scala.util.control.TailCalls._
 import scala.util.Try
@@ -99,7 +99,7 @@ object ItemCsv {
   case class SiteItemNumericMetadataField(
     typeCode: SiteItemNumericMetadataType,
     value: Long,
-    until: LocalDateTime
+    until: Instant
   )
 
   def getLongRemovingAfterColonComment(s: String): Option[Long] =
@@ -132,7 +132,7 @@ object ItemCsv {
             throw new InvalidColumnException(lineNo, colNo, "Invalid site item numeric metadata code", s)
         },
         toMandatory[Long](lineNo, colNo, "site item numeric metadata value", split(1)),
-        toMandatory[LocalDateTime](lineNo, colNo, "site item numeric metadata until", split(2))(YyyyMmDdHhMmSsParser)
+        toMandatory[Instant](lineNo, colNo, "site item numeric metadata until", split(2))(YyyyMmDdHhMmSsParser)
       )
     }
   }
@@ -174,8 +174,8 @@ object ItemCsv {
   }
 
   val YyyyMmDdHhMmSsParserFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-  object YyyyMmDdHhMmSsParser extends FieldParser[LocalDateTime](
-    s => java.sql.Timestamp.valueOf(s).toLocalDateTime
+  object YyyyMmDdHhMmSsParser extends FieldParser[Instant](
+    s => java.sql.Timestamp.valueOf(s).toInstant
   )
 
   def to[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): Option[T] =
@@ -278,7 +278,7 @@ class ItemCsvRepo @Inject() (
     val itemPriceHistory = itemPriceHistoryRepo.add(
       item.id.get, itemCsv.siteId, itemCsv.taxId, itemCsv.currencyId,
       itemCsv.price, itemCsv.listPrice, itemCsv.costPrice.getOrElse(BigDecimal(0)),
-      Until.EverLocalDateTime
+      Until.EverInstant
     )
     val itemDesc = itemDescriptionRepo.add(itemCsv.siteId, item.id.get, locale.id, itemCsv.description)
     itemCsv.siteItemNumericMetadata.foreach { md =>

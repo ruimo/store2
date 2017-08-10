@@ -12,7 +12,8 @@
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import helper._

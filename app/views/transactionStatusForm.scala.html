@@ -11,7 +11,7 @@
 )(implicit request: MessagesRequest[AnyContent])
 
 @import helper._
-@import org.joda.time.format.DateTimeFormat
+@import java.time.format.DateTimeFormatter
 
 <table class="shippingStatusTable">
   <tr>
@@ -42,11 +42,11 @@
   <table class="shippingDeliveryDateTable">
     <tr>
       <td class="shippingDate">@Messages("shippingDate")</td>
-      <td>@{DateTimeFormat.forPattern(Messages("shippingDateFormat")).print(entry.plannedShippingDate.get)}</td>
+      <td>@{DateTimeFormatter.ofPattern(Messages("shippingDateFormat")).format(entry.plannedShippingDate.get)}</td>
     </tr>
     <tr>
       <td class="deliveryDate">@Messages("deliveryDate")</td>
-      <td>@{DateTimeFormat.forPattern(Messages("deliveryDateFormat")).print(entry.plannedDeliveryDate.get)}</td>
+      <td>@{DateTimeFormatter.ofPattern(Messages("deliveryDateFormat")).format(entry.plannedDeliveryDate.get)}</td>
     </tr>
   </table>
 } else {

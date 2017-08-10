@@ -1,7 +1,7 @@
-@(date: Long)(implicit request: MessagesRequest[AnyContent])
+@(date: java.time.Instant)(implicit request: MessagesRequest[AnyContent])
 
-@import org.joda.time.format.DateTimeFormat
+@import java.time.format.DateTimeFormatter
 
 @{
-  DateTimeFormat.forPattern(Messages("last.update.format")).print(date)
+  DateTimeFormatter.ofPattern(Messages("last.update.format")).format(date)
 }

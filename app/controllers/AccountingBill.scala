@@ -20,11 +20,11 @@ class AccountingBill @Inject() (
   cc: MessagesControllerComponents,
   cache: Cache,
   authenticated: NeedLogin.Authenticated,
-  db: Database,
   implicit val siteRepo: SiteRepo,
   transactionSummary: TransactionSummary,
   transactionLogShippingRepo: TransactionLogShippingRepo,
-  implicit val shoppingCartItemRepo: ShoppingCartItemRepo
+  implicit val shoppingCartItemRepo: ShoppingCartItemRepo,
+  implicit val db: Database,
 ) extends MessagesAbstractController(cc) {
   val UseShippingDateForAccountingBill: () => Boolean = cache.config(
     _.getOptional[Boolean]("useShippingDateForAccountingBill").getOrElse(false)

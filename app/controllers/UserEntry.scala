@@ -28,7 +28,7 @@ import play.api.db.Database
 class UserEntry @Inject() (
   cc: MessagesControllerComponents,
   val cache: Cache,
-  db: Database,
+  implicit val db: Database,
   userEntryMail: UserEntryMail,
   notificationMail: NotificationMail,
   fc: FormConstraints,
@@ -98,9 +98,9 @@ class UserEntry @Inject() (
     db.withConnection { implicit conn =>
       implicit val login: Option[LoginSession] = loginSessionRepo.fromRequest(request)
       supportedLangs.preferred(langs) match {
-        case japanese =>
+        case `japanese` =>
           Ok(views.html.userEntryJa(jaForm, Address.JapanPrefectures))
-        case japan =>
+        case `japan` =>
           Ok(views.html.userEntryJa(jaForm, Address.JapanPrefectures))
         
         case _ =>
@@ -174,9 +174,9 @@ class UserEntry @Inject() (
   def registerUserInformation(userId: Long) = Action { implicit request: MessagesRequest[AnyContent] =>
     Ok(
       supportedLangs.preferred(langs) match {
-        case japanese =>
+        case `japanese` =>
           registerUserInformationView(userId, createRegistrationForm)
-        case japan =>
+        case `japan` =>
           registerUserInformationView(userId, createRegistrationForm)
 
         case _ =>
@@ -261,9 +261,9 @@ class UserEntry @Inject() (
   )(
     implicit request: MessagesRequest[AnyContent]
   ): Html = supportedLangs.preferred(langs) match {
-    case japanese =>
+    case `japanese` =>
       views.html.registerUserInformationJa(userId, form, Address.JapanPrefectures)
-    case japan =>
+    case `japan` =>
       views.html.registerUserInformationJa(userId, form, Address.JapanPrefectures)
 
     case _ =>
@@ -302,9 +302,9 @@ class UserEntry @Inject() (
 
       Ok(
         supportedLangs.preferred(langs) match {
-          case japanese =>
+          case `japanese` =>
             views.html.updateUserInfoJa(form, Address.JapanPrefectures)
-          case japan =>
+          case `japan` =>
             views.html.updateUserInfoJa(form, Address.JapanPrefectures)
 
           case _ =>
@@ -319,9 +319,9 @@ class UserEntry @Inject() (
     updateUserInfoForm.bindFromRequest.fold(
       formWithErrors => BadRequest(
         supportedLangs.preferred(langs) match {
-          case japanese =>
+          case `japanese` =>
             views.html.updateUserInfoJa(formWithErrors, Address.JapanPrefectures)
-          case japan =>
+          case `japan` =>
             views.html.updateUserInfoJa(formWithErrors, Address.JapanPrefectures)
 
           case _ =>
@@ -330,9 +330,9 @@ class UserEntry @Inject() (
       ),
       newInfo => {
         val prefTable = supportedLangs.preferred(langs) match {
-          case japanese =>
+          case `japanese` =>
             i: Int => JapanPrefecture.byIndex(i)
-          case japan =>
+          case `japan` =>
             i: Int => JapanPrefecture.byIndex(i)
 
           case _ =>
@@ -356,10 +356,10 @@ class UserEntry @Inject() (
           else {
             val form = updateUserInfoForm.fill(newInfo).withError("currentPassword", "confirmPasswordDoesNotMatch")
             BadRequest(
-              supportedLangs.preferred(langs).toLocale match {
-                case japanese =>
+              supportedLangs.preferred(langs) match {
+                case `japanese` =>
                   views.html.updateUserInfoJa(form, Address.JapanPrefectures)
-                case japan =>
+                case `japan` =>
                   views.html.updateUserInfoJa(form, Address.JapanPrefectures)
 
                 case _ =>

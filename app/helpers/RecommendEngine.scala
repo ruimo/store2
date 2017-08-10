@@ -14,11 +14,11 @@ import play.api.libs.json.JsResult
 import play.api.libs.concurrent.Akka
 
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.json.{JsError, JsResult, JsSuccess}
+import scala.concurrent.ExecutionContext
 
 class RecommendEngine @Inject() (
-  recoengApi: RecoEngApi, system: ActorSystem
+  recoengApi: RecoEngApi, system: ActorSystem, implicit val ec: ExecutionContext
 ) extends HasLogger {
   def onSales(login: LoginSession, tran: PersistedTransaction, addr: Option[Address]) {
     system.scheduler.scheduleOnce(0.microsecond) {
@@ -73,7 +73,7 @@ class RecommendEngine @Inject() (
   ): JsResult[OnSalesJsonResponse] =
     recoengApi.onSales(
       transactionMode = TransactionSalesMode,
-      transactionTime = tran.header.transactionTime,
+      transactionTime = tran.header.transactionTime.toEpochMilli,
       userCode = tran.header.userId.toString,
       itemTable = tran.itemTable.map { e =>
         val siteId: String = e._1.toString

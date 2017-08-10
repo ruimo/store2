@@ -1,5 +1,6 @@
 package models
 
+import play.api.Configuration
 import javax.inject.Singleton
 
 import anorm._
@@ -8,7 +9,7 @@ import anorm.SqlParser
 import scala.language.postfixOps
 import collection.immutable
 import java.sql.{Connection, Timestamp}
-import java.time.LocalDateTime
+import java.time.Instant
 import javax.inject.Inject
 
 import org.joda.time.DateTime
@@ -37,7 +38,7 @@ case class ItemPriceHistory(
   unitPrice: BigDecimal,
   listPrice: Option[BigDecimal],
   costPrice: BigDecimal,
-  validUntil: LocalDateTime
+  validUntil: Instant
 )
 
 case class ItemNumericMetadata(
@@ -48,11 +49,11 @@ case class ItemTextMetadata(
   id: Option[Long] = None, itemId: ItemId, metadataType: ItemTextMetadataType, metadata: String
 )
 
-case class SiteItem(itemId: ItemId, siteId: Long, created: Long)
+case class SiteItem(itemId: ItemId, siteId: Long, created: Instant)
 
 case class SiteItemNumericMetadata(
   id: Option[Long] = None, itemId: ItemId, siteId: Long, metadataType: SiteItemNumericMetadataType, metadata: Long,
-  validUntil: LocalDateTime
+  validUntil: Instant
 )
 
 case class SiteItemTextMetadata(
@@ -71,10 +72,11 @@ class ItemRepo @Inject() (
   itemDescriptionRepo: ItemDescriptionRepo,
   siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo,
   db: Database,
-  currencyRegistry: CurrencyRegistry
+  currencyRegistry: CurrencyRegistry,
+  conf: Configuration
 ) {
   val ItemListDefaultOrderBy = OrderBy("item_name.item_name", Asc)
-  val ItemListQueryColumnsToAdd = Play.current.configuration.getString("item.list.query.columns.add").get
+  val ItemListQueryColumnsToAdd = conf.get[String]("item.list.query.columns.add")
 
   val simple = {
     SqlParser.get[Option[Long]]("item.item_id") ~
@@ -473,7 +475,7 @@ class ItemRepo @Inject() (
       val desc = itemDescriptionRepo.createNew(item, site, prototype.description)
       val price = itemPriceRepo.createNew(item, site)
       val tax = taxRepo(prototype.taxId)
-      val priceHistory = itemPriceHistoryRepo.createNew(price, tax, currencyRegistry(prototype.currencyId), prototype.price, prototype.listPrice, prototype.costPrice, Until.EverLocalDateTime)
+      val priceHistory = itemPriceHistoryRepo.createNew(price, tax, currencyRegistry(prototype.currencyId), prototype.price, prototype.listPrice, prototype.costPrice, Until.EverInstant)
       val siteItem = siteItemRepo.createNew(site, item)
       if (prototype.isCoupon)
         Coupon.updateAsCoupon(item.id.get)
@@ -757,14 +759,14 @@ class ItemPriceHistoryRepo @Inject() (
     SqlParser.get[java.math.BigDecimal]("item_price_history.unit_price") ~
     SqlParser.get[Option[java.math.BigDecimal]]("item_price_history.list_price") ~
     SqlParser.get[java.math.BigDecimal]("item_price_history.cost_price") ~
-    SqlParser.get[java.time.LocalDateTime]("item_price_history.valid_until") map {
+    SqlParser.get[java.time.Instant]("item_price_history.valid_until") map {
       case id~itemPriceId~taxId~currencyId~unitPrice~listPrice~costPrice~validUntil
         => ItemPriceHistory(id, itemPriceId, taxId, currencyRegistry(currencyId), unitPrice, listPrice.map(BigDecimal.apply), costPrice, validUntil)
     }
   }
 
   def createNew(
-    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal, listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: LocalDateTime
+    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal, listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: Instant
   ): ItemPriceHistory = db.withConnection { implicit conn =>
     SQL(
       """
@@ -791,7 +793,7 @@ class ItemPriceHistoryRepo @Inject() (
   }
 
   def update(
-    id: Long, taxId: Long, currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: LocalDateTime
+    id: Long, taxId: Long, currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: Instant
   ) {
     db.withConnection { implicit conn =>
       SQL(
@@ -819,7 +821,7 @@ class ItemPriceHistoryRepo @Inject() (
 
   def add(
     itemId: ItemId, siteId: Long, taxId: Long, currencyId: Long, 
-    unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: LocalDateTime
+    unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: Instant
   ) {
     db.withConnection { implicit conn =>
       val priceId = SQL(
@@ -1150,7 +1152,7 @@ class SiteItemNumericMetadataRepo @Inject() (
     SqlParser.get[Long]("site_item_numeric_metadata.site_id") ~
     SqlParser.get[Int]("site_item_numeric_metadata.metadata_type") ~
     SqlParser.get[Long]("site_item_numeric_metadata.metadata") ~
-    SqlParser.get[java.time.LocalDateTime]("site_item_numeric_metadata.valid_until") map {
+    SqlParser.get[java.time.Instant]("site_item_numeric_metadata.valid_until") map {
       case id~itemId~siteId~metadataType~metadata~validUntil =>
         SiteItemNumericMetadata(id, ItemId(itemId), siteId, SiteItemNumericMetadataType.byIndex(metadataType), metadata, validUntil)
     }
@@ -1158,7 +1160,7 @@ class SiteItemNumericMetadataRepo @Inject() (
 
   def createNew(
     siteId: Long, itemId: ItemId, metadataType: SiteItemNumericMetadataType, metadata: Long,
-    validUntil: LocalDateTime = Until.EverLocalDateTime
+    validUntil: Instant = Until.EverInstant
   )(implicit conn: Connection): SiteItemNumericMetadata = {
     SQL(
       """
@@ -1227,7 +1229,7 @@ class SiteItemNumericMetadataRepo @Inject() (
   }
 
   def update(
-    id: Long, metadata: Long, validUntil: LocalDateTime = Until.EverLocalDateTime
+    id: Long, metadata: Long, validUntil: Instant = Until.EverInstant
   )(implicit conn: Connection) {
     SQL(
       """
@@ -1404,8 +1406,8 @@ class SiteItemRepo @Inject() (
   val simple = {
     SqlParser.get[Long]("site_item.item_id") ~
     SqlParser.get[Long]("site_item.site_id") ~
-    SqlParser.get[java.util.Date]("site_item.created") map {
-      case itemId~siteId~created => SiteItem(ItemId(itemId), siteId, created.getTime)
+    SqlParser.get[java.time.Instant]("site_item.created") map {
+      case itemId~siteId~created => SiteItem(ItemId(itemId), siteId, created)
     }
   }
 
@@ -1434,14 +1436,14 @@ class SiteItemRepo @Inject() (
   def createNew(site: Site, item: Item)(implicit conn: Connection): SiteItem = add(item.id.get, site.id.get)
 
   def add(
-    itemId: ItemId, siteId: Long, created: Long = System.currentTimeMillis
+    itemId: ItemId, siteId: Long, created: Instant = Instant.now()
   )(implicit conn: Connection): SiteItem = {
     SQL(
       "insert into site_item (item_id, site_id, created) values ({itemId}, {siteId}, {created})"
     ).on(
       'itemId -> itemId.id,
       'siteId -> siteId,
-      'created -> new java.sql.Timestamp(created)
+      'created -> created
     ).executeUpdate()
 
     SiteItem(itemId, siteId, created)

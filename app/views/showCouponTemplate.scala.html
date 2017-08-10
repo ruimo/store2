@@ -1,7 +1,7 @@
 @(
   templateNo: Long,
   itemId: ItemId,
-  time: Long,
+  time: java.time.Instant,
   tranId: Option[Long]
 )(
   implicit request: MessagesRequest[AnyContent],

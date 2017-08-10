@@ -1,7 +1,8 @@
 @()(
   implicit request: MessagesRequest[AnyContent],
   loginSession: Option[LoginSession],
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("item.detail"), loginSession) {

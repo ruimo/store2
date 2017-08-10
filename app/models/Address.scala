@@ -1,5 +1,6 @@
 package models
 
+import java.time.Instant
 import anorm._
 import anorm.SqlParser
 import play.api.db._
@@ -43,7 +44,7 @@ case class ShippingAddressHistory(
   id: Option[Long] = None,
   storeUserId: Long,
   addressId: Long,
-  updatedTime: Long
+  updatedTime: Instant
 )
 
 object Address {
@@ -232,9 +233,9 @@ object ShippingAddressHistory {
     SqlParser.get[Option[Long]]("shipping_address_history.shipping_address_history_id") ~
     SqlParser.get[Long]("shipping_address_history.store_user_id") ~
     SqlParser.get[Long]("shipping_address_history.address_id") ~
-    SqlParser.get[java.util.Date]("shipping_address_history.updated_time") map {
+    SqlParser.get[java.time.Instant]("shipping_address_history.updated_time") map {
       case id~userId~addressId~updatedTime =>
-        ShippingAddressHistory(id, userId, addressId, updatedTime.getTime)
+        ShippingAddressHistory(id, userId, addressId, updatedTime)
     }
   }
 
@@ -272,7 +273,7 @@ object ShippingAddressHistory {
       )
       """
     ).on(
-      'now -> new java.util.Date(now),
+      'now -> now,
       'userId -> userId,
       'countryCode -> address.countryCode.code,
       'firstName -> address.firstName,
@@ -332,7 +333,7 @@ object ShippingAddressHistory {
       ).on(
         'userId -> userId,
         'addressId -> newAddress.id.get,
-        'now -> new java.util.Date(now)
+        'now -> now
       ).executeUpdate()
 
       SQL(

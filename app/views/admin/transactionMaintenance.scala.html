@@ -9,7 +9,8 @@
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import helper._
@@ -93,7 +94,7 @@
             @e.transactionId
           </a>
         </td>
-        <td class="transactionTime">@yyyymmddhhmmss(e.transactionTime)</td>
+        <td class="transactionTime">@yyyymmddhhmmss(e.transactionTime)(implicitly, request.acceptLanguages.head)</td>
         <td class="site">@e.siteName</td>
         <td class="shippingDate">
           @if(e.address.isDefined) {

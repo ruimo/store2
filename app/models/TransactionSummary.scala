@@ -1,5 +1,6 @@
 package models
 
+import java.time.Instant
 import anorm._
 import java.sql.Connection
 import javax.inject.{Inject, Singleton}
@@ -14,7 +15,7 @@ import play.api.mvc.{AnyContent, MessagesRequest}
 case class TransactionSummaryEntry(
   transactionId: Long,
   transactionSiteId: Long,
-  transactionTime: Long,
+  transactionTime: Instant,
   totalAmount: BigDecimal,
   totalTax: BigDecimal,
   address: Option[Address],
@@ -22,13 +23,13 @@ case class TransactionSummaryEntry(
   siteName: String,
   shippingFee: BigDecimal,
   status: TransactionStatus,
-  statusLastUpdate: Long,
+  statusLastUpdate: Instant,
   shipStatus: Option[ShippingInfo],
   buyer: StoreUser,
-  shippingDate: Option[Long],
+  shippingDate: Option[Instant],
   mailSent: Boolean,
-  plannedShippingDate: Option[Long],
-  plannedDeliveryDate: Option[Long],
+  plannedShippingDate: Option[Instant],
+  plannedDeliveryDate: Option[Instant],
   transactionType: TransactionType
 ) {
   lazy val totalWithTax = totalAmount + totalTax
@@ -52,7 +53,7 @@ class TransactionSummary @Inject() (
   val parser = {
     SqlParser.get[Long]("tranid") ~
     SqlParser.get[Long]("transaction_site_id") ~
-    SqlParser.get[java.util.Date]("transaction_time") ~
+    SqlParser.get[java.time.Instant]("transaction_time") ~
     SqlParser.get[java.math.BigDecimal]("total_amount") ~
     SqlParser.get[java.math.BigDecimal]("tax_amount") ~
     (Address.simple ?) ~
@@ -61,22 +62,22 @@ class TransactionSummary @Inject() (
     SqlParser.get[java.math.BigDecimal]("shipping") ~
     SqlParser.get[Int]("transtatus") ~
     storeUserRepo.simple ~
-    SqlParser.get[Option[java.util.Date]]("shipping_date") ~
-    SqlParser.get[java.util.Date]("transaction_status.last_update") ~ 
+    SqlParser.get[Option[java.time.Instant]]("shipping_date") ~
+    SqlParser.get[java.time.Instant]("transaction_status.last_update") ~ 
     SqlParser.get[Option[Long]]("transaction_status.transporter_id") ~
     SqlParser.get[Option[String]]("transaction_status.slip_code") ~
     SqlParser.get[Boolean]("transaction_status.mail_sent") ~
-    SqlParser.get[Option[java.util.Date]]("transaction_status.planned_shipping_date") ~
-    SqlParser.get[Option[java.util.Date]]("transaction_status.planned_delivery_date") ~
+    SqlParser.get[Option[java.time.Instant]]("transaction_status.planned_shipping_date") ~
+    SqlParser.get[Option[java.time.Instant]]("transaction_status.planned_delivery_date") ~
     SqlParser.get[Int]("transaction_type") ~
     (TransactionLogPaypalStatus.simple ?) map {
       case id~tranSiteId~time~amount~tax~address~siteId~siteName~shippingFee~status~user~shippingDate~lastUpdate~transporterId~slipCode~mailSent~plannedShippingDate~plannedDeliveryDate~transactionType~paypalStatus =>
         TransactionSummaryEntry(
-          id, tranSiteId, time.getTime, amount, tax, address, siteId, siteName,
-          shippingFee, TransactionStatus.byIndex(status), lastUpdate.getTime,
+          id, tranSiteId, time, amount, tax, address, siteId, siteName,
+          shippingFee, TransactionStatus.byIndex(status), lastUpdate,
           if (transporterId.isDefined) Some(ShippingInfo(transporterId.get, slipCode.get)) else None,
-          user, shippingDate.map(_.getTime), mailSent, 
-          plannedShippingDate.map(_.getTime), plannedDeliveryDate.map(_.getTime),
+          user, shippingDate, mailSent, 
+          plannedShippingDate, plannedDeliveryDate,
           toTransactionType(TransactionTypeCode.byIndex(transactionType), paypalStatus)
         )
     }

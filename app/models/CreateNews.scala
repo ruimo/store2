@@ -2,12 +2,12 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class CreateNews(
   title: String,
   contents: String,
-  releaseTime: LocalDateTime,
+  releaseTime: Instant,
   siteId: Option[Long]
 ) (
   implicit newsRepo: NewsRepo

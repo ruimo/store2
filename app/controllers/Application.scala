@@ -11,7 +11,7 @@ class Application @Inject() (
   cc: MessagesControllerComponents,
   optAuthenticated: NeedLogin.OptAuthenticated,
   loginSessionRepo: LoginSessionRepo,
-  db: Database,
+  implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
   def index = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>

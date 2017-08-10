@@ -5,20 +5,23 @@ import java.sql.Connection
 import play.api.libs.concurrent.Akka
 import play.api.Play.current
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.i18n.{Messages, MessagesProvider}
 import models.{StoreUser, CreatePrize}
 import play.api.libs.mailer._
 import javax.inject._
 import akka.actor.{ActorSystem}
+import scala.concurrent.ExecutionContext
+import play.api.Configuration
 
 @Singleton
 class PrizeMail @Inject() (
-  system: ActorSystem, mailerClient: MailerClient
+  system: ActorSystem, mailerClient: MailerClient,
+  conf: Configuration,
+  implicit val ec: ExecutionContext
 ) extends HasLogger {
-  val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
-  val from = Play.current.configuration.getString("prize.email.from").get
-  val to = Play.current.configuration.getString("prize.email.to").get
+  val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
+  val from = conf.get[String]("prize.email.from")
+  val to = conf.get[String]("prize.email.to")
 
   def send(itemName: String, user: StoreUser, prize: CreatePrize)(
     implicit mp: MessagesProvider

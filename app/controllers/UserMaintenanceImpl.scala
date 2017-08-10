@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.Configuration
 import helpers.Formatter
 import models.InvalidUserNameException
 import java.sql.Connection
@@ -38,6 +39,7 @@ class UserMaintenanceImpl (
   cache: Cache,
   fc: FormConstraints,
   admin: Admin,
+  config: Configuration,
   implicit val storeUserRepo: StoreUserRepo,
   authenticated: Authenticated,
   implicit val orderNotificationRepo: OrderNotificationRepo,
@@ -116,7 +118,7 @@ class UserMaintenanceImpl (
     implicit val login = request.login
     NeedLogin.assumeAdmin(login) {
       if (SiteOwnerCanUploadUserCsv() || login.isSuperUser) {
-        Ok(views.html.admin.userMaintenance())
+        Ok(views.html.admin.userMaintenance(config))
       }
       else {
         Redirect(routes.Admin.index)

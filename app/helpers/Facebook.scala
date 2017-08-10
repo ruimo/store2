@@ -102,7 +102,7 @@ class Facebook(
     logger.info("Obtaining facebook posts. appId: '" + appId + "'")
     val resp: WSResponse = Await.result(
       wsClient.url(graphFeedUrl(pageId))
-        .withQueryString(
+        .withQueryStringParameters(
           "access_token" -> accessToken()
         )
         .get(), Duration(30, SECONDS)
@@ -127,7 +127,7 @@ class Facebook(
     logger.info("Acquiring access token. appId: '" + appId + "'")
     val resp: WSResponse = Await.result(
       wsClient.url(AccessTokenUrl)
-        .withQueryString(
+        .withQueryStringParameters(
           "client_id" -> appId,
           "client_secret" -> appSecret,
           "grant_type" -> "client_credentials"

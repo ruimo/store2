@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import java.time.Instant
 import models._
 import play.api.mvc._
 import play.api.db.Database
@@ -58,7 +59,7 @@ class CouponHistory @Inject() (
       db.withConnection { implicit conn => siteItemNumericMetadataRepo.all(siteId, ItemId(itemId)) }
 
     if (metaData.get(SiteItemNumericMetadataType.INSTANT_COUPON).getOrElse(0) != 0) {
-      showCoupon(metaData, ItemId(itemId), System.currentTimeMillis, None)
+      showCoupon(metaData, ItemId(itemId), Instant.now(), None)
     }
     else {
       Redirect(routes.Application.index)
@@ -68,7 +69,7 @@ class CouponHistory @Inject() (
   def showCoupon(
     siteItemNumericMetadata: Map[SiteItemNumericMetadataType, SiteItemNumericMetadata],
     itemId: ItemId,
-    time: Long,
+    time: Instant,
     tranId: Option[Long]
   )(
     implicit request: MessagesRequest[AnyContent],

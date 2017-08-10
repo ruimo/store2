@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.temporal.ChronoUnit
+import helpers.Forms._
 import play.Logger
 
 import scala.util.{Failure, Success, Try}
@@ -22,7 +24,7 @@ import java.util.regex.Pattern
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 import java.time.format.DateTimeFormatter
 
 import scala.collection.immutable
@@ -140,7 +142,7 @@ class Shipping @Inject() (
       "tel1" -> text.verifying(Messages("error.number"), z => TelPattern.matcher(z).matches),
       "tel2" -> text.verifying(Messages("error.number"), z => TelOptionPattern.matcher(z).matches),
       "tel3" -> text.verifying(Messages("error.number"), z => TelOptionPattern.matcher(z).matches),
-      "shippingDate" -> localDateTime(Messages("shipping.date.format")),
+      "shippingDate" -> instant(Messages("shipping.date.format")),
       "comment" -> text.verifying(maxLength(2048)),
       "email" -> text.verifying(fc.emailConstraint: _*)
     )(CreateAddress.apply4Japan)(CreateAddress.unapply4Japan)
@@ -160,7 +162,7 @@ class Shipping @Inject() (
             Address.byId(ua.addressId)
           }
         }
-        val shippingDate = ShoppingCartShipping.find(login.userId).getOrElse(LocalDateTime.now().plusDays(5))
+        val shippingDate = ShoppingCartShipping.find(login.userId).getOrElse(Instant.now().plus(5, ChronoUnit.DAYS))
         val form = addr match {
           case Some(a) =>
             jaForm.fill(CreateAddress.fromAddress(a.fillEmailIfEmpty(login.storeUser.email), shippingDate))
@@ -174,9 +176,9 @@ class Shipping @Inject() (
         }
 
         request.acceptLanguages.head match {
-          case japanese =>
+          case `japanese` =>
             Ok(views.html.shippingAddressJa(form, Address.JapanPrefectures))
-          case japan =>
+          case `japan` =>
             Ok(views.html.shippingAddressJa(form, Address.JapanPrefectures))
         
           case _ =>

@@ -1,7 +1,7 @@
 package controllers
 
-
-import java.time.LocalDateTime
+import helpers.Forms._
+import java.time.Instant
 
 import play.Logger
 import javax.inject.{Inject, Singleton}
@@ -53,7 +53,7 @@ class ShippingFeeMaintenance @Inject() (
   def feeMaintenanceForm(implicit mp: MessagesProvider) = Form(
     mapping(
       "boxId" -> longNumber,
-      "now" -> localDateTime(Messages("shipping.fee.maintenance.date.format"))
+      "now" -> instant(Messages("shipping.fee.maintenance.date.format"))
     )(FeeMaintenance.apply)(FeeMaintenance.unapply)
   )
 
@@ -65,7 +65,7 @@ class ShippingFeeMaintenance @Inject() (
           "taxId" -> longNumber,
           "fee" -> bigDecimal.verifying(min(BigDecimal(0))),
           "costFee" -> optional(bigDecimal.verifying(min(BigDecimal(0)))),
-          "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+          "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
         ) (ChangeFeeHistory.apply)(ChangeFeeHistory.unapply)
       )
     ) (ChangeFeeHistoryTable.apply)(ChangeFeeHistoryTable.unapply)
@@ -77,7 +77,7 @@ class ShippingFeeMaintenance @Inject() (
       "taxId" -> longNumber,
       "fee" -> bigDecimal.verifying(min(BigDecimal(0))),
       "costFee" -> optional(bigDecimal.verifying(min(BigDecimal(0)))),
-      "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+      "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
     ) (ChangeFeeHistory.apply)(ChangeFeeHistory.unapply)
   )
 
@@ -117,7 +117,7 @@ class ShippingFeeMaintenance @Inject() (
   def startFeeMaintenanceNow(boxId: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     NeedLogin.assumeSuperUser(login) {
-      feeMaintenance(boxId, LocalDateTime.now())
+      feeMaintenance(boxId, Instant.now())
     }
   }
 
@@ -138,7 +138,7 @@ class ShippingFeeMaintenance @Inject() (
     }
   }
 
-  private def feeMaintenance(boxId: Long, now: LocalDateTime)(
+  private def feeMaintenance(boxId: Long, now: Instant)(
     implicit req: MessagesRequest[AnyContent],
     loginSession: LoginSession
   ): Result = {

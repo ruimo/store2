@@ -1,6 +1,6 @@
 package models
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class ChangeItemPriceTable(
   itemPrices: Seq[ChangeItemPrice]
@@ -17,7 +17,7 @@ case class ChangeItemPriceTable(
 case class ChangeItemPrice(
   siteId: Long, itemPriceId: Long, itemPriceHistoryId: Long, taxId: Long,
   currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal,
-  validUntil: LocalDateTime
+  validUntil: Instant
 )(
   implicit val itemPriceHistoryRepo: ItemPriceHistoryRepo
 ) {

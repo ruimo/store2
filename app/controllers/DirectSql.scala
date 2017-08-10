@@ -22,7 +22,7 @@ import play.api.db.Database
 class DirectSql @Inject() (
   cc: MessagesControllerComponents,
   authenticated: Authenticated,
-  db: Database,
+  implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
   val SqlPattern = """(?m);$""".r

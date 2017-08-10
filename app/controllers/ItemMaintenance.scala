@@ -1,7 +1,9 @@
 package controllers
 
+import helpers.Forms._
 import javax.inject.{Inject, Singleton}
 
+import helpers.Forms._
 import play.Logger
 import controllers.NeedLogin.Authenticated
 import play.api.data.Form
@@ -334,7 +336,7 @@ class ItemMaintenance @Inject() (
           "siteId" -> longNumber,
           "metadataType" -> number,
           "metadata" -> longNumber,
-          "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+          "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
         ) (ChangeSiteItemMetadata.apply)(ChangeSiteItemMetadata.unapply)
       )
     ) (ChangeSiteItemMetadataTable.apply)(ChangeSiteItemMetadataTable.unapply)
@@ -378,7 +380,7 @@ class ItemMaintenance @Inject() (
       "siteId" -> longNumber,
       "metadataType" -> number,
       "metadata" -> longNumber,
-      "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+      "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
     ) (CreateSiteItemMetadata.apply)(CreateSiteItemMetadata.unapply)
   ).bind(
     Map(
@@ -902,7 +904,7 @@ class ItemMaintenance @Inject() (
           "itemPrice" -> bigDecimal.verifying(min(BigDecimal(0))),
           "listPrice" -> optional(bigDecimal.verifying(min(BigDecimal(0)))),
           "costPrice" -> bigDecimal.verifying(min(BigDecimal(0))),
-          "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+          "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
         ) (ChangeItemPrice.apply)(ChangeItemPrice.unapply)
       )
     ) (ChangeItemPriceTable.apply)(ChangeItemPriceTable.unapply)
@@ -918,7 +920,7 @@ class ItemMaintenance @Inject() (
       "itemPrice" -> bigDecimal.verifying(min(BigDecimal(0))),
       "listPrice" -> optional(bigDecimal.verifying(min(BigDecimal(0)))),
       "costPrice" -> bigDecimal.verifying(min(BigDecimal(0))),
-      "validUntil" -> localDateTime("yyyy-MM-dd HH:mm:ss")
+      "validUntil" -> instant("yyyy-MM-dd HH:mm:ss")
     ) (ChangeItemPrice.apply)(ChangeItemPrice.unapply)
   )
 

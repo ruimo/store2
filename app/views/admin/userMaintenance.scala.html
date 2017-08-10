@@ -1,19 +1,16 @@
-@()(
+@(config: play.api.Configuration)(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
-@config = @{
-  play.api.Play.maybeApplication.map(_.configuration).get
-}
-
 @siteOwnerCanUploadUserCsv = @{
-  config.getBoolean("siteOwnerCanUploadUserCsv").getOrElse(false)
+  config.getOptional[Boolean]("siteOwnerCanUploadUserCsv").getOrElse(false)
 }
 
 @siteOwnerCanEditEmployee = @{
-  config.getBoolean("siteOwnerCanEditEmployee").getOrElse(false)
+  config.getOptional[Boolean]("siteOwnerCanEditEmployee").getOrElse(false)
 }
 
 @main(Messages("userMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {

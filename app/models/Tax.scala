@@ -10,11 +10,13 @@ import java.sql.Connection
 import math.BigDecimal.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.time.Instant
+import java.time.Instant
 
 case class Tax(id: Option[Long] = None)
 
 case class TaxHistory(
-  id: Option[Long] = None, taxId: Long, taxType: TaxType, rate: BigDecimal, validUntil: Long
+  id: Option[Long] = None, taxId: Long, taxType: TaxType, rate: BigDecimal, validUntil: Instant
 ) {
   lazy val realRate = rate / BigDecimal(100)
   def taxAmount(target: BigDecimal)(implicit taxRepo: TaxRepo): BigDecimal = taxRepo.taxAmount(target, taxType, realRate)
@@ -157,14 +159,14 @@ class TaxHistoryRepo @Inject() (
     SqlParser.get[Long]("tax_history.tax_id") ~
     SqlParser.get[Int]("tax_history.tax_type") ~
     SqlParser.get[java.math.BigDecimal]("tax_history.rate") ~
-    SqlParser.get[java.util.Date]("tax_history.valid_until") map {
+    SqlParser.get[java.time.Instant]("tax_history.valid_until") map {
       case id~taxId~taxType~rate~validUntil =>
-        TaxHistory(id, taxId, TaxType.byIndex(taxType), rate, validUntil.getTime)
+        TaxHistory(id, taxId, TaxType.byIndex(taxType), rate, validUntil)
     }
   }
 
   def createNew(
-    tax: Tax, taxType: TaxType, rate: BigDecimal, validUntil: Long
+    tax: Tax, taxType: TaxType, rate: BigDecimal, validUntil: Instant
   )(implicit conn: Connection) : TaxHistory = {
     SQL(
       """
@@ -175,7 +177,7 @@ class TaxHistoryRepo @Inject() (
       'taxId -> tax.id.get,
       'taxType -> taxType.ordinal,
       'rate -> rate.bigDecimal,
-      'validUntil -> new java.sql.Timestamp(validUntil)
+      'validUntil -> validUntil
     ).executeUpdate()
 
     val id = SQL("select currval('tax_history_seq')").as(SqlParser.scalar[Long].single)

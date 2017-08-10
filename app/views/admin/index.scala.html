@@ -1,16 +1,13 @@
-@()(
+@(config: play.api.Configuration)(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
-@config = @{
-  play.api.Play.maybeApplication.map(_.configuration).get
-}
-
 @siteOwnerCanUploadUserCsv = @{
-  config.getBoolean("siteOwnerCanUploadUserCsv").getOrElse(false)
+  config.getOptional[Boolean]("siteOwnerCanUploadUserCsv").getOrElse(false)
 }
 
 @main(Messages("adminTitle"), Some(loginSession), contentCssClass = "adminContents") {

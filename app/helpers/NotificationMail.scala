@@ -3,7 +3,7 @@ package helpers
 import models._
 import play.api.i18n.{Messages, MessagesProvider}
 import play.api.libs.concurrent.Akka
-import play.api.libs.concurrent.Execution.Implicits._
+import scala.concurrent.ExecutionContext
 
 import scala.concurrent.duration._
 import play.api.Play.current
@@ -25,7 +25,8 @@ class NotificationMail @Inject() (
   orderNotificationRepo: OrderNotificationRepo,
   system: ActorSystem, mailerClient: MailerClient,
   conf: Configuration,
-  implicit val siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+  implicit val siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo,
+  implicit val ec: ExecutionContext
 ) extends HasLogger {
   val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
   val from = conf.get[String]("order.email.from")
@@ -480,7 +481,7 @@ class NotificationMail @Inject() (
     implicit mp: MessagesProvider
   ) {
     logger.info("Sending reset password confirmation to " + user.email)
-    val body = views.html.mail.resetPassword(user, rec).toString
+    val body = views.html.mail.resetPassword(user, rec, conf).toString
     if (! disableMailer) {
       system.scheduler.scheduleOnce(0.microsecond) {
         val mail = Email(

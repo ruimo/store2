@@ -74,9 +74,9 @@ class EntryUserEntry @Inject() (
   ): Result = {
     db.withConnection { implicit conn =>
       supportedLangs.preferred(langs) match {
-        case japanese =>
+        case `japanese` =>
           Ok(views.html.entryUserEntryJa(jaForm, Address.JapanPrefectures, sanitize(url)))
-        case japan =>
+        case `japan` =>
           Ok(views.html.entryUserEntryJa(jaForm, Address.JapanPrefectures, sanitize(url)))
 
         case _ =>

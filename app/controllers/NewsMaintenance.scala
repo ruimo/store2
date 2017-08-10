@@ -1,5 +1,6 @@
 package controllers
 
+import helpers.Forms._
 import javax.inject.{Inject, Singleton}
 
 import play.Logger
@@ -26,7 +27,7 @@ class NewsMaintenance @Inject() (
     mapping(
       "title" -> text.verifying(nonEmpty, maxLength(255)),
       "contents" ->  text.verifying(nonEmpty, maxLength(65535)),
-      "releaseDate" -> localDateTime(Messages("news.date.format")),
+      "releaseDate" -> instant(Messages("news.date.format")),
       "site" -> optional(longNumber)
     )(CreateNews.apply)(CreateNews.unapply)
   )

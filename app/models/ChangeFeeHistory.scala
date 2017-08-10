@@ -2,7 +2,7 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class ChangeFeeHistoryTable(
   histories: Seq[ChangeFeeHistory]
@@ -15,7 +15,7 @@ case class ChangeFeeHistoryTable(
 }
 
 case class ChangeFeeHistory(
-  historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: LocalDateTime
+  historyId: Long, taxId: Long, fee: BigDecimal, costFee: Option[BigDecimal], validUntil: Instant
 ) {
   def update()(implicit shippingFeeHistoryRepo: ShippingFeeHistoryRepo, conn: Connection) {
     shippingFeeHistoryRepo.update(historyId, taxId, fee, costFee, validUntil)

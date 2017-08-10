@@ -6,7 +6,8 @@
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
   flash: play.api.mvc.Flash,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @import helper._

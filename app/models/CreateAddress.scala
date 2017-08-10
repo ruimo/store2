@@ -1,7 +1,7 @@
 package models
 
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class CreateAddress(
   countryCode: CountryCode,
@@ -22,7 +22,7 @@ case class CreateAddress(
   tel1: String,
   tel2: String,
   tel3: String,
-  shippingDate: LocalDateTime,
+  shippingDate: Instant,
   comment: String,
   email: String
 ) {
@@ -64,7 +64,7 @@ case class CreateAddress(
 }
 
 object CreateAddress {
-  def fromAddress(addr: Address, shippingDate: LocalDateTime) =
+  def fromAddress(addr: Address, shippingDate: Instant) =
     CreateAddress(
       addr.countryCode,
       addr.firstName,
@@ -105,7 +105,7 @@ object CreateAddress {
     tel1: String,
     tel2: String,
     tel3: String,
-    shippingDate: LocalDateTime,
+    shippingDate: Instant,
     comment: String,
     email: String
   ) = CreateAddress(
@@ -138,7 +138,7 @@ object CreateAddress {
     String, String,
     Int,
     String, String, String, String, String,
-    String, String, String, LocalDateTime, String, String
+    String, String, String, Instant, String, String
   )] = Some((addr.firstName, addr.lastName,
              addr.firstNameKana, addr.lastNameKana,
              addr.zip1, addr.zip2,

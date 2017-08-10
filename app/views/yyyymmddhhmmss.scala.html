@@ -1,4 +1,4 @@
-@(time: Long)(implicit request: MessagesRequest[AnyContent])
+@(time: java.time.Instant)(implicit request: MessagesRequest[AnyContent], lang: Lang)
 
 @import java.util.Locale
 

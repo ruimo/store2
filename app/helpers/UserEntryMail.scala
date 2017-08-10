@@ -6,15 +6,15 @@ import java.sql.Connection
 import javax.inject.{Inject, Singleton}
 
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import play.api.i18n.{Messages, MessagesProvider}
 import akka.actor.ActorSystem
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class UserEntryMail @Inject() (
   system: ActorSystem, mailerClient: MailerClient, conf: Configuration,
-  orderNotificationRepo: OrderNotificationRepo
+  orderNotificationRepo: OrderNotificationRepo, implicit val ec: ExecutionContext
 ) extends HasLogger {
   val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
   val from = conf.get[String]("user.registration.email.from")

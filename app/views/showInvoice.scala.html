@@ -67,7 +67,7 @@
           <table id="invoiceStoreTable">
             <tr>
               <td class="invoiceStoreTableLeft"></td>
-              <td id="invoiceDate">@yyyymmddhhmmss(tranSummary.transactionTime)</td>
+              <td id="invoiceDate">@yyyymmddhhmmss(tranSummary.transactionTime)(implicitly, request.acceptLanguages.head)</td>
             </tr>
             <tr>
               <td class="invoiceStoreTableLeft"></td>

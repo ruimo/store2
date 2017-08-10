@@ -1,6 +1,6 @@
 package models
 
-import java.time.{Instant, LocalDateTime}
+import java.time.Instant
 
 import anorm._
 import anorm.SqlParser
@@ -131,7 +131,7 @@ case class ShoppingCartShipping(
   id: Option[Long] = None,
   storeUserId: Long,
   siteId: Long,
-  shippingDate: Long
+  shippingDate: Instant
 )
 
 @Singleton
@@ -434,14 +434,14 @@ object ShoppingCartShipping {
     SqlParser.get[Option[Long]]("shopping_cart_shipping.shopping_cart_shipping_id") ~
     SqlParser.get[Long]("shopping_cart_shipping.store_user_id") ~
     SqlParser.get[Long]("shopping_cart_shipping.site_id") ~
-    SqlParser.get[java.util.Date]("shopping_cart_shipping.shipping_date") map {
+    SqlParser.get[java.time.Instant]("shopping_cart_shipping.shipping_date") map {
       case id~userId~siteId~shippingDate =>
-        ShoppingCartShipping(id, userId, siteId, shippingDate.getTime)
+        ShoppingCartShipping(id, userId, siteId, shippingDate)
     }
   }
 
   // Not atomic.
-  def updateOrInsert(userId: Long, siteId: Long, shippingDate: LocalDateTime)(implicit conn: Connection) {
+  def updateOrInsert(userId: Long, siteId: Long, shippingDate: Instant)(implicit conn: Connection) {
     val updateCount = SQL(
       """
       update shopping_cart_shipping
@@ -472,7 +472,7 @@ object ShoppingCartShipping {
     }
   }
 
-  def find(userId: Long, siteId: Long)(implicit conn: Connection): Long =
+  def find(userId: Long, siteId: Long)(implicit conn: Connection): Instant =
     SQL(
       """
       select shipping_date from shopping_cart_shipping
@@ -482,10 +482,10 @@ object ShoppingCartShipping {
       'userId -> userId,
       'siteId -> siteId
     ).as(
-      SqlParser.scalar[java.util.Date].single
-    ).getTime
+      SqlParser.scalar[java.time.Instant].single
+    )
 
-  def find(userId: Long)(implicit conn: Connection): Option[LocalDateTime] =
+  def find(userId: Long)(implicit conn: Connection): Option[Instant] =
     SQL(
       """
       select min(shipping_date) from shopping_cart_shipping
@@ -494,7 +494,7 @@ object ShoppingCartShipping {
     ).on(
       'userId -> userId
     ).as(
-      SqlParser.scalar[LocalDateTime].singleOpt
+      SqlParser.scalar[Instant].singleOpt
     )
 
   def clear(userId: Long)(implicit conn: Connection): Unit =

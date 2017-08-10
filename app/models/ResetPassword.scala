@@ -1,5 +1,6 @@
 package models
 
+import java.time.Instant
 import anorm._
 import anorm.SqlParser
 
@@ -16,7 +17,7 @@ case class ResetPassword(
   id: Option[ResetPasswordId] = None,
   storeUserId: Long,
   token: Long,
-  resetTime: Long
+  resetTime: Instant
 )
 
 @Singleton
@@ -29,19 +30,19 @@ class ResetPasswordRepo @Inject() (
     SqlParser.get[Option[Long]]("reset_password.reset_password_id") ~
     SqlParser.get[Long]("reset_password.store_user_id") ~
     SqlParser.get[Long]("reset_password.token") ~
-    SqlParser.get[java.util.Date]("reset_password.reset_time") map {
+    SqlParser.get[java.time.Instant]("reset_password.reset_time") map {
       case id~storeUserId~token~resetTime =>
-        ResetPassword(id.map {ResetPasswordId.apply}, storeUserId, token, resetTime.getTime)
+        ResetPassword(id.map {ResetPasswordId.apply}, storeUserId, token, resetTime)
     }
   }
 
   def createNew(storeUserId: Long)(implicit conn: Connection): ResetPassword = createNew(
     storeUserId,
-    System.currentTimeMillis,
+    Instant.now(),
     createToken()
   )
 
-  def createNew(storeUserId: Long, now: Long, token: Long)(implicit conn: Connection): ResetPassword = {
+  def createNew(storeUserId: Long, now: Instant, token: Long)(implicit conn: Connection): ResetPassword = {
     SQL(
       """
       insert into reset_password (reset_password_id, store_user_id, token, reset_time)
@@ -53,7 +54,7 @@ class ResetPasswordRepo @Inject() (
     ).on(
       'storeUserId -> storeUserId,
       'token ->token,
-      'resetTime -> new java.sql.Timestamp(now)
+      'resetTime -> now
     ).executeUpdate()
 
     val id = ResetPasswordId(

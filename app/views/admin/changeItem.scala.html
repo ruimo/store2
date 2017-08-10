@@ -7,10 +7,11 @@
   loginSession: LoginSession,
   localeInfoRepo: LocaleInfoRepo,
   lang: Lang,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
-@import org.joda.time.format.DateTimeFormat
+@import java.time.format.DateTimeFormatter
 @import helper._
 
 @fileUpload(id: Long, idx: Int) = {
@@ -412,7 +413,7 @@
           @e._1.name
         </td>
         <td>
-          @DateTimeFormat.forPattern(Messages("site.item.date.format")).print(e._2.created)
+          @DateTimeFormatter.ofPattern(Messages("site.item.date.format")).format(e._2.created)
         </td>
       </tr>
     }

@@ -29,7 +29,7 @@ class Qa @Inject() (
   implicit val db: Database,
   implicit val siteRepo: SiteRepo,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
-) extends MessagesAbstractController(cc) {
+) extends MessagesAbstractController(cc) with I18n {
   def qaSiteForm(implicit mp: MessagesProvider) = Form(
     mapping(
       "command" -> text,
@@ -75,9 +75,9 @@ class Qa @Inject() (
     }.getOrElse(jaForm)
 
     request.acceptLanguages.head match {
-      case japanese =>
+      case `japanese` =>
         Ok(views.html.qaJa(form))
-      case japan =>
+      case `japan` =>
         Ok(views.html.qaJa(form))
         
       case _ =>
@@ -120,9 +120,9 @@ class Qa @Inject() (
       ).discardingErrors
 
       request.acceptLanguages.head match {
-        case japanese =>
+        case `japanese` =>
           Ok(views.html.qaSiteJa(site, form, sanitize(backLink)))
-        case japan =>
+        case `japan` =>
           Ok(views.html.qaSiteJa(site, form, sanitize(backLink)))
         
         case _ =>

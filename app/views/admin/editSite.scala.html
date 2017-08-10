@@ -1,7 +1,8 @@
 @(sites: Seq[Site])(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
-  shoppingCartItemRepo: ShoppingCartItemRepo
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
 )
 
 @main(Messages("editSiteTitle"), Some(loginSession), contentCssClass = "adminContents") {

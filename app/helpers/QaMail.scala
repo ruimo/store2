@@ -8,20 +8,23 @@ import play.api.libs.concurrent.Akka
 import play.api.Play.current
 
 import scala.concurrent.duration._
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import play.api.i18n.{Messages, MessagesProvider}
 import javax.inject._
 
 import akka.actor.ActorSystem
+import play.api.Configuration
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class QaMail @Inject() (
   system: ActorSystem, mailerClient: MailerClient,
-  orderNotificationRepo: OrderNotificationRepo
+  orderNotificationRepo: OrderNotificationRepo,
+  conf: Configuration,
+  implicit val ec: ExecutionContext
 ) extends HasLogger {
-  val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
-  val from = Play.current.configuration.getString("user.registration.email.from").get
+  val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
+  val from = conf.get[String]("user.registration.email.from")
 
   def send(qa: QaEntry)(
     implicit conn: Connection, mp: MessagesProvider

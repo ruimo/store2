@@ -1,5 +1,6 @@
 package models
 
+import java.time.Instant
 import java.sql.Connection
 
 trait CreateItemInquiryReservation {
@@ -21,7 +22,7 @@ case class CreateItemInquiry(
 ) extends CreateItemInquiryReservation {
   def save(user: StoreUser)(implicit conn: Connection): ItemInquiry = {
     val inq = ItemInquiry.createNew(
-      siteId, ItemId(itemId), user.id.get, ItemInquiryType.QUERY, name, email, System.currentTimeMillis
+      siteId, ItemId(itemId), user.id.get, ItemInquiryType.QUERY, name, email, Instant.now()
     )
 
     ItemInquiryField.createNew(inq.id.get, Map('Message -> message))
@@ -44,7 +45,7 @@ case class CreateItemReservation(
 ) extends CreateItemInquiryReservation {
   def save(user: StoreUser)(implicit conn: Connection): ItemInquiry = {
     val inq = ItemInquiry.createNew(
-      siteId, ItemId(itemId), user.id.get, ItemInquiryType.RESERVATION, name, email, System.currentTimeMillis
+      siteId, ItemId(itemId), user.id.get, ItemInquiryType.RESERVATION, name, email, Instant.now()
     )
 
     ItemInquiryField.createNew(inq.id.get, Map('Message -> message))

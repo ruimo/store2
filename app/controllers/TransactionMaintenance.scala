@@ -2,6 +2,7 @@ package controllers
 
 import play.Logger
 
+import helpers.Forms._
 import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.i18n.{Lang, Messages, MessagesProvider}
 import play.api.data.Forms._
@@ -45,8 +46,8 @@ class TransactionMaintenance @Inject() (
 
   def shippingDeliveryDateForm(implicit mp: MessagesProvider) = Form(
     mapping(
-      "shippingDate" -> localDateTime(Messages("shippingDateFormat")),
-      "deliveryDate" -> localDateTime(Messages("deliveryDateFormat"))
+      "shippingDate" -> instant(Messages("shippingDateFormat")),
+      "deliveryDate" -> instant(Messages("deliveryDateFormat"))
     )(ShippingDeliveryDate.apply)(ShippingDeliveryDate.unapply)
   )
 

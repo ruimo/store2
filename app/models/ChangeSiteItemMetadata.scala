@@ -2,7 +2,7 @@ package models
 
 import org.joda.time.DateTime
 import java.sql.Connection
-import java.time.LocalDateTime
+import java.time.Instant
 
 case class ChangeSiteItemMetadataTable(
   siteItemMetadata: Seq[ChangeSiteItemMetadata]
@@ -15,7 +15,7 @@ case class ChangeSiteItemMetadataTable(
 }
 
 case class ChangeSiteItemMetadata(
-  id: Long, siteId: Long, metadataType: Int, metadata: Long, validUntil: LocalDateTime
+  id: Long, siteId: Long, metadataType: Int, metadata: Long, validUntil: Instant
 )(
   implicit siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) {

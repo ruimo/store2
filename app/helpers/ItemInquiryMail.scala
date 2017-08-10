@@ -11,21 +11,24 @@ import play.api.Play.current
 
 import scala.concurrent.duration._
 import play.api.i18n.{Messages, MessagesProvider}
-import play.api.libs.concurrent.Execution.Implicits._
 import play.api.libs.mailer._
 import akka.actor._
 import javax.inject._
 
 import play.api.libs.mailer._
+import scala.concurrent.ExecutionContext
+import play.api.Configuration
 
 @Singleton
 class ItemInquiryMail @Inject() (
   system: ActorSystem, mailerClient: MailerClient,
   siteItemRepo: SiteItemRepo,
-  orderNotificationRepo: OrderNotificationRepo
+  orderNotificationRepo: OrderNotificationRepo,
+  conf: Configuration,
+  implicit val ec: ExecutionContext
 ) extends HasLogger {
-  val disableMailer = Play.current.configuration.getBoolean("disable.mailer").getOrElse(false)
-  val from = Play.current.configuration.getString("user.registration.email.from").get
+  val disableMailer = conf.getOptional[Boolean]("disable.mailer").getOrElse(false)
+  val from = conf.get[String]("user.registration.email.from")
 
   def send(
     user: StoreUser, inq: ItemInquiry, fields: immutable.Map[Symbol, String], locale: LocaleInfo

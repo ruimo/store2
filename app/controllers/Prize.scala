@@ -25,7 +25,7 @@ class Prize @Inject() (
   prizeMail: PrizeMail,
   implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
-) extends MessagesAbstractController(cc) {
+) extends MessagesAbstractController(cc) with I18n {
   def sexForDropdown(implicit mp: MessagesProvider): Seq[(String, String)] = Seq(
     (Sex.MALE.ordinal.toString, Messages("sex." + Sex.MALE)),
     (Sex.FEMALE.ordinal.toString, Messages("sex." + Sex.FEMALE))
@@ -65,9 +65,9 @@ class Prize @Inject() (
     }
 
     val (countryCode, prefectures, lookupPref) = request.acceptLanguages.head match {
-      case japanese =>
+      case `japanese` =>
         (CountryCode.JPN, Address.JapanPrefectures, JapanPrefecture.byIndex _)
-      case japan =>
+      case `japan` =>
         (CountryCode.JPN, Address.JapanPrefectures, JapanPrefecture.byIndex _)
       case _ =>
         (CountryCode.JPN, Address.JapanPrefectures, JapanPrefecture.byIndex _)
@@ -90,9 +90,9 @@ class Prize @Inject() (
 
     Ok(
       request.acceptLanguages.head match {
-        case japanese =>
+        case `japanese` =>
           views.html.prizeJa(itemName, user, prefectures, prizeFormJa.fill(model), sexForDropdown)
-        case japan =>
+        case `japan` =>
           views.html.prizeJa(itemName, user, prefectures, prizeFormJa.fill(model), sexForDropdown)
         case _ =>
           views.html.prizeJa(itemName, user, prefectures, prizeFormJa.fill(model), sexForDropdown)
