@@ -1,0 +1,15 @@
+version: '3'
+services:
+  web:
+    image: "ruimo/store2"
+    ports:
+     - "9000:9000"
+    volumes:
+     - /logs:/var/applog
+    environment:
+     - APP_SECRET
+  postgres:
+    image: ruimo/df-ub1604-pgsql96x
+    volumes:
+     - /var/pg_db:/var/pgsql
+     - /etc/localtime:/etc/localtime:ro
