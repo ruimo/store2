@@ -1,0 +1,129 @@
+<script>
+    var itemQueryMenu = {
+        applyCurrentCondition: function() {
+            if (currentCondition.ccs) {
+                $.each(currentCondition.ccs.split('&'), function(i, g) {
+                    $.each(g.split(','), function(j, ccs) {
+                        var cb = $(".categoryConditionItem[data-category-code='" + ccs + "'] .categoryConditionCb");
+                        cb.prop('checked', true);
+                        cb.button("refresh");
+                    });
+                });
+            }
+            else {
+                $(".categoryConditionCb").each(function(i, e) {
+                    var cb = $(e);
+                    cb.prop('checked', false);
+                    cb.button("refresh");
+                });
+            }
+        }
+    };
+
+    var onCategoryNameGot = function(data) {
+        var map = {};
+        $.each(data.categoryNames, function(i, e) {
+            map[e.categoryCode] = e.categoryName;
+        });
+
+        $(".categoryConditionItem").each(function(i, e) {
+            var p = $(e);
+            var cc = p.attr("data-category-code");
+            var cn = map[cc];
+            var lbl = p.find(".categoryName");
+            $(lbl).text(cn ? cn : cc);
+        });        
+    };
+
+    var createMenu = function() {
+        $("#categoryCondition").accordion({
+            heightStyle: "content",
+            collapsible: true
+        });
+        $(".categoryConditionCb").button();
+        itemQueryMenu.applyCurrentCondition();
+        onConditionChanged = itemQueryMenu.applyCurrentCondition;
+        $(".categoryConditionCb").change(function() {
+            var condGroups = "";
+
+            $(".categoryConditionGroup").each(function(i, g) {
+                var conds = "";
+
+                $(g).find(".categoryConditionCb").each(function(j, e) {
+                    var cb = $(e);
+                    if (cb.prop('checked')) {
+                        if (conds.length !== 0) {
+                            conds += ",";
+                        }
+                        conds += cb.parent().attr("data-category-code");
+                    }
+                });
+
+                if (conds.length !== 0) {
+                    if (condGroups.length !== 0) {
+                        condGroups += "&";
+                    }
+                    condGroups += conds;
+                }
+            });
+  
+            currentCondition.ccs = condGroups;
+            changeCategories();
+            pushCurrentState();
+        });
+    };
+
+    $(function() {
+        var categoryCodes = [];
+        $(".categoryConditionItem").each(function(i, e) {
+            var p = $(e);
+            var cc = p.attr("data-category-code");
+            categoryCodes.push(cc);
+        });
+
+        $.ajax({
+            type: 'post',
+            url: jsRoutes.controllers.ItemQuery.categoryNameJson().url,
+            data: JSON.stringify({categoryCodes: categoryCodes}),
+            contentType: 'application/json',
+            dataType: 'json',
+            cache: false,
+            success: function(data, status, jqXhr) {
+                onCategoryNameGot(data);
+                createMenu();
+            },
+            error: function(jqXhr, status, error) {
+                createMenu();
+            }
+        });
+    });
+</script>
+
+<!-- Specify category id for the value of input[type="checkbox"]. -->
+<div id="categoryCondition">
+  <h3 class="category01">カテゴリ</h3>
+  <div class="categoryConditionGroup">
+    <div class="categoryConditionItem" data-category-code="10000000">
+      <input type="checkbox" class="categoryConditionCb" id="categoryConditionItem10000000">
+      <label for="categoryConditionItem10000000" class="categoryName"></label>
+    </div>
+    
+    <div class="categoryConditionItem" data-category-code="10000001">
+      <input type="checkbox" class="categoryConditionCb" id="categoryConditionItem1000001">
+      <label for="categoryConditionItem1000001" class="categoryName"></label>
+    </div>
+  </div>
+  
+  <h3 class="category02">色</h3>
+  <div class="categoryConditionGroup">
+    <div class="categoryConditionItem" data-category-code="2000000">
+      <input type="checkbox" class="categoryConditionCb" id="categoryConditionItem2000000">
+      <label for="categoryConditionItem2000000" class="categoryName"></label>
+    </div>
+    
+    <div class="categoryConditionItem" data-category-code="2000001">
+      <input type="checkbox" class="categoryConditionCb" id="categoryConditionItem2000001">
+      <label for="categoryConditionItem2000001" class="categoryName"></label>
+    </div>
+  </div>
+</div>

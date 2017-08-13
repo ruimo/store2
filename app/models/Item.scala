@@ -85,72 +85,70 @@ class ItemRepo @Inject() (
     }
   }
 
-  val itemParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~siteRepo.simple map {
+  val itemParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~SiteRepo.simple map {
     case item~itemName~itemDescription~itemPrice~site => (
       item, itemName, itemDescription, itemPrice, site
     )
   }
 
-  val itemListParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceHistoryRepo.simple~siteRepo.simple map {
+  val itemListParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceHistoryRepo.simple~SiteRepo.simple map {
     case item~itemName~itemDescription~itemPrice~site => (
       item, itemName, itemDescription, itemPrice, site
     )
   }
 
   val itemListForMaintenanceParser = 
-    simple~(itemNameRepo.simple ?)~(itemDescriptionRepo.simple ?)~(itemPriceHistoryRepo.simple ?)~(siteRepo.simple ?) map {
+    simple~(itemNameRepo.simple ?)~(itemDescriptionRepo.simple ?)~(itemPriceHistoryRepo.simple ?)~(SiteRepo.simple ?) map {
       case item~itemName~itemDescription~itemPrice~site => (
         item, itemName, itemDescription, itemPrice, site
       )
     }
 
-  def apply(id: Long): Item = db.withConnection { implicit conn =>
+  def apply(id: Long)(implicit conn: Connection): Item =
     SQL(
       "select * from item where item_id = {id}"
     ).on(
       'id -> id
     ).as(simple.single)
-  }
 
   def itemInfo(
     id: Long, locale: LocaleInfo,
-    now: Long = System.currentTimeMillis
+    now: Instant = Instant.now()
+  )(
+    implicit conn: Connection
   ): (Item, ItemName, ItemDescription, Site, ItemPriceHistory, Map[ItemNumericMetadataType, ItemNumericMetadata]) = {
-    db.withConnection { implicit conn =>
-      val item = SQL(
-        """
-        select * from item
-        inner join item_name on item.item_id = item_name.item_id
-        inner join item_description on item.item_id = item_description.item_id
-        inner join item_price on item.item_id = item_price.item_id
-        inner join site_item on item.item_id = site_item.item_id
-        inner join site on site_item.site_id = site.site_id
-        where item.item_id= {id}
-        and item_name.locale_id = {localeId}
-        and item_description.locale_id = {localeId}
-        order by item_name.item_name
-        """
-      ).on(
-        'id -> id,
-        'localeId -> locale.id
-      ).as(
-        itemParser.single
-      )
+    val item = SQL(
+      """
+      select * from item
+      inner join item_name on item.item_id = item_name.item_id
+      inner join item_description on item.item_id = item_description.item_id
+      inner join item_price on item.item_id = item_price.item_id
+      inner join site_item on item.item_id = site_item.item_id
+      inner join site on site_item.site_id = site.site_id
+      where item.item_id= {id}
+      and item_name.locale_id = {localeId}
+      and item_description.locale_id = {localeId}
+      order by item_name.item_name
+      """
+    ).on(
+      'id -> id,
+      'localeId -> locale.id
+    ).as(
+      itemParser.single
+    )
 
-      val itemId = item._1.id.get
-      val itemPriceId = item._4.id.get
-      val priceHistory = itemPriceHistoryRepo.at(itemPriceId, now)
-      val metadata = ItemNumericMetadata.allById(itemId)
+    val itemId = item._1.id.get
+    val itemPriceId = item._4.id.get
+    val priceHistory = itemPriceHistoryRepo.at(itemPriceId, now)
+    val metadata = ItemNumericMetadata.allById(itemId)
 
-      (item._1, item._2, item._3, item._5, priceHistory, metadata)
-    }
+    (item._1, item._2, item._3, item._5, priceHistory, metadata)
   }
 
-  def createNew(category: Category): Item = db.withConnection { implicit conn =>
+  def createNew(category: Category)(implicit conn: Connection): Item =
     createNew(category.id.get)
-  }
 
-  def createNew(categoryId: Long): Item = db.withConnection { implicit conn =>
+  def createNew(categoryId: Long)(implicit conn: Connection): Item = {
     SQL(
       """
       insert into item values (
@@ -169,14 +167,14 @@ class ItemRepo @Inject() (
   def listForMaintenance(
     siteUser: Option[SiteUser] = None, locale: LocaleInfo, queryString: QueryString,
     page: Int = 0, pageSize: Int = 10,
-    now: Long = System.currentTimeMillis,
+    now: Instant = Instant.now(),
     orderBy: OrderBy = ItemListDefaultOrderBy
-  ): PagedRecords[(
+  )(implicit conn: Connection): PagedRecords[(
     Item, Option[ItemName], Option[ItemDescription], Option[Site], Option[ItemPriceHistory],
     Map[ItemNumericMetadataType, ItemNumericMetadata],
     Option[Map[SiteItemNumericMetadataType, SiteItemNumericMetadata]],
     Map[ItemTextMetadataType, ItemTextMetadata]
-  )] = db.withConnection { implicit conn =>
+  )] = {
     val sqlBody = """
       left join item_name on item.item_id = item_name.item_id and item_name.locale_id = {localeId}
       left join item_description on item.item_id = item_description.item_id and item_description.locale_id = {localeId}
@@ -216,7 +214,7 @@ class ItemRepo @Inject() (
         'localeId -> locale.id,
         'pageSize -> pageSize,
         'offset -> page * pageSize,
-        'now -> new Timestamp(now)
+        'now -> now
       ).as(
         itemListForMaintenanceParser *
       ).map {e => {
@@ -235,7 +233,7 @@ class ItemRepo @Inject() (
     val count = applyQueryString(queryString, countSql)
       .on(
         'localeId -> locale.id,
-        'now -> new Timestamp(now)
+        'now -> now
       ).as(
         SqlParser.scalar[Long].single
       )
@@ -252,15 +250,15 @@ class ItemRepo @Inject() (
     categoryCodes: CategoryCodeSearchCondition = CategoryCodeSearchCondition.Null,
     siteId: Option[Long] = None,
     page: Int = 0, pageSize: Int = 10,
-    now: Long = System.currentTimeMillis,
+    now: Instant = Instant.now(),
     orderBy: OrderBy = ItemListDefaultOrderBy
-  ): PagedRecords[(
+  )(implicit conn: Connection): PagedRecords[(
     Item, ItemName, ItemDescription, Site, ItemPriceHistory,
     Map[ItemNumericMetadataType, ItemNumericMetadata],
     Map[SiteItemNumericMetadataType, SiteItemNumericMetadata],
     Map[ItemTextMetadataType, ItemTextMetadata],
     Map[SiteItemTextMetadataType, SiteItemTextMetadata]
-  )] = db.withConnection { implicit conn =>
+  )] = {
     val sqlBody = """
       inner join item_name on item.item_id = item_name.item_id
       inner join item_description on item.item_id = item_description.item_id
@@ -310,7 +308,7 @@ class ItemRepo @Inject() (
         'localeId -> locale.id,
         'pageSize -> pageSize,
         'offset -> page * pageSize,
-        'now -> new Timestamp(now)
+        'now -> now
       ).as(
         itemListParser *
       ).map {e => {
@@ -330,7 +328,7 @@ class ItemRepo @Inject() (
     val count = applyQueryString(queryString, countSql)
       .on(
         'localeId -> locale.id,
-        'now -> new Timestamp(now)
+        'now -> now
       ).as(
         SqlParser.scalar[Long].single
       )
@@ -416,84 +414,77 @@ class ItemRepo @Inject() (
 
   def listBySite(
     site: Site, locale: LocaleInfo, queryString: String, page: Int = 0, pageSize: Int = 10,
-    now: Long = System.currentTimeMillis
-  ): Seq[
+    now: Instant = Instant.now()
+  )(implicit conn: Connection): Seq[
     (Item, ItemName, 
      ItemDescription,
      ItemPrice,
      ItemPriceHistory,
      Map[ItemNumericMetadataType, ItemNumericMetadata])
-  ] = db.withConnection { implicit conn =>
+  ] =
     listBySiteId(site.id.get, locale, queryString, page, pageSize, now)
-  }
 
   def listBySiteId(
     siteId: Long, locale: LocaleInfo, queryString: String, page: Int = 0, pageSize: Int = 10,
-    now: Long = System.currentTimeMillis
-  ): Seq[
+    now: Instant = Instant.now()
+  )(implicit conn: Connection): Seq[
     (Item, ItemName, ItemDescription, ItemPrice, ItemPriceHistory, Map[ItemNumericMetadataType, ItemNumericMetadata])
-  ]  = db.withConnection { implicit conn =>
+  ] = SQL(
+    """
+    select * from item
+    inner join item_name on item.item_id = item_name.item_id
+    inner join item_description on item.item_id = item_description.item_id
+    inner join item_price on item.item_id = item_price.item_id
+    inner join site_item on item.item_id = site_item.item_id and item_price.site_id = site_item.site_id
+    inner join site on site.site_id = site_item.site_id
+    where item_name.locale_id = {localeId}
+    and item_description.locale_id = {localeId}
+    and item_description.site_id = {siteId}
+    and item_price.site_id = {siteId}
+    and site_item.site_id = {siteId}
+    and (item_name.item_name like {query} or item_description.description like {query})
+    order by item_name.item_name
+    limit {pageSize} offset {offset}
+    """
+  ).on(
+    'localeId -> locale.id,
+    'siteId -> siteId,
+    'query -> ("%" + queryString + "%"),
+    'pageSize -> pageSize,
+    'offset -> page * pageSize
+  ).as(
+    itemParser *
+  ).map { e =>
+    val itemId = e._1.id.get
+    val itemPriceId = e._4.id.get
+    val priceHistory = itemPriceHistoryRepo.at(itemPriceId, now)
+    val metadata = ItemNumericMetadata.allById(itemId)
+    (e._1, e._2, e._3, e._4, priceHistory, metadata)
+  }
+
+  def createItem(prototype: CreateItem, hide: Boolean)(implicit conn: Connection) {
+    val item = createNew(prototype.categoryId)
+    val name = itemNameRepo.createNew(item, Map(localeInfoRepo(prototype.localeId) -> prototype.itemName))
+    val site = siteRepo(prototype.siteId)
+    val desc = itemDescriptionRepo.createNew(item, site, prototype.description)
+    val price = itemPriceRepo.createNew(item, site)
+    val tax = taxRepo(prototype.taxId)
+    val priceHistory = itemPriceHistoryRepo.createNew(price, tax, currencyRegistry(prototype.currencyId), prototype.price, prototype.listPrice, prototype.costPrice, Until.EverInstant)
+    val siteItem = siteItemRepo.createNew(site, item)
+    if (prototype.isCoupon)
+      Coupon.updateAsCoupon(item.id.get)
+    if (hide) {
+      siteItemNumericMetadataRepo.createNew(site.id.get, item.id.get, SiteItemNumericMetadataType.HIDE, 1)
+    }
+  }
+
+  def changeCategory(itemId: ItemId, categoryId: Long)(implicit conn: Connection) {
     SQL(
-      """
-      select * from item
-      inner join item_name on item.item_id = item_name.item_id
-      inner join item_description on item.item_id = item_description.item_id
-      inner join item_price on item.item_id = item_price.item_id
-      inner join site_item on item.item_id = site_item.item_id and item_price.site_id = site_item.site_id
-      inner join site on site.site_id = site_item.site_id
-      where item_name.locale_id = {localeId}
-      and item_description.locale_id = {localeId}
-      and item_description.site_id = {siteId}
-      and item_price.site_id = {siteId}
-      and site_item.site_id = {siteId}
-      and (item_name.item_name like {query} or item_description.description like {query})
-      order by item_name.item_name
-      limit {pageSize} offset {offset}
-      """
+      "update item set category_id = {categoryId} where item_id = {itemId}"
     ).on(
-      'localeId -> locale.id,
-      'siteId -> siteId,
-      'query -> ("%" + queryString + "%"),
-      'pageSize -> pageSize,
-      'offset -> page * pageSize
-    ).as(
-      itemParser *
-    ).map { e => {
-      val itemId = e._1.id.get
-      val itemPriceId = e._4.id.get
-      val priceHistory = itemPriceHistoryRepo.at(itemPriceId, now)
-      val metadata = ItemNumericMetadata.allById(itemId)
-      (e._1, e._2, e._3, e._4, priceHistory, metadata)
-    }}
-  }
-
-  def createItem(prototype: CreateItem, hide: Boolean) {
-    db.withConnection { implicit conn =>
-      val item = createNew(prototype.categoryId)
-      val name = itemNameRepo.createNew(item, Map(localeInfoRepo(prototype.localeId) -> prototype.itemName))
-      val site = siteRepo(prototype.siteId)
-      val desc = itemDescriptionRepo.createNew(item, site, prototype.description)
-      val price = itemPriceRepo.createNew(item, site)
-      val tax = taxRepo(prototype.taxId)
-      val priceHistory = itemPriceHistoryRepo.createNew(price, tax, currencyRegistry(prototype.currencyId), prototype.price, prototype.listPrice, prototype.costPrice, Until.EverInstant)
-      val siteItem = siteItemRepo.createNew(site, item)
-      if (prototype.isCoupon)
-        Coupon.updateAsCoupon(item.id.get)
-      if (hide) {
-        siteItemNumericMetadataRepo.createNew(site.id.get, item.id.get, SiteItemNumericMetadataType.HIDE, 1)
-      }
-    }
-  }
-
-  def changeCategory(itemId: ItemId, categoryId: Long) {
-    db.withConnection { implicit conn =>
-      SQL(
-        "update item set category_id = {categoryId} where item_id = {itemId}"
-      ).on(
-        'itemId -> itemId.id,
-        'categoryId -> categoryId
-      ).executeUpdate()
-    }
+      'itemId -> itemId.id,
+      'categoryId -> categoryId
+    ).executeUpdate()
   }
 }
 
@@ -696,7 +687,6 @@ class ItemDescriptionRepo @Inject() (
 
 @Singleton
 class ItemPriceRepo @Inject() (
-  itemPriceRepo: ItemPriceRepo
 ) {
   val simple = {
     SqlParser.get[Option[Long]]("item_price.item_price_id") ~
@@ -732,7 +722,7 @@ class ItemPriceRepo @Inject() (
       'itemId -> item.id.get.id,
       'siteId -> site.id.get
     ).as(
-      itemPriceRepo.simple.singleOpt
+      simple.singleOpt
     )
   }
 
@@ -766,8 +756,9 @@ class ItemPriceHistoryRepo @Inject() (
   }
 
   def createNew(
-    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal, listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: Instant
-  ): ItemPriceHistory = db.withConnection { implicit conn =>
+    itemPrice: ItemPrice, tax: Tax, currency: CurrencyInfo, unitPrice: BigDecimal,
+    listPrice: Option[BigDecimal] = None, costPrice: BigDecimal, validUntil: Instant
+  )(implicit conn: Connection): ItemPriceHistory = {
     SQL(
       """
       insert into item_price_history(
@@ -794,69 +785,65 @@ class ItemPriceHistoryRepo @Inject() (
 
   def update(
     id: Long, taxId: Long, currencyId: Long, unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: Instant
-  ) {
-    db.withConnection { implicit conn =>
-      SQL(
-        """
-        update item_price_history
-        set tax_id = {taxId},
-        currency_id = {currencyId},
-        unit_price = {unitPrice},
-        list_price = {listPrice},
-        cost_price = {costPrice},
-        valid_until = {validUntil}
-        where item_price_history_id = {id}
-        """
-      ).on(
-        'taxId -> taxId,
-        'currencyId -> currencyId,
-        'unitPrice -> unitPrice.bigDecimal,
-        'listPrice -> listPrice.map(_.bigDecimal),
-        'costPrice -> costPrice.bigDecimal,
-        'validUntil -> validUntil,
-        'id -> id
-      ).executeUpdate()
-    }
+  )(implicit conn: Connection) {
+    SQL(
+      """
+      update item_price_history
+      set tax_id = {taxId},
+      currency_id = {currencyId},
+      unit_price = {unitPrice},
+      list_price = {listPrice},
+      cost_price = {costPrice},
+      valid_until = {validUntil}
+      where item_price_history_id = {id}
+      """
+    ).on(
+      'taxId -> taxId,
+      'currencyId -> currencyId,
+      'unitPrice -> unitPrice.bigDecimal,
+      'listPrice -> listPrice.map(_.bigDecimal),
+      'costPrice -> costPrice.bigDecimal,
+      'validUntil -> validUntil,
+      'id -> id
+    ).executeUpdate()
   }
 
   def add(
     itemId: ItemId, siteId: Long, taxId: Long, currencyId: Long, 
     unitPrice: BigDecimal, listPrice: Option[BigDecimal], costPrice: BigDecimal, validUntil: Instant
-  ) {
-    db.withConnection { implicit conn =>
-      val priceId = SQL(
-        """
-        select item_price_id from item_price
-        where site_id = {siteId}
-        and item_id = {itemId}
-        """
-      ).on(
-        'siteId -> siteId,
-        'itemId -> itemId.id
-      ).as(SqlParser.scalar[Long].single)
+  )(implicit conn: Connection) {
+    val priceId = SQL(
+      """
+      select item_price_id from item_price
+      where site_id = {siteId}
+      and item_id = {itemId}
+      """
+    ).on(
+      'siteId -> siteId,
+      'itemId -> itemId.id
+    ).as(SqlParser.scalar[Long].single)
 
-      SQL(
-        """
-        insert into item_price_history
-        (item_price_history_id, item_price_id, tax_id, currency_id, unit_price, list_price, cost_price, valid_until)
-        values (
-          (select nextval('item_price_history_seq')),
-          {itemPriceId}, {taxId}, {currencyId}, {unitPrice}, {listPrice}, {costPrice}, {validUntil}
-        )
-        """
-      ).on(
-        'itemPriceId -> priceId,
-        'taxId -> taxId,
-        'currencyId -> currencyId,
-        'unitPrice -> unitPrice.bigDecimal,
-        'listPrice -> listPrice.map(_.bigDecimal),
-        'costPrice -> costPrice.bigDecimal,
-        'validUntil -> validUntil
-      ).executeUpdate()
-    }
+    SQL(
+      """
+      insert into item_price_history
+      (item_price_history_id, item_price_id, tax_id, currency_id, unit_price, list_price, cost_price, valid_until)
+      values (
+        (select nextval('item_price_history_seq')),
+        {itemPriceId}, {taxId}, {currencyId}, {unitPrice}, {listPrice}, {costPrice}, {validUntil}
+      )
+      """
+    ).on(
+      'itemPriceId -> priceId,
+      'taxId -> taxId,
+      'currencyId -> currencyId,
+      'unitPrice -> unitPrice.bigDecimal,
+      'listPrice -> listPrice.map(_.bigDecimal),
+      'costPrice -> costPrice.bigDecimal,
+      'validUntil -> validUntil
+    ).executeUpdate()
   }
 
-  def list(itemPrice: ItemPrice)(implicit conn: Connection): Seq[ItemPriceHistory] = db.withConnection { implicit conn =>
+  def list(itemPrice: ItemPrice)(implicit conn: Connection): Seq[ItemPriceHistory] =
     SQL(
       "select * from item_price_history where item_price_id = {itemPriceId}"
     ).on(
@@ -864,17 +851,14 @@ class ItemPriceHistoryRepo @Inject() (
     ).as(
       simple *
     )
-  }
 
   def at(
-    itemPriceId: Long, now: Long = System.currentTimeMillis
-  ): ItemPriceHistory = db.withConnection { implicit conn =>
-    getAt(itemPriceId, now).get
-  }
+    itemPriceId: Long, now: Instant = Instant.now()
+  )(implicit conn: Connection): ItemPriceHistory = getAt(itemPriceId, now).get
 
   def getAt(
-    itemPriceId: Long, now: Long = System.currentTimeMillis
-  ): Option[ItemPriceHistory] = db.withConnection { implicit conn =>
+    itemPriceId: Long, now: Instant = Instant.now()
+  )(implicit conn: Connection): Option[ItemPriceHistory] =
     SQL(
       """
       select * from item_price_history
@@ -885,15 +869,14 @@ class ItemPriceHistoryRepo @Inject() (
       """
     ).on(
       'itemPriceId -> itemPriceId,
-      'now -> new java.sql.Timestamp(now)
+      'now -> now
     ).as(
       simple.singleOpt
     )
-  }
 
   def atBySiteAndItem(
-    siteId: Long, itemId: ItemId, now: Long = System.currentTimeMillis
-  ): ItemPriceHistory = db.withConnection { implicit conn =>
+    siteId: Long, itemId: ItemId, now: Instant = Instant.now()
+  )(implicit conn: Connection): ItemPriceHistory =
     SQL(
       """
       select * from item_price_history
@@ -908,21 +891,20 @@ class ItemPriceHistoryRepo @Inject() (
     ).on(
       'itemId -> itemId.id,
       'siteId -> siteId,
-      'now -> new java.sql.Timestamp(now)
+      'now -> now
     ).as(
       simple.singleOpt
     ).getOrElse(
       throw new RuntimeException(
-        "No rows are found in item_price. itemId = " + itemId + ", siteId = " + siteId + ", time = " + new java.sql.Date(now)
+        "No rows are found in item_price. itemId = " + itemId + ", siteId = " + siteId + ", time = " + now
       )
     )
-  }
 
   val withItemPrice = itemPriceRepo.simple~simple map {
     case price~priceHistory => (price, priceHistory)
   }
 
-  def listByItemId(itemId: ItemId): Seq[(ItemPrice, ItemPriceHistory)] = db.withConnection { implicit conn =>
+  def listByItemId(itemId: ItemId)(implicit conn: Connection): Seq[(ItemPrice, ItemPriceHistory)] =
     SQL(
       """
       select * from item_price_history
@@ -936,27 +918,24 @@ class ItemPriceHistoryRepo @Inject() (
     ).as(
       withItemPrice *
     ).toSeq
-  }
 
-  def remove(itemId: ItemId, siteId: Long, id: Long) {
-    db.withConnection { implicit conn =>
-      SQL(
-        """
-        delete from item_price_history
-        where item_price_history_id = {id}
-        and (
-          select count(*) from item_price_history
-          inner join item_price on item_price_history.item_price_id = item_price.item_price_id
-          where item_price.item_id = {itemId}
-          and item_price.site_id = {siteId}
-        ) > 1
-        """
-      ).on(
-        'id -> id,
-        'itemId -> itemId.id,
-        'siteId -> siteId
-      ).executeUpdate()
-    }
+  def remove(itemId: ItemId, siteId: Long, id: Long)(implicit conn: Connection) {
+    SQL(
+      """
+      delete from item_price_history
+      where item_price_history_id = {id}
+      and (
+        select count(*) from item_price_history
+        inner join item_price on item_price_history.item_price_id = item_price.item_price_id
+        where item_price.item_id = {itemId}
+        and item_price.site_id = {siteId}
+      ) > 1
+      """
+    ).on(
+      'id -> id,
+      'itemId -> itemId.id,
+      'siteId -> siteId
+    ).executeUpdate()
   }
 }
 
@@ -1144,7 +1123,6 @@ object ItemTextMetadata {
 
 @Singleton
 class SiteItemNumericMetadataRepo @Inject() (
-  implicit val siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) {
   val simple = {
     SqlParser.get[Option[Long]]("site_item_numeric_metadata.site_item_numeric_metadata_id") ~
@@ -1201,7 +1179,7 @@ class SiteItemNumericMetadataRepo @Inject() (
     'metadataType -> metadataType.ordinal,
     'now -> new java.sql.Timestamp(now)
   ).as(
-    siteItemNumericMetadataRepo.simple.single
+    simple.single
   )
 
   def all(
@@ -1223,7 +1201,7 @@ class SiteItemNumericMetadataRepo @Inject() (
     'itemId -> itemId.id,
     'now -> new java.sql.Timestamp(now)
   ).as(
-    (siteItemNumericMetadataRepo.simple) *
+    simple *
   ).foldLeft(new immutable.HashMap[SiteItemNumericMetadataType, SiteItemNumericMetadata]) {
     (map, e) => map.updated(e.metadataType, e)
   }
@@ -1261,7 +1239,7 @@ class SiteItemNumericMetadataRepo @Inject() (
   ).on(
     'itemId -> itemId.id
   ).as(
-    siteItemNumericMetadataRepo.simple *
+    simple *
   )
 }
 
@@ -1400,7 +1378,6 @@ object SiteItemTextMetadata {
 class SiteItemRepo @Inject() (
   itemNameRepo: ItemNameRepo,
   siteRepo: SiteRepo,
-  siteItemRepo: SiteItemRepo,
   itemPriceRepo: ItemPriceRepo
 ) {
   val simple = {
@@ -1411,11 +1388,11 @@ class SiteItemRepo @Inject() (
     }
   }
 
-  val withSiteAndItemName = siteRepo.simple ~ itemNameRepo.simple map {
+  val withSiteAndItemName = SiteRepo.simple ~ itemNameRepo.simple map {
     case site~itemName => (site, itemName)
   }
 
-  val withSite = siteRepo.simple ~ siteItemRepo.simple map {
+  val withSite = SiteRepo.simple ~ simple map {
     case site~siteItem => (site, siteItem)
   }
 

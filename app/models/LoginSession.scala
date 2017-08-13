@@ -43,7 +43,6 @@ case class LoginSession(storeUser: StoreUser, siteUser: Option[SiteUser], expire
 @Singleton
 class LoginSessionRepo @Inject() (
   implicit storeUserRepo: StoreUserRepo,
-  loginSessionRepo: LoginSessionRepo,
   conf: Configuration
 ) {
   val loginUserKey = "loginUser"
@@ -62,7 +61,7 @@ class LoginSessionRepo @Inject() (
   )(implicit conn: Connection): Option[LoginSession] = {
     request.session.get(loginUserKey).flatMap {
       sessionString =>
-        val s = loginSessionRepo(sessionString)
+        val s = apply(sessionString)
         if (s.expireTime < now) None else Some(s)
     }
   }

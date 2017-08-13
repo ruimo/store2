@@ -7,7 +7,7 @@ case class ChangeItemCategory(
 ) (
   implicit itemRepo: ItemRepo
 ) {
-  def update(itemId: Long) {
+  def update(itemId: Long)(implicit conn: Connection) {
     itemRepo.changeCategory(ItemId(itemId), categoryId)
   }
 }

@@ -1,5 +1,6 @@
 package models
 
+import play.api.db.Database
 import javax.inject.Inject
 import javax.inject.Singleton
 import helpers.Cache

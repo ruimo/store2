@@ -136,7 +136,6 @@ case class ShoppingCartShipping(
 
 @Singleton
 class ShoppingCartItemRepo @Inject() (
-  shoppingCartItemRepo: ShoppingCartItemRepo,
   itemNameRepo: ItemNameRepo,
   itemDescriptionRepo: ItemDescriptionRepo,
   itemPriceRepo: ItemPriceRepo,
@@ -144,7 +143,8 @@ class ShoppingCartItemRepo @Inject() (
   itemPriceHistoryRepo: ItemPriceHistoryRepo,
   taxHistoryRepo: TaxHistoryRepo,
   itemPriceStrategyRepo: ItemPriceStrategyRepo,
-  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
+  siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo,
+  implicit val taxRepo: TaxRepo
 ) {
   val simple = {
     SqlParser.get[Option[Long]]("shopping_cart_item.shopping_cart_item_id") ~
@@ -256,7 +256,7 @@ class ShoppingCartItemRepo @Inject() (
     ).executeUpdate()
   }
 
-  val listParser = shoppingCartItemRepo.simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~siteRepo.simple map {
+  val listParser = simple~itemNameRepo.simple~itemDescriptionRepo.simple~itemPriceRepo.simple~SiteRepo.simple map {
     case cart~itemName~itemDescription~itemPrice~site => (
       cart, itemName, itemDescription, itemPrice, site
     )
@@ -277,9 +277,9 @@ class ShoppingCartItemRepo @Inject() (
 
   def listItemsForUser(
     locale: LocaleInfo, loginSession: LoginSession,
-    page: Int = 0, pageSize: Int = 100, now: Long = System.currentTimeMillis
+    page: Int = 0, pageSize: Int = 100, now: Instant = Instant.now()
   )(
-    implicit taxRepo: TaxRepo, conn: Connection
+    implicit conn: Connection
   ): (ShoppingCartTotal, Seq[ItemExpiredException]) = {
     val itemPriceStrategy: ItemPriceStrategy = itemPriceStrategyRepo(ItemPriceStrategyContext(loginSession))
 
@@ -330,7 +330,7 @@ class ShoppingCartItemRepo @Inject() (
   }
 
   def removeExpiredItems(
-    userId: Long, now: Long = System.currentTimeMillis
+    userId: Long, now: Instant = Instant.now()
   )(
     implicit conn: Connection
   ): Long = SQL(
@@ -348,7 +348,7 @@ class ShoppingCartItemRepo @Inject() (
     """
   ).on(
     'userId -> userId,
-    'now -> Instant.ofEpochMilli(now)
+    'now -> now
   ).executeUpdate()
 
   def changeQuantity(id: Long, userId: Long, quantity: Int)(implicit conn: Connection): Int = {

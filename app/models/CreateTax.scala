@@ -13,7 +13,7 @@ case class CreateTax(taxType: Int, localeId: Long, name: String, rate: BigDecima
   ): Unit = {
     val tax = taxRepo.createNew
     taxNameRepo.createNew(tax, localeInfoRepo(localeId), name)
-    taxHistoryRepo.createNew(tax, TaxType.byIndex(taxType), rate, date("9999-12-31").toInstant())
+    taxHistoryRepo.createNew(tax, TaxType.byIndex(taxType), rate, Until.EverInstant)
   }
 }
 

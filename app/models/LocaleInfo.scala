@@ -1,5 +1,6 @@
 package models
 
+import play.api.mvc.MessagesRequestHeader
 import play.api.db.Database
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,7 +34,6 @@ case class LocaleInfo(id: Long, lang: String, country: Option[String] = None) {
 
 @Singleton
 class LocaleInfoRepo @Inject() (
-  localeInfoRepo: LocaleInfoRepo,
   db: Database
 ) {
   lazy val Ja = apply(1L)
@@ -50,7 +50,7 @@ class LocaleInfoRepo @Inject() (
   lazy val registry: immutable.SortedMap[Long, LocaleInfo] = db.withConnection { implicit conn =>
     immutable.TreeMap(
       SQL("select * from locale")
-        .as(localeInfoRepo.simple *)
+        .as(simple *)
         .map(r => r.id -> r): _*
     )
   }
@@ -65,12 +65,12 @@ class LocaleInfoRepo @Inject() (
       byLangTable.get(Lang(lang.language))
     ).get
 
-  def localeTable(implicit mp: MessagesProvider): Seq[(String, String)] = registry.values.map {
+  def localeTable(implicit mp: MessagesRequestHeader): Seq[(String, String)] = registry.values.map {
     e => e.id.toString -> Messages("lang." + e.lang)
   }.toSeq
 
   def getDefault(implicit langs: List[Lang]): LocaleInfo = langs match {
-    case Seq() => localeInfoRepo.En
+    case Seq() => En
     case l::tail =>
       byLangTable.get(l).orElse {
         byLangTable.get(Lang(l.language))

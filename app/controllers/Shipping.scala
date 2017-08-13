@@ -1,5 +1,6 @@
 package controllers
 
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import helpers.Forms._
 import play.Logger
@@ -169,7 +170,7 @@ class Shipping @Inject() (
           case None =>
             jaForm.bind(
               Map(
-                "shippingDate" -> shippingDateFormat.format(shippingDate),
+                "shippingDate" -> shippingDateFormat.format(shippingDate.atZone(ZoneId.systemDefault())),
                 "email" -> login.storeUser.email
               )
             ).discardingErrors

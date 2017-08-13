@@ -15,7 +15,9 @@ class Application @Inject() (
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
   def index = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
-    implicit val optLogin = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
+    implicit val optLogin = db.withConnection { implicit conn =>
+      loginSessionRepo.fromRequest(request)
+    }
     Ok(views.html.index())
   }
 

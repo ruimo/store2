@@ -90,7 +90,7 @@ class WebSnippetRepo @Inject() (
     simple *
   )
 
-  val withSite = simple ~ siteRepo.simple map {
+  val withSite = simple ~ SiteRepo.simple map {
     case webSnippet~site => (webSnippet, site)
   }
 

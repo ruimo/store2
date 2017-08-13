@@ -1,5 +1,5 @@
 @(date: java.time.Instant)(implicit request: MessagesRequest[AnyContent])
 
 @{
-  java.time.format.DateTimeFormatter.ofPattern(Messages("published.date.format")).format(date)
+  java.time.format.DateTimeFormatter.ofPattern(Messages("published.date.format")).format(date.atZone(java.time.ZoneId.systemDefault()))
 }

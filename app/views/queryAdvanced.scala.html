@@ -157,7 +157,7 @@
     }
 
     $(function() {
-        var uri = new URI('@contentUrl'.replace(/&amp;/g, '&'));
+        var uri = new URI('@Html(contentUrl)');
         currentCondition = uri.search(true);
         setSearchText();
         
@@ -167,7 +167,7 @@
         else {
             $("#advancedQueryMenu").load("/static/templates/itemQueryMenu/" + @templateNo + ".html");
         }
-        renderResult('@contentUrl');
+        renderResult('@Html(contentUrl)');
         replaceCurrentState();
         window.onpopstate = function(e) {
             if (e.state) {

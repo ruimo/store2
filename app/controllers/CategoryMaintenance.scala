@@ -90,7 +90,7 @@ class CategoryMaintenance @Inject() (
     NeedLogin.assumeSuperUser(login) {
       createCategoryForm.bindFromRequest.fold(
         formWithErrors => {
-          Logger.error("Validation error in CategoryMaintenance.createNewCategory.")
+          Logger.error("Validation error in CategoryMaintenance.createNewCategory." + formWithErrors)
           BadRequest(views.html.admin.createNewCategory(formWithErrors, localeInfoRepo.localeTable))
         },
         newCategory => db.withConnection { implicit conn =>
@@ -197,7 +197,8 @@ class CategoryMaintenance @Inject() (
         db.withConnection { implicit conn =>
           categoryRepo.move(
             categoryRepo.get(categoryId).get,
-            parentCategoryId map { categoryRepo.get(_).get })
+            parentCategoryId map { categoryRepo.get(_).get }
+          )
         }
         Ok
       } catch {
@@ -206,7 +207,7 @@ class CategoryMaintenance @Inject() (
     }
   }
 
-  def createUpdateForms(categoryId: Long)(implicit conn: Connection): Form[UpdateCategoryNameTable] =
+  def createUpdateForms(categoryId: Long)(implicit conn: Connection): Form[UpdateCategoryNameTable] = {
     updateCategoryNameForm.fill(
       UpdateCategoryNameTable(
         categoryNameRepo.all(categoryId).values.toSeq.map { cn =>
@@ -214,6 +215,7 @@ class CategoryMaintenance @Inject() (
         }
       )
     )
+  }
 
   def editCategoryName(categoryId: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
@@ -223,7 +225,7 @@ class CategoryMaintenance @Inject() (
         Ok(
           views.html.admin.editCategoryName(
             categoryId,
-            createCategoryNameForm,
+            createCategoryNameForm.bind(Map("categoryId" -> categoryId.toString)).discardingErrors,
             createUpdateForms(categoryId),
             removeCategoryNameForm,
             localeInfoRepo.localeTable
@@ -242,7 +244,7 @@ class CategoryMaintenance @Inject() (
     implicit val login = request.login
     updateCategoryCodeForm.bindFromRequest.fold(
       formWithErrors => {
-        Logger.error("Validation error in CategoryMaintenance.updateCategoryCode.")
+        Logger.error("Validation error in CategoryMaintenance.updateCategoryCode." + formWithErrors)
         BadRequest(
           views.html.admin.editCategoryCode(categoryId, formWithErrors)
         )
@@ -273,7 +275,7 @@ class CategoryMaintenance @Inject() (
     NeedLogin.assumeSuperUser(login) {
       updateCategoryNameForm.bindFromRequest.fold(
         formWithErrors => {
-          Logger.error("Validation error in CategoryMaintenance.updateCategoryName.")
+          Logger.error("Validation error in CategoryMaintenance.updateCategoryName." + formWithErrors)
           BadRequest(
             views.html.admin.editCategoryName(
               categoryId,
@@ -300,7 +302,7 @@ class CategoryMaintenance @Inject() (
     NeedLogin.assumeSuperUser(login) {
       createCategoryNameForm.bindFromRequest.fold(
         formWithErrors => {
-          Logger.error("Validation error in CategoryMaintenance.createCategoryName.")
+          Logger.error("Validation error in CategoryMaintenance.createCategoryName." + formWithErrors)
           db.withConnection { implicit conn =>
             BadRequest(
               views.html.admin.editCategoryName(
@@ -344,7 +346,7 @@ class CategoryMaintenance @Inject() (
     NeedLogin.assumeSuperUser(login) {
       removeCategoryNameForm.bindFromRequest.fold(
         formWithErrors => {
-          Logger.error("Validation error in CategoryMaintenance.createCategoryName.")
+          Logger.error("Validation error in CategoryMaintenance.createCategoryName." + formWithErrors)
           db.withConnection { implicit conn =>
             BadRequest(
               views.html.admin.editCategoryName(

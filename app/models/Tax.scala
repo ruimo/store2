@@ -11,7 +11,6 @@ import math.BigDecimal.RoundingMode
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.time.Instant
-import java.time.Instant
 
 case class Tax(id: Option[Long] = None)
 
@@ -186,7 +185,7 @@ class TaxHistoryRepo @Inject() (
   }
 
   def at(
-    taxId: Long, now: Long = System.currentTimeMillis
+    taxId: Long, now: Instant = Instant.now()
   )(implicit conn: Connection): TaxHistory = SQL(
     """
     select * from tax_history
@@ -197,7 +196,7 @@ class TaxHistoryRepo @Inject() (
     """
   ).on(
     'taxId -> taxId,
-    'now -> new java.sql.Timestamp(now)
+    'now -> now
   ).as(
     simple.single
   )

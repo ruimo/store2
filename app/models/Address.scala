@@ -240,7 +240,7 @@ object ShippingAddressHistory {
   }
 
   def createNew(
-    userId: Long, address: Address, now: Long = System.currentTimeMillis
+    userId: Long, address: Address, now: Instant = Instant.now()
   )(implicit conn: Connection) {
     val updateCount = SQL(
       """

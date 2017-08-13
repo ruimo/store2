@@ -25,7 +25,6 @@ import views.csv.{TransactionDetailBodyCsv, TransactionDetailCsv}
 class TransactionMaintenance @Inject() (
   cc: MessagesControllerComponents,
   authenticated: Authenticated,
-  transactionMaintenance: TransactionMaintenance,
   notificationMail: NotificationMail,
   transactionPersister: TransactionPersister,
   implicit val transactionSummary: TransactionSummary,
@@ -143,7 +142,7 @@ class TransactionMaintenance @Inject() (
           views.html.admin.transactionDetail(
             entry,
             transactionDetailRepo.show(tranSiteId, localeInfoRepo.getDefault(request.acceptLanguages.toList), login.siteUser),
-            transactionMaintenance.changeStatusForm, transactionMaintenance.statusDropDown,
+            changeStatusForm, statusDropDown,
             LongMap[Form[ChangeShippingInfo]]().withDefaultValue(entryShippingInfoForm),
             transporterRepo.tableForDropDown,
             transporterRepo.listWithName.foldLeft(LongMap[String]()) {

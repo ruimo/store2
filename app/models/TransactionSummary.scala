@@ -44,7 +44,6 @@ case class AccountingBillTable(
 @Singleton
 class TransactionSummary @Inject() (
   localeInfoRepo: LocaleInfoRepo,
-  transactionSummary: TransactionSummary,
   transactionPersister: TransactionPersister,
   storeUserRepo: StoreUserRepo,
   transactionDetailRepo: TransactionDetailRepo
@@ -281,7 +280,7 @@ class TransactionSummary @Inject() (
   )(
     implicit conn: Connection
   ): Seq[TransactionSummaryEntry] = {
-    val summariesForAllUser: Seq[TransactionSummaryEntry] = transactionSummary.listByPeriod(
+    val summariesForAllUser: Seq[TransactionSummaryEntry] = listByPeriod(
       siteId = siteId,
       yearMonth = yearMonth,
       onlyShipped = true, useShippedDate = userShippedDate

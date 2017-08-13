@@ -70,7 +70,7 @@ class RecommendByAdminRepo @Inject() (
     SqlParser.scalar[Long].single
   )
 
-  val listParser = simple~(itemNameRepo.simple?)~(siteRepo.simple?) map {
+  val listParser = simple~(itemNameRepo.simple?)~(SiteRepo.simple?) map {
     case recommend~itemName~site => (
       recommend, itemName, site
     )

@@ -3,5 +3,5 @@
 @import java.time.format.DateTimeFormatter
 
 @{
-  DateTimeFormatter.ofPattern(Messages("last.update.format")).format(date)
+  DateTimeFormatter.ofPattern(Messages("last.update.format")).format(date.atZone(java.time.ZoneId.systemDefault()))
 }

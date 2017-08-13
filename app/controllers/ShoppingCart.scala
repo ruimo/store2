@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
-import controllers.NeedLogin.Authenticated
+import controllers.NeedLogin.{Authenticated, AuthenticatedJson}
 import helpers.ViewHelpers
 import models._
 import play.api.Play.current
@@ -17,13 +17,14 @@ import scala.collection.immutable
 class ShoppingCart @Inject() (
   cc: MessagesControllerComponents,
   authenticated: Authenticated,
+  authenticatedJson: AuthenticatedJson,
   implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo,
   implicit val localeInfoRepo: LocaleInfoRepo,
   implicit val transactionLogItemRepo: TransactionLogItemRepo,
   implicit val taxRepo: TaxRepo
 ) extends MessagesAbstractController(cc) {
-  def quantityInShoppingCartJson = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+  def quantityInShoppingCartJson = authenticatedJson { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
 
     db.withConnection { implicit conn =>
@@ -37,7 +38,7 @@ class ShoppingCart @Inject() (
     }
   }
 
-  def addToCartJson = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+  def addToCartJson = authenticatedJson { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
 
     request.body.asJson.map { json =>
@@ -45,7 +46,7 @@ class ShoppingCart @Inject() (
       val itemId = (json \ "itemId").as[Long]
       val quantity = (json \ "quantity").as[Int]
 
-      db.withConnection { implicit conn => {
+      db.withConnection { implicit conn =>
         shoppingCartItemRepo.addItem(login.userId, siteId, itemId, quantity)
         val (cart: ShoppingCartTotal, errors: Seq[ItemExpiredException]) = shoppingCartItemRepo.listItemsForUser(
           localeInfoRepo.getDefault(request.acceptLanguages.toList), login
@@ -61,11 +62,11 @@ class ShoppingCart @Inject() (
             )
           )
         )
-      }}
+      }
     }.get
   }
 
-  def addOrderHistoryJson = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+  def addOrderHistoryJson = authenticatedJson { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
 
     request.body.asJson.map { json =>

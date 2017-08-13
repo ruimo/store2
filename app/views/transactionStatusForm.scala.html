@@ -42,11 +42,11 @@
   <table class="shippingDeliveryDateTable">
     <tr>
       <td class="shippingDate">@Messages("shippingDate")</td>
-      <td>@{DateTimeFormatter.ofPattern(Messages("shippingDateFormat")).format(entry.plannedShippingDate.get)}</td>
+      <td>@{DateTimeFormatter.ofPattern(Messages("shippingDateFormat")).format(entry.plannedShippingDate.get.atZone(java.time.ZoneId.systemDefault()))}</td>
     </tr>
     <tr>
       <td class="deliveryDate">@Messages("deliveryDate")</td>
-      <td>@{DateTimeFormatter.ofPattern(Messages("deliveryDateFormat")).format(entry.plannedDeliveryDate.get)}</td>
+      <td>@{DateTimeFormatter.ofPattern(Messages("deliveryDateFormat")).format(entry.plannedDeliveryDate.get.atZone(java.time.ZoneId.systemDefault()))}</td>
     </tr>
   </table>
 } else {

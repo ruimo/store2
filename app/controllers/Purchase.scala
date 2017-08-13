@@ -18,11 +18,14 @@ class Purchase @Inject() (
   implicit val taxRepo: TaxRepo
 ) extends MessagesAbstractController(cc) {
   def addToCart(siteId: Long, itemId: Long, quantity: Int) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+println("addToCart 0")
     implicit val login = request.login
-    db.withConnection { implicit conn => {
+    db.withConnection { implicit conn =>
+println("addToCart 1")
       val cartItem = shoppingCartItemRepo.addItem(login.userId, siteId, itemId, quantity)
+println("addToCart 2")
       Redirect(routes.Purchase.showShoppingCart())
-    }}
+    }
   }
 
   def showShoppingCart = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>

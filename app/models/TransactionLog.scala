@@ -784,7 +784,6 @@ object TransactionLogPaypalStatus {
 class TransactionLogCouponRepo @Inject() (
   siteRepo: SiteRepo,
   taxRepo: TaxRepo,
-  transactionLogCouponRepo: TransactionLogCouponRepo,
   siteItemNumericMetadataRepo: SiteItemNumericMetadataRepo
 ) {
   val TransactionLogCouponDefaultOrderBy = OrderBy("h.transaction_id", Desc)
@@ -1659,7 +1658,7 @@ class TransactionPersister @Inject() (
     ).on(
       'id -> tranId
     ).as(
-      (transactionLogSiteRepo.simple ~ siteRepo.simple) *
+      (transactionLogSiteRepo.simple ~ SiteRepo.simple) *
     ).map {
       e => (e._1 -> e._2)
     }.unzip

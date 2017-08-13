@@ -98,6 +98,8 @@
     }
   }
 
+@{println("form = " + createForm.data)}
+
   @form(action = CSRF(routes.CategoryMaintenance.createCategoryName(categoryId)), 'id -> "createCategoryNameForm") {
     <table class="createCategoryName">
       <tr>

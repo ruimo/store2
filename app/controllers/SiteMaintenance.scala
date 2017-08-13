@@ -3,7 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import play.Logger
-import controllers.NeedLogin.Authenticated
+import controllers.NeedLogin.{Authenticated, AuthenticatedJson}
 import play.api.libs.json.{JsObject, Json}
 import models._
 import play.api.data.Forms._
@@ -17,6 +17,7 @@ import play.api.mvc.{AnyContent, MessagesAbstractController, MessagesControllerC
 class SiteMaintenance @Inject() (
   cc: MessagesControllerComponents,
   authenticated: Authenticated,
+  authenticatedJson: AuthenticatedJson,
   implicit val localeInfoRepo: LocaleInfoRepo,
   implicit val db: Database,
   implicit val siteRepo: SiteRepo,
@@ -121,7 +122,7 @@ class SiteMaintenance @Inject() (
     }
   }
 
-  def sitesAsJson = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+  def sitesAsJson = authenticatedJson { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     NeedLogin.assumeSuperUser(login) {
       db.withConnection { implicit conn =>

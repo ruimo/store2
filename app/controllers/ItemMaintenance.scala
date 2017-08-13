@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.mvc.MessagesRequestHeader
 import helpers.Forms._
 import javax.inject.{Inject, Singleton}
 
@@ -56,7 +57,6 @@ class ItemMaintenance @Inject() (
   cache: Cache,
   authenticated: Authenticated,
   implicit val db: Database,
-  implicit val mp: MessagesProvider,
   implicit val categoryRepo: CategoryRepo,
   implicit val siteRepo: SiteRepo,
   implicit val taxRepo: TaxRepo,
@@ -74,10 +74,11 @@ class ItemMaintenance @Inject() (
   def createChangeItem(
     id: Long,
     login: LoginSession,
-    lang: Lang
+    lang: Lang,
+    req: MessagesRequestHeader
   )(
     siteMap: Map[Long, Site] = siteListAsMap,
-    langTable: Seq[(String, String)] = localeInfoRepo.localeTable,
+    langTable: Seq[(String, String)] = localeInfoRepo.localeTable(req),
     itemNameTableForm: Form[ChangeItemNameTable] = createItemNameTable(id),
     newItemNameForm: Form[ChangeItemName] = addItemNameForm,
     siteNameTable: Seq[(String, String)] = createSiteTable(login),
@@ -269,19 +270,19 @@ class ItemMaintenance @Inject() (
     currencyRegistry.tableForDropDown
   }
 
-  def itemMetadataTable(implicit lang: Lang): Seq[(String, String)] = ItemNumericMetadataType.all.map {
+  def itemMetadataTable(implicit req: MessagesRequestHeader): Seq[(String, String)] = ItemNumericMetadataType.all.map {
     e => (e.ordinal.toString, Messages("itemNumericMetadata" + e.toString))
   }
 
-  def itemTextMetadataTable(implicit lang: Lang): Seq[(String, String)] = ItemTextMetadataType.all.map {
+  def itemTextMetadataTable(implicit req: MessagesRequestHeader): Seq[(String, String)] = ItemTextMetadataType.all.map {
     e => (e.ordinal.toString, Messages("itemTextMetadata" + e.toString))
   }
 
-  def siteItemMetadataTable(implicit lang: Lang): Seq[(String, String)] = SiteItemNumericMetadataType.all.map {
+  def siteItemMetadataTable(implicit req: MessagesRequestHeader): Seq[(String, String)] = SiteItemNumericMetadataType.all.map {
     e => (e.ordinal.toString, Messages("siteItemMetadata" + e.toString))
   }
 
-  def siteItemTextMetadataTable(implicit lang: Lang): Seq[(String, String)] = SiteItemTextMetadataType.all.map {
+  def siteItemTextMetadataTable(implicit req: MessagesRequestHeader): Seq[(String, String)] = SiteItemTextMetadataType.all.map {
     e => (e.ordinal.toString, Messages("siteItemTextMetadata" + e.toString))
   }
 
@@ -290,7 +291,7 @@ class ItemMaintenance @Inject() (
     implicit val lang = request.acceptLanguages.head
     NeedLogin.assumeAdmin(login) {
       Ok(views.html.admin.changeItem(
-        createChangeItem(id, login, request.acceptLanguages.head)(), this
+        createChangeItem(id, login, request.acceptLanguages.head, request)(), this
       ))
     }
   }
@@ -467,7 +468,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 itemNameTableForm = formWithErrors
               ),
@@ -497,7 +498,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newItemNameForm = formWithErrors
               ),
@@ -518,7 +519,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newItemNameForm = addItemNameForm.fill(newItem).withError("localeId", "unique.constraint.violation")
                   ),
@@ -633,7 +634,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newSiteItemForm = formWithErrors
               ),
@@ -656,7 +657,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newSiteItemForm = addSiteItemForm.fill(newSiteItem).withError("siteId", "unique.constraint.violation")
                   ),
@@ -719,7 +720,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 couponForm = formWithErrors
               ),
@@ -749,7 +750,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 updateCategoryForm = formWithErrors
               ),
@@ -809,7 +810,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 itemDescriptionTableForm = formWithErrors
               ),
@@ -839,7 +840,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newItemDescriptionForm = formWithErrors
               ),
@@ -860,7 +861,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newItemDescriptionForm = addItemDescriptionForm
                       .fill(newItem)
@@ -947,7 +948,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 itemPriceTableForm = formWithErrors
               ),
@@ -957,7 +958,7 @@ class ItemMaintenance @Inject() (
         },
         newPrice => {
           db.withConnection { implicit conn =>
-            newPrice.update()
+            newPrice.update
           }
           Redirect(
             routes.ItemMaintenance.startChangeItem(id)
@@ -977,7 +978,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newItemPriceForm = formWithErrors
               ),
@@ -999,7 +1000,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newItemPriceForm = addItemPriceForm
                       .fill(newHistory)
@@ -1041,7 +1042,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                itemId, login, request.acceptLanguages.head
+                itemId, login, request.acceptLanguages.head, request
               )(
                 itemMetadataTableForm = formWithErrors
               ),
@@ -1071,7 +1072,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                itemId, login, request.acceptLanguages.head
+                itemId, login, request.acceptLanguages.head, request
               )(
                 itemTextMetadataTableForm = formWithErrors
               ),
@@ -1101,7 +1102,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                itemId, login, request.acceptLanguages.head
+                itemId, login, request.acceptLanguages.head, request
               )(
                 siteItemMetadataTableForm = formWithErrors
               ),
@@ -1131,7 +1132,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                itemId, login, request.acceptLanguages.head
+                itemId, login, request.acceptLanguages.head, request
               )(
                 siteItemTextMetadataTableForm = formWithErrors
               ),
@@ -1161,7 +1162,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newItemMetadataForm = formWithErrors
               ),
@@ -1182,7 +1183,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newItemMetadataForm = addItemMetadataForm
                       .fill(newMetadata)
@@ -1208,7 +1209,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newItemTextMetadataForm = formWithErrors
               ),
@@ -1229,7 +1230,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newItemTextMetadataForm = addItemTextMetadataForm
                       .fill(newMetadata)
@@ -1255,7 +1256,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newSiteItemMetadataForm = formWithErrors
               ),
@@ -1278,7 +1279,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newSiteItemMetadataForm = addSiteItemMetadataForm
                       .fill(newMetadata)
@@ -1305,7 +1306,7 @@ class ItemMaintenance @Inject() (
           BadRequest(
             views.html.admin.changeItem(
               createChangeItem(
-                id, login, request.acceptLanguages.head
+                id, login, request.acceptLanguages.head, request
               )(
                 newSiteItemTextMetadataForm = formWithErrors
               ),
@@ -1328,7 +1329,7 @@ class ItemMaintenance @Inject() (
               BadRequest(
                 views.html.admin.changeItem(
                   createChangeItem(
-                    id, login, request.acceptLanguages.head
+                    id, login, request.acceptLanguages.head, request
                   )(
                     newSiteItemTextMetadataForm = addSiteItemTextMetadataForm
                       .fill(newMetadata)

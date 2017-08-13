@@ -17,9 +17,7 @@ case class Site(
   }
 }
 
-@Singleton
-class SiteRepo @Inject() (
-) {
+object SiteRepo {
   val simple = {
     SqlParser.get[Option[Long]]("site.site_id") ~
     SqlParser.get[Long]("site.locale_id") ~
@@ -27,20 +25,24 @@ class SiteRepo @Inject() (
       case id~localeId~siteName => Site(id, localeId, siteName)
     }
   }
+}
 
+@Singleton
+class SiteRepo @Inject() (
+) {
   def apply(siteId: Long)(implicit conn: Connection): Site =
     SQL(
       "select * from site where site_id = {id} and site.deleted = FALSE"
     ).on(
       'id -> siteId
-    ).as(simple.single)
+    ).as(SiteRepo.simple.single)
 
   def get(siteId: Long)(implicit conn: Connection): Option[Site] =
     SQL(
       "select * from site where site_id = {id} and site.deleted = FALSE"
     ).on(
       'id -> siteId
-    ).as(simple.singleOpt)
+    ).as(SiteRepo.simple.singleOpt)
 
   def createNew(locale: LocaleInfo, name: String)(implicit conn: Connection): Site = {
     SQL(
@@ -66,7 +68,7 @@ class SiteRepo @Inject() (
   ).on(
     'pageSize -> pageSize,
     'offset -> page * pageSize
-  ).as(simple *)
+  ).as(SiteRepo.simple *)
 
   def tableForDropDown(implicit login: LoginSession, conn: Connection): Seq[(String, String)] =
     SQL(
@@ -78,7 +80,7 @@ class SiteRepo @Inject() (
       """
       order by site_name
       """
-    ).as(simple *).map {
+    ).as(SiteRepo.simple *).map {
       e => e.id.get.toString -> e.name
     }
 
@@ -95,14 +97,14 @@ class SiteRepo @Inject() (
       """
     ).on(
       'itemId -> itemId
-    ).as(simple *).map {
+    ).as(SiteRepo.simple *).map {
       e => e.id.get.toString -> e.name
     }
 
   def listAsMap(implicit conn: Connection): Map[Long, Site] =
     SQL(
       "select * from site where site.deleted = FALSE order by site_name"
-    ).as(simple *).map {
+    ).as(SiteRepo.simple *).map {
       e => e.id.get -> e
     }.toMap
 

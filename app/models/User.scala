@@ -158,7 +158,7 @@ class StoreUserRepo @Inject() (
   val withSiteUser = 
     simple ~
     (siteUserRepo.simple ?) ~
-    (siteRepo.simple ?) ~
+    (SiteRepo.simple ?) ~
     SqlParser.get[Option[Long]]("order_notification.order_notification_id") map {
       case storeUser~siteUser~site~notificationId => ListUserEntry(storeUser, siteUser, site, notificationId.isDefined)
     }

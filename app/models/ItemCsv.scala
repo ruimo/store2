@@ -175,7 +175,7 @@ object ItemCsv {
 
   val YyyyMmDdHhMmSsParserFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
   object YyyyMmDdHhMmSsParser extends FieldParser[Instant](
-    s => java.sql.Timestamp.valueOf(s).toInstant
+    s => Instant.ofEpochMilli(java.sql.Timestamp.valueOf(s).getTime)
   )
 
   def to[T](lineNo: Int, colNo: Int, name: String, s: String)(implicit parser: FieldParser[T]): Option[T] =
@@ -214,9 +214,9 @@ class ItemCsvRepo @Inject() (
   // Returns current locale id.
   def processOneLine(
     lineNo: Int,
-    dir: Path, locale: Option[LocaleInfo], z: Iterator[String], conn: Connection,
+    dir: Path, locale: Option[LocaleInfo], z: Iterator[String],
     toPicPath: (ItemId, Int) => Path, toDetailPicPath: ItemId => Path
-  ): Option[LocaleInfo] = {
+  )(implicit conn: Connection): Option[LocaleInfo] = {
     readCsvLine(lineNo, z) match {
       case CommentCsvLine => locale
       case LocaleCsvLine(lid) => Some(localeInfoRepo.get(lid).getOrElse {
@@ -229,7 +229,7 @@ class ItemCsvRepo @Inject() (
           throw new NoLangDefException(lineNo)
 
         case Some(loc) =>
-          processItem(lineNo, dir, loc, item, conn, toPicPath, toDetailPicPath)
+          processItem(lineNo, dir, loc, item, toPicPath, toDetailPicPath)
           locale
       }
     }
@@ -237,10 +237,9 @@ class ItemCsvRepo @Inject() (
 
   def processItem(
     lineNo: Int,
-    dir: Path, locale: LocaleInfo, itemCsv: ItemCsvLine, conn: Connection,
+    dir: Path, locale: LocaleInfo, itemCsv: ItemCsvLine,
     toPicPath: (ItemId, Int) => Path, toDetailPicPath: ItemId => Path
-  ) {
-    implicit val connection = conn
+  )(implicit conn: Connection) {
     val item: Item = try {
       itemRepo.createNew(itemCsv.categoryId)
     }
@@ -344,7 +343,6 @@ class ItemCsvRepo @Inject() (
       val siteId: Long = getLongRemovingAfterColonComment(col).getOrElse {
         throw new InvalidColumnException(lineNo, colNo, "invalid siteId", col)
       }
-
       tailcall(itemCategoryId(lineNo, colNo + 1, crud, itemId, siteId))
     }
 

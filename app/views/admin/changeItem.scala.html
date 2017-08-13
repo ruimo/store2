@@ -413,7 +413,7 @@
           @e._1.name
         </td>
         <td>
-          @DateTimeFormatter.ofPattern(Messages("site.item.date.format")).format(e._2.created)
+          @DateTimeFormatter.ofPattern(Messages("site.item.date.format")).format(e._2.created.atZone(java.time.ZoneId.systemDefault()))
         </td>
       </tr>
     }

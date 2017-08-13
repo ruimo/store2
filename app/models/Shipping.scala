@@ -115,11 +115,7 @@ case class ShippingFeeEntries(
   )
 }
 
-@Singleton
-class ShippingBoxRepo @Inject() (
-  siteRepo: SiteRepo,
-  shippingFeeHistoryRepo: ShippingFeeHistoryRepo
-) {
+object ShippingBoxRepo {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_box.shipping_box_id") ~
     SqlParser.get[Long]("shipping_box.site_id") ~
@@ -131,10 +127,16 @@ class ShippingBoxRepo @Inject() (
     }
   }
 
-  val withSite = siteRepo.simple ~ simple map {
+  val withSite = SiteRepo.simple ~ simple map {
     case site~shippingBox => (site, shippingBox)
   }
+}
 
+@Singleton
+class ShippingBoxRepo @Inject() (
+  siteRepo: SiteRepo,
+  shippingFeeHistoryRepo: ShippingFeeHistoryRepo
+) {
   def createNew(
     siteId: Long, itemClass: Long, boxSize: Int, boxName: String
   )(implicit conn: Connection): ShippingBox = {
@@ -165,7 +167,7 @@ class ShippingBoxRepo @Inject() (
     ).on(
       'id -> id
     ).as(
-      simple.single
+      ShippingBoxRepo.simple.single
     )
 
   def getWithSite(id: Long)(implicit conn: Connection): Option[(Site, ShippingBox)] =
@@ -178,7 +180,7 @@ class ShippingBoxRepo @Inject() (
     ).on(
       'id -> id
     ).as(
-      withSite.singleOpt
+      ShippingBoxRepo.withSite.singleOpt
     )
 
   def apply(siteId: Long, itemClass: Long)(implicit conn: Connection): ShippingBox =
@@ -190,7 +192,7 @@ class ShippingBoxRepo @Inject() (
       'siteId -> siteId,
       'itemClass -> itemClass
     ).as(
-      simple.single
+      ShippingBoxRepo.simple.single
     )
 
   def list(siteId: Long)(implicit conn: Connection): Seq[ShippingBox] =
@@ -201,7 +203,7 @@ class ShippingBoxRepo @Inject() (
     ).on(
       'siteId -> siteId
     ).as(
-      simple *
+      ShippingBoxRepo.simple *
     )
 
   def list(implicit conn: Connection): Seq[(Site, ShippingBox)] =
@@ -212,7 +214,7 @@ class ShippingBoxRepo @Inject() (
       order by site.site_name, item_class
       """
     ).as(
-      withSite *
+      ShippingBoxRepo.withSite *
     )
 
   def update(
@@ -263,10 +265,7 @@ class ShippingBoxRepo @Inject() (
   }
 }
 
-@Singleton
-class ShippingFeeRepo @Inject() (
-  shippingFeeHistoryRepo: ShippingFeeHistoryRepo
-) {
+object ShippingFeeRepo {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_fee.shipping_fee_id") ~
     SqlParser.get[Long]("shipping_fee.shipping_box_id") ~
@@ -277,6 +276,14 @@ class ShippingFeeRepo @Inject() (
     }
   }
 
+  val withHistory = simple ~ (ShippingFeeHistoryRepo.simple ?) map {
+    case fee~feeHistory => (fee, feeHistory)
+  }
+}
+
+@Singleton
+class ShippingFeeRepo @Inject() (
+) {
   def apply(id: Long)(implicit conn: Connection): ShippingFee =
     SQL(
       """
@@ -285,12 +292,8 @@ class ShippingFeeRepo @Inject() (
     ).on(
       'id -> id
     ).as(
-      simple.single
+      ShippingFeeRepo.simple.single
     )
-
-  val withHistory = simple ~ (shippingFeeHistoryRepo.simple ?) map {
-    case fee~feeHistory => (fee, feeHistory)
-  }
 
   def createNew(
     shippingBoxId: Long, countryCode: CountryCode, locationCode: Int
@@ -330,7 +333,7 @@ class ShippingFeeRepo @Inject() (
       'countryCode -> countryCode.code,
       'locationCode -> locationCode
     ).as(
-      simple.single
+      ShippingFeeRepo.simple.single
     )
 
   def listWithHistory(
@@ -354,7 +357,7 @@ class ShippingFeeRepo @Inject() (
       'now -> now,
       'boxId -> boxId
     ).as(
-      withHistory *
+      ShippingFeeRepo.withHistory *
     )
 
   def list(boxId: Long, countryCode: CountryCode)(implicit conn: Connection): Seq[ShippingFee] =
@@ -368,7 +371,7 @@ class ShippingFeeRepo @Inject() (
       'boxId -> boxId,
       'countryCode -> countryCode.code
     ).as(
-      simple *
+      ShippingFeeRepo.simple *
     )
 
   def removeWithHistories(feeId: Long)(implicit conn: Connection) {
@@ -390,12 +393,7 @@ class ShippingFeeRepo @Inject() (
   }
 }
 
-@Singleton
-class ShippingFeeHistoryRepo @Inject() (
-  shippingFeeRepo: ShippingFeeRepo,
-  shippingBoxRepo: ShippingBoxRepo,
-  taxHistoryRepo: TaxHistoryRepo
-) {
+object ShippingFeeHistoryRepo {
   val simple = {
     SqlParser.get[Option[Long]]("shipping_fee_history.shipping_fee_history_id") ~
     SqlParser.get[Long]("shipping_fee_history.shipping_fee_id") ~
@@ -409,6 +407,21 @@ class ShippingFeeHistoryRepo @Inject() (
     }
   }
 
+  val withBoxFee = ShippingBoxRepo.simple ~ ShippingFeeRepo.simple map {
+    case box~fee => (box, fee)
+  }
+
+  val withFee = ShippingFeeRepo.simple ~ simple map {
+    case shippingFee~shippingFeeHistory => (shippingFee, shippingFeeHistory)
+  }
+}
+
+@Singleton
+class ShippingFeeHistoryRepo @Inject() (
+  implicit val shippingFeeRepo: ShippingFeeRepo,
+  implicit val taxHistoryRepo: TaxHistoryRepo,
+  implicit val taxRepo: TaxRepo
+) {
   def apply(id: Long)(implicit conn: Connection): ShippingFeeHistory = SQL(
     """
     select * from shipping_fee_history
@@ -417,7 +430,7 @@ class ShippingFeeHistoryRepo @Inject() (
   ).on(
     'id -> id
   ).as(
-    simple.single
+    ShippingFeeHistoryRepo.simple.single
   )
 
   def update(
@@ -480,11 +493,11 @@ class ShippingFeeHistoryRepo @Inject() (
   ).on(
     'shippingFeeId -> feeId
   ).as(
-    simple *
+    ShippingFeeHistoryRepo.simple *
   )
 
   def at(
-    feeId: Long, now: Long = System.currentTimeMillis
+    feeId: Long, now: Instant = Instant.now()
   )(implicit conn: Connection): ShippingFeeHistory = SQL(
     """
     select * from shipping_fee_history
@@ -495,13 +508,13 @@ class ShippingFeeHistoryRepo @Inject() (
     """
   ).on(
     'feeId -> feeId,
-    'now -> new java.sql.Timestamp(now)
+    'now -> now
   ).as(
-    simple.single
+    ShippingFeeHistoryRepo.simple.single
   )
 
   def atOpt(
-    feeId: Long, now: Long = System.currentTimeMillis
+    feeId: Long, now: Instant = Instant.now()
   )(implicit conn: Connection): Option[ShippingFeeHistory] = SQL(
     """
     select * from shipping_fee_history
@@ -512,14 +525,10 @@ class ShippingFeeHistoryRepo @Inject() (
     """
   ).on(
     'feeId -> feeId,
-    'now -> new java.sql.Timestamp(now)
+    'now -> now
   ).as(
-    simple.singleOpt
+    ShippingFeeHistoryRepo.simple.singleOpt
   )
-
-  val withFee = shippingFeeRepo.simple ~ simple map {
-    case shippingFee~shippingFeeHistory => (shippingFee, shippingFeeHistory)
-  }
 
   def listByLocation(
     countryCode: CountryCode, locationCode: Int
@@ -535,18 +544,14 @@ class ShippingFeeHistoryRepo @Inject() (
       'countryCode -> countryCode.code,
       'locationCode -> locationCode
     ).as(
-      withFee *
+      ShippingFeeHistoryRepo.withFee *
     ).toSeq
-
-  val withBoxFee = shippingBoxRepo.simple ~ shippingFeeRepo.simple map {
-    case box~fee => (box, fee)
-  }
 
   def feeBySiteAndItemClass(
     countryCode: CountryCode, locationCode: Int, entries: ShippingFeeEntries,
-    now: Long = System.currentTimeMillis
+    now: Instant = Instant.now()
   )(
-    implicit taxRepo: TaxRepo, conn: Connection
+    implicit conn: Connection
   ): ShippingTotal = {
     var result = List[ShippingTotalEntry]()
 
@@ -568,7 +573,7 @@ class ShippingFeeHistoryRepo @Inject() (
         'locationCode -> locationCode,
         'siteId -> site.id.get
       ).as(
-        withBoxFee *
+        ShippingFeeHistoryRepo.withBoxFee *
       )
       
       if (list.isEmpty) throw new CannotShippingException(site, locationCode)
@@ -593,9 +598,9 @@ class ShippingFeeHistoryRepo @Inject() (
   def addPrice(
     site: Site,
     map: Map[Long, (ShippingBox, ShippingFee, Int)], // The key is itemClass.
-    now: Long
+    now: Instant
   )(
-    implicit taxRepo: TaxRepo, conn: Connection
+    implicit conn: Connection
   ): Seq[ShippingTotalEntry] = {
     val ret = ListBuffer[ShippingTotalEntry]()
 

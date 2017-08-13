@@ -151,7 +151,10 @@ GET     /queryBySelect                   controllers.ItemQuery.queryBySelect(pag
 GET     /queryByRadio                    controllers.ItemQuery.queryByRadio(page:Int ?= 0, pageSize:Int ?= 10, templateNo:Int ?= 0)
 GET     /queryAdvanced                   controllers.ItemQuery.queryAdvanced(qs: List[String], cs: String ?= "", ccs: String ?= "", sid: Option[Long], page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "item.item_id", templateNo:Int ?= 0)
 GET     /queryAdvancedContent            controllers.ItemQuery.queryAdvancedContent(qs: List[String] ?= List(), cs: String ?= "", ccs: String ?= "", sid: Option[Long] ?= None, page: Int, pageSize: Int, orderBySpec: String, templateNo: Int ?= 0)
+
++ nocsrf
 POST    /categoryNameJson                controllers.ItemQuery.categoryNameJson()
+
 GET     /itemDetail                      controllers.ItemDetail.show(itemId: Long, siteId: Long)
 GET     /itemDetailAsJson                controllers.ItemDetail.showAsJson(itemId: Long, siteId: Long)
 GET     /addToCart                       controllers.Purchase.addToCart(siteId: Long, itemId: Long, quantity: Int)

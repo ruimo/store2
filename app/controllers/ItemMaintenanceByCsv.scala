@@ -140,7 +140,7 @@ class ItemMaintenanceByCsv @Inject() (
             persist(
               itemCsvRepo.processOneLine(
                 lineNo,
-                explodeDir, locale, csvLine.toIterator, conn,
+                explodeDir, locale, csvLine.toIterator,
                 (itemId, no) => itemPictures.toPath(itemId.id, no),
                 itemId => itemPictures.toDetailPath(itemId.id)
               ),

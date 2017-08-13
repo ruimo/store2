@@ -2,11 +2,15 @@ package models
 
 import javax.inject.Singleton
 import javax.inject.Inject
+
 import anorm._
 import anorm.SqlParser
+
 import scala.language.postfixOps
 import collection.immutable.{HashMap, IntMap}
 import java.sql.Connection
+import java.time.Instant
+
 import org.joda.time.DateTime
 
 case class ItemDetail(
@@ -37,7 +41,7 @@ class ItemDetailRepo @Inject() (
   }
 
   def show(
-    siteId: Long, itemId: Long, locale: LocaleInfo, now: Long = System.currentTimeMillis,
+    siteId: Long, itemId: Long, locale: LocaleInfo, now: Instant = Instant.now(),
     itemPriceStrategy: ItemPriceStrategy
   )(implicit conn: Connection): Option[ItemDetail] = SQL(
       """

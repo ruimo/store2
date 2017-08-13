@@ -22,7 +22,6 @@ case class TransporterName(
 @Singleton
 class TransporterRepo @Inject() (
   localeInfoRepo: LocaleInfoRepo,
-  transporterRepo: TransporterRepo,
   transporterNameRepo: TransporterNameRepo
 ) {
   val simple = {
@@ -31,11 +30,11 @@ class TransporterRepo @Inject() (
     }
   }
 
-  val withName = transporterRepo.simple ~ transporterNameRepo.simple map {
+  val withName = simple ~ transporterNameRepo.simple map {
     case t~name => (t, name)
   }
 
-  val withNameOpt = transporterRepo.simple ~ (transporterNameRepo.simple ?) map {
+  val withNameOpt = simple ~ (transporterNameRepo.simple ?) map {
     case trans~name => (trans, name)
   }
 

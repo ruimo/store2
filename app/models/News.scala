@@ -34,7 +34,7 @@ class NewsRepo @Inject() (
     }
   }
 
-  val withSite = simple ~ (siteRepo.simple ?) map {
+  val withSite = simple ~ (SiteRepo.simple ?) map {
     case news~site => (news, site)
   }
 

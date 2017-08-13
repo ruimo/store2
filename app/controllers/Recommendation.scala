@@ -15,7 +15,7 @@ import scala.concurrent.Future
 import java.sql.Connection
 import javax.inject.{Inject, Singleton}
 
-import controllers.NeedLogin.Authenticated
+import controllers.NeedLogin.{Authenticated, AuthenticatedJson}
 import play.api.Configuration
 import play.api.db.Database
 
@@ -24,6 +24,7 @@ class Recommendation @Inject() (
   cc: MessagesControllerComponents,
   config: Configuration,
   authenticated: Authenticated,
+  authenticatedJson: AuthenticatedJson,
   recommendEngine: RecommendEngine,
   implicit val db: Database,
   implicit val localeInfoRepo: LocaleInfoRepo,
@@ -35,7 +36,7 @@ class Recommendation @Inject() (
 ) extends MessagesAbstractController(cc) {
   def maxRecommendCount: Int = config.getOptional[Int]("recommend.maxCount").getOrElse(5)
 
-  def byItemJson(siteId: Long, itemId: Long) = authenticated.async { implicit request: AuthMessagesRequest[AnyContent] =>
+  def byItemJson(siteId: Long, itemId: Long) = authenticatedJson.async { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     implicit val lang = request.acceptLanguages.head
 
@@ -118,7 +119,7 @@ class Recommendation @Inject() (
     }
   }
 
-  def byShoppingCartJson() = authenticated.async { implicit request: AuthMessagesRequest[AnyContent] =>
+  def byShoppingCartJson() = authenticatedJson.async { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     implicit val lang = request.acceptLanguages.head
 
