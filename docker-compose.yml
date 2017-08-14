@@ -5,7 +5,7 @@ services:
     ports:
      - "9000:9000"
     volumes:
-     - /logs:/var/applog
+     - /var/applog:/logs
     environment:
      - APP_SECRET
   postgres:
