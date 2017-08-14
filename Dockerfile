@@ -16,7 +16,7 @@ RUN cd /opt/functional-store2 && \
   cmd=$(basename *.zip .zip) && \
   echo "#!/bin/bash -xe" > launch.sh && \
   echo printenv >> launch.sh && \
-  echo "rm RUNNING_PID" >> launch.sh && \
+  echo "rm -f RUNNING_PID" >> launch.sh && \
   echo "ln -s /logs /opt/functional-store2/$cmd/logs" >> launch.sh && \
   echo "ls -lh /opt/functional-store2/$cmd" >> launch.sh && \
   echo /opt/functional-store2/$cmd/bin/functional-store2 -J-Xmx2048m -DmoduleName=$cmd -DapplyEvolutions.default=true -Dplay.http.secret.key=\${APP_SECRET} >> launch.sh && \
