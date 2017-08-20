@@ -186,6 +186,7 @@ class UserEntry @Inject() (
   }
 
   def submitUserInfo(userId: Long) = Action { implicit request: MessagesRequest[AnyContent] =>
+println("*** submitUserInfo(" + userId + ")")
     createRegistrationForm.bindFromRequest.fold(
       formWithErrors =>
         BadRequest(registerUserInformationView(userId, formWithErrors)),

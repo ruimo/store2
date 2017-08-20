@@ -165,7 +165,8 @@ object NeedLogin {
     val parser: BodyParser[AnyContent],
     messagesApi: MessagesApi,
     loginSessionRepo: LoginSessionRepo,
-    conf: Configuration
+    conf: Configuration,
+    storeUserRepo: StoreUserRepo
   )(
     implicit val executionContext: ExecutionContext,
     db: Database
@@ -177,9 +178,10 @@ object NeedLogin {
       parser: BodyParsers.Default,
       messagesApi: MessagesApi,
       loginSessionRepo: LoginSessionRepo,
-      conf: Configuration
+      conf: Configuration,
+      storeUserRepo: StoreUserRepo
     )(implicit ec: ExecutionContext, db: Database) =
-      this (parser: BodyParser[AnyContent], messagesApi, loginSessionRepo, conf)
+      this (parser: BodyParser[AnyContent], messagesApi, loginSessionRepo, conf, storeUserRepo)
 
     val needAuthenticationEntirely = conf.getOptional[Boolean]("need.authentication.entirely").getOrElse(false)
 
@@ -189,7 +191,9 @@ object NeedLogin {
           block(new MessagesRequest[A](request, messagesApi))
         }
         case None =>
-          if (needAuthenticationEntirely) Future.successful(Redirect(routes.Application.index))
+          if (needAuthenticationEntirely) Future.successful(
+            onUnauthorized(request)(db, storeUserRepo)
+          )
           else block(new MessagesRequest[A](request, messagesApi))
       }
     }
