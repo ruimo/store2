@@ -211,13 +211,6 @@ class ItemQuery @Inject() (
   ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] => db.withConnection { implicit conn =>
     implicit val optLogin = loginSessionRepo.fromRequest(request)
     val queryString = if (qs.size == 1) QueryString(qs.head) else QueryString(qs.filter {! _.isEmpty})
-println("categoryCodes = " + CategoryCodeSearchCondition(ccs))
-println("qs = '" + qs + "'")
-println("cs = '" + cs + "'")
-println("ccs = '" + ccs + "'")
-println("sid = '" + sid + "'")
-println("page = '" + page + "'")
-println("pageSize = '" + pageSize + "'")
 
     val list = itemRepo.list(
       locale = localeInfoRepo.getDefault(request.acceptLanguages.toList),
@@ -229,7 +222,6 @@ println("pageSize = '" + pageSize + "'")
       pageSize = pageSize,
       orderBy = OrderBy(orderBySpec)
     )
-println("list = " + list)
 
     val itemPriceStrategy = itemPriceStrategyRepo(ItemPriceStrategyContext(optLogin))
     Ok(

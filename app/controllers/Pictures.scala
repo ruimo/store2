@@ -15,8 +15,9 @@ import models.{LoginSession, LoginSessionRepo, StoreUserRepo}
 import play.Logger
 import play.api.db.Database
 import play.api.libs.Files.TemporaryFile
-
+import com.ruimo.scoins.LoanPattern._
 import scala.io.Source
+import scala.collection.{immutable => imm}
 
 trait Pictures extends MessagesAbstractController {
   val loginSessionRepo: LoginSessionRepo
@@ -61,40 +62,30 @@ trait Pictures extends MessagesAbstractController {
 
   def uploadPicture(
     id: Long, no: Int, retreat: Long => Call
-  ) = Action(parse.multipartFormData) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
-    val login = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
-    login match {
-      case None => NeedLogin.onUnauthorized(request)
-      case Some(user) =>
-        if (user.isBuyer) NeedLogin.onUnauthorized(request)
-        else {
-          request.body.file("picture").map { picture =>
-            val filename = picture.filename
-            val contentType = picture.contentType
-            if (contentType != Some("image/jpeg")) {
-              Redirect(
-                retreat(id)
-              ).flashing("errorMessage" -> Messages("jpeg.needed"))
-            }
-            else {
-              picture.ref.moveTo(toPath(id, no).toFile, true)
-              Redirect(
-                retreat(id)
-              ).flashing("message" -> Messages("itemIsUpdated"))
-            }
-          }.getOrElse {
-            Redirect(retreat(id)).flashing(
-              "errorMessage" -> Messages("file.not.found")
-            )
-          }.withSession(
-            request.session + (loginSessionRepo.loginUserKey -> user.withExpireTime(System.currentTimeMillis + loginSessionRepo.sessionTimeout).toSessionString)
-          )
-        }
+  ) = authenticated(parse.multipartFormData) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
+    request.body.file("picture").map { picture =>
+      val filename = picture.filename
+      val contentType = picture.contentType
+      if (contentType != Some("image/jpeg")) {
+        Redirect(
+          retreat(id)
+        ).flashing("errorMessage" -> Messages("jpeg.needed"))
+      }
+      else {
+        picture.ref.moveTo(toPath(id, no).toFile, true)
+        Redirect(
+          retreat(id)
+        ).flashing("message" -> Messages("itemIsUpdated"))
+      }
+    }.getOrElse {
+      Redirect(retreat(id)).flashing(
+        "errorMessage" -> Messages("file.not.found")
+      )
     }
   }
 
-  def toPath(id: Long, no: Int) = picturePath.resolve(pictureName(id, no))
-  def pictureName(id: Long, no: Int) = id + "_" + no + ".jpg"
+def toPath(id: Long, no: Int) = picturePath.resolve(pictureName(id, no))
+def pictureName(id: Long, no: Int) = id + "_" + no + ".jpg"
   def allPicturePaths(id: Long): Iterable[Path] = iterableAsScalaIterable(Files.newDirectoryStream(picturePath, id + "_*.jpg"))
 
   def isModified(path: Path, request: RequestHeader): Boolean = {
@@ -203,4 +194,63 @@ trait Pictures extends MessagesAbstractController {
   }
 
   def onPictureNotFound(id: Long, no: Int): Result
+
+  def toAttachmentPath(id: Long, idx: Int, fileName: String) = attachmentPath.resolve(id + "_" + idx + "_" + fileName)
+
+  def retrieveAttachmentNames(id: Long): Map[Int, String] =
+    using(Files.newDirectoryStream(attachmentPath, id + "_*")) { stream =>
+      stream.asScala.foldLeft(imm.IntMap[String]()) { (sum, e) =>
+        val restName = e.getFileName.toString.substring((id + "_").length)
+        val idx = restName.indexOf('_')
+        if (idx == -1) sum
+        else {
+          sum.updated(restName.substring(0, idx).toInt, restName.substring(idx + 1))
+        }
+      }
+    }.get
+
+  def getAttachment(
+    itemId: Long, no: Int, fileName: String
+  ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
+    val path = toAttachmentPath(itemId, no, fileName)
+    if (Files.isReadable(path)) {
+      if (isModified(path, request)) readFile(path, "application/octet-stream", Some(fileName)) else NotModified
+    }
+    else {
+      NotFound
+    }
+  }
+
+  def uploadAttachmentFile(
+    id: Long, no: Int, retreat: Long => Call
+  ) = authenticated(parse.multipartFormData) {
+    implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
+    request.body.file("attachment").map { picture =>
+      val fileName = picture.filename
+      val contentType = picture.contentType
+      picture.ref.moveTo(toAttachmentPath(id, no, fileName).toFile, true)
+      Redirect(
+        retreat(id)
+      ).flashing("message" -> Messages("itemIsUpdated"))
+    }.getOrElse {
+      Redirect(retreat(id)).flashing(
+        "errorMessage" -> Messages("file.not.found")
+      )
+    }
+  }
+
+  def removeAttachmentFile(
+    itemId: Long, no: Int, fileName: String, retreat: Long => Call
+  ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
+    try {
+      Files.delete(toAttachmentPath(itemId, no, fileName))
+    }
+    catch {
+      case e: NoSuchFileException =>
+      case e: Throwable => throw e
+    }
+    Redirect(
+      retreat(itemId)
+    ).flashing("message" -> Messages("itemIsUpdated"))
+  }
 }

@@ -108,13 +108,13 @@ POST    /admin/uploadItemPicture         controllers.ItemPictures.upload(id: Lon
 POST    /admin/removeItemPicture         controllers.ItemPictures.remove(id: Long, no: Int)
 GET     /admin/getItemPicture            controllers.ItemPictures.getPicture(id: Long, no: Int)
 
-POST    /admin/uploadItemAttachment      controllers.ItemPictures.uploadItemAttachment(itemId: Long, no: Int)
+POST    /admin/uploadItemAttachment      controllers.ItemPictures.uploadAttachment(itemId: Long, no: Int)
 POST    /admin/removeItemAttachment      controllers.ItemPictures.removeAttachment(id: Long, no: Int, fileName: String)
 
 POST    /admin/uploadItemDetailPicture   controllers.ItemPictures.uploadDetail(id: Long)
 POST    /admin/removeItemDetailPicture   controllers.ItemPictures.removeDetail(id: Long)
 GET     /admin/getItemDetailPicture      controllers.ItemPictures.getDetailPicture(id: Long)
-GET     /admin/getItemAttachment         controllers.ItemPictures.getItemAttachment(itemId: Long, no: Int, fileName: String)
+GET     /admin/getItemAttachment         controllers.ItemPictures.getAttachment(itemId: Long, no: Int, fileName: String)
 
 GET     /admin/transactionMaintenance    controllers.TransactionMaintenance.index(page: Int ?= 0, pageSize: Int ?= 999, orderBySpec: String ?= "transaction_site_id desc")
 POST    /admin/setStatus                 controllers.TransactionMaintenance.setStatus
@@ -277,6 +277,10 @@ GET     /pagedNewsList                   controllers.NewsQuery.pagedList(page:In
 
 GET     /itemzip                         controllers.ItemMaintenanceByCsv.index
 POST    /itemzip/upload                  controllers.ItemMaintenanceByCsv.uploadZip()
+
+GET     /getNewsAttachment         controllers.NewsPictures.getAttachment(itemId: Long, no: Int, fileName: String)
+POST    /admin/uploadNewsAttachment      controllers.NewsPictures.uploadAttachment(itemId: Long, no: Int)
+POST    /admin/removeNewsAttachment      controllers.NewsPictures.removeAttachment(id: Long, no: Int, fileName: String)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

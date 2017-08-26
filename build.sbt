@@ -9,6 +9,8 @@ resolvers += "ruimo.com" at "http://static.ruimo.com/release"
 
 scalaVersion := "2.12.3"
 
+scalacOptions := Seq("-unchecked", "-deprecation", "-feature")
+
 routesGenerator := InjectedRoutesGenerator
 
 libraryDependencies += guice
@@ -25,5 +27,3 @@ libraryDependencies += "com.ruimo" %% "csvparser" % "1.2"
 libraryDependencies += "org.twitter4j" % "twitter4j-core" % "4.0.6"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.1.4"
 libraryDependencies += specs2 % Test
-
-

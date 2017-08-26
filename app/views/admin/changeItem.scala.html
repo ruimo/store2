@@ -57,7 +57,7 @@
     <tr>
       <td class="name">@c.attachmentNames.get(idx).getOrElse("-")</td>
       <td class="upload">
-        @form(action = CSRF(routes.ItemPictures.uploadItemAttachment(id, idx)), 'enctype -> "multipart/form-data") {
+        @form(action = CSRF(routes.ItemPictures.uploadAttachment(id, idx)), 'enctype -> "multipart/form-data") {
           <input id="itemAttachmentUpload@idx" type="file" name="attachment">
           <input id="itemAttachmentUploadSubmit@idx" type="submit" value='@Messages("register")'>
         }

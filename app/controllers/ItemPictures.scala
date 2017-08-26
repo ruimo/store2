@@ -1,5 +1,6 @@
 package controllers
 
+import scala.collection.JavaConverters._
 import scala.annotation.tailrec
 import scala.collection.immutable
 import java.io.InputStream
@@ -14,7 +15,6 @@ import javax.inject.{Inject, Singleton}
 import controllers.NeedLogin.{Authenticated, OptAuthenticated}
 import models.{LoginSessionRepo, StoreUserRepo}
 
-import scala.collection.JavaConversions._
 import collection.immutable.IntMap
 import play.api.Configuration
 import play.Logger
@@ -47,60 +47,27 @@ class ItemPictures @Inject() (
 
   def upload(itemId: Long, no: Int) = uploadPicture(itemId, no, routes.ItemMaintenance.startChangeItem(_))
 
-  def uploadDetail(itemId: Long) = Action(parse.multipartFormData) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
-    val login = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
-    login match {
-      case None => db.withConnection { implicit conn => NeedLogin.onUnauthorized(request) }
-      case Some(user) =>
-        if (user.isBuyer) NeedLogin.onUnauthorized(request)
-        else {
-          request.body.file("picture").map { picture =>
-            val filename = picture.filename
-            val contentType = picture.contentType
-            if (contentType != Some("image/jpeg")) {
-              Redirect(
-                routes.ItemMaintenance.startChangeItem(itemId)
-              ).flashing("errorMessage" -> Messages("jpeg.needed"))
-            }
-            else {
-              picture.ref.moveTo(toDetailPath(itemId).toFile, true)
-              Redirect(
-                routes.ItemMaintenance.startChangeItem(itemId)
-              ).flashing("message" -> Messages("itemIsUpdated"))
-            }
-          }.getOrElse {
-            Redirect(routes.ItemMaintenance.startChangeItem(itemId)).flashing(
-              "errorMessage" -> Messages("file.not.found")
-            )
-          }.withSession(
-            request.session + (loginSessionRepo.loginUserKey -> user.withExpireTime(System.currentTimeMillis + loginSessionRepo.sessionTimeout).toSessionString)
-          )
-        }
-    }
-  }
-
-  def uploadItemAttachment(itemId: Long, no: Int) = Action(parse.multipartFormData) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
-    val login = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
-    login match {
-      case None => NeedLogin.onUnauthorized(request)
-      case Some(user) =>
-        if (user.isBuyer) NeedLogin.onUnauthorized(request)
-        else {
-          request.body.file("attachment").map { picture =>
-            val fileName = picture.filename
-            val contentType = picture.contentType
-            picture.ref.moveTo(toAttachmentPath(itemId, no, fileName).toFile, true)
-            Redirect(
-              routes.ItemMaintenance.startChangeItem(itemId)
-            ).flashing("message" -> Messages("itemIsUpdated"))
-          }.getOrElse {
-            Redirect(routes.ItemMaintenance.startChangeItem(itemId)).flashing(
-              "errorMessage" -> Messages("file.not.found")
-            )
-          }.withSession(
-            request.session + (loginSessionRepo.loginUserKey -> user.withExpireTime(System.currentTimeMillis + loginSessionRepo.sessionTimeout).toSessionString)
-          )
-        }
+  def uploadDetail(itemId: Long) = authenticated(
+    parse.multipartFormData
+  ) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
+    request.body.file("picture").map { picture =>
+      val filename = picture.filename
+      val contentType = picture.contentType
+      if (contentType != Some("image/jpeg")) {
+        Redirect(
+          routes.ItemMaintenance.startChangeItem(itemId)
+        ).flashing("errorMessage" -> Messages("jpeg.needed"))
+      }
+      else {
+        picture.ref.moveTo(toDetailPath(itemId).toFile, true)
+        Redirect(
+          routes.ItemMaintenance.startChangeItem(itemId)
+        ).flashing("message" -> Messages("itemIsUpdated"))
+      }
+    }.getOrElse {
+      Redirect(routes.ItemMaintenance.startChangeItem(itemId)).flashing(
+        "errorMessage" -> Messages("file.not.found")
+      )
     }
   }
 
@@ -211,57 +178,19 @@ class ItemPictures @Inject() (
     ).flashing("message" -> Messages("itemIsUpdated"))
   }
 
-  def removeAttachment(itemId: Long, no: Int, fileName: String) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
-    try {
-      Files.delete(toAttachmentPath(itemId, no, fileName))
-    }
-    catch {
-      case e: NoSuchFileException =>
-      case e: Throwable => throw e
-    }
-    Redirect(
-      routes.ItemMaintenance.startChangeItem(itemId)
-    ).flashing("message" -> Messages("itemIsUpdated"))
-  }
-
   def detailPictureName(itemId: Long) = "detail" + itemId + ".jpg"
   def toDetailPath(itemId: Long) = picturePath.resolve(detailPictureName(itemId))
-  def toAttachmentPath(itemId: Long, idx: Int, fileName: String) = attachmentPath.resolve(itemId + "_" + idx + "_" + fileName)
-
-  def getItemAttachment(itemId: Long, no: Int, fileName: String) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
-    val path = toAttachmentPath(itemId, no, fileName)
-    if (Files.isReadable(path)) {
-      if (isModified(path, request)) readFile(path, "application/octet-stream", Some(fileName)) else NotModified
-    }
-    else {
-      NotFound
-    }
-  }
-
-  def retrieveAttachmentNames(itemId: Long): Map[Int, String] = {
-    val stream = Files.newDirectoryStream(attachmentPath, itemId + "_*")
-    try {
-      stream.foldLeft(IntMap[String]()) { (sum, e) =>
-        val restName = e.getFileName.toString.substring((itemId + "_").length)
-        val idx = restName.indexOf('_')
-        if (idx == -1) sum
-        else {
-          sum.updated(restName.substring(0, idx).toInt, restName.substring(idx + 1))
-        }
-      }
-    }
-    finally {
-      try {
-        stream.close()
-      }
-      catch {
-        case t: Throwable => t.printStackTrace
-      }
-    }
-  }
 
   def remove(id: Long, no: Int) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val lang = request.acceptLanguages.head
     removePicture(id, no, routes.ItemMaintenance.startChangeItem(_), messagesApi("itemIsUpdated"), NeedLogin.assumeAdmin)
   }
+
+  def uploadAttachment(
+    id: Long, no: Int
+  ) = uploadAttachmentFile(id, no, routes.ItemMaintenance.startChangeItem(_))
+
+  def removeAttachment(
+    id: Long, no: Int, fileName: String
+  ) = removeAttachmentFile(id, no, fileName, routes.ItemMaintenance.startChangeItem(_))
 }

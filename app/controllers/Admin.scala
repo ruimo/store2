@@ -205,7 +205,7 @@ class Admin @Inject() (
         },
         user => {
           db.withConnection { implicit conn =>
-            val salt = RandomTokenGenerator()next
+            val salt = RandomTokenGenerator().next
             val userNameSeed = RandomTokenGenerator().next
             val userName = f"anon$userNameSeed%08x"
             val anonUser = storeUserRepo.create(

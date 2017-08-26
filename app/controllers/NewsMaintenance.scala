@@ -92,7 +92,8 @@ class NewsMaintenance @Inject() (
                 news._1.title, news._1.contents, news._1.releaseTime, news._1.siteId
               )
             ),
-            siteRepo.tableForDropDown
+            siteRepo.tableForDropDown,
+            newsPictures.retrieveAttachmentNames(id)
           )
         )
       }
@@ -110,7 +111,8 @@ class NewsMaintenance @Inject() (
               id, formWithErrors,
               db.withConnection { implicit conn =>
                 siteRepo.tableForDropDown
-              }
+              },
+              newsPictures.retrieveAttachmentNames(id)
             )
           )
         },

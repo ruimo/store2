@@ -42,4 +42,12 @@ class NewsPictures @Inject() (
   def remove(id: Long, no: Int) = authenticated {implicit request: AuthMessagesRequest[AnyContent] =>
     removePicture(id, no, routes.NewsMaintenance.modifyNewsStart(_), Messages("newsIsUpdated"), NeedLogin.assumeAdmin)
   }
+
+  def uploadAttachment(
+    id: Long, no: Int
+  ) = uploadAttachmentFile(id, no, routes.NewsMaintenance.modifyNewsStart(_))
+
+  def removeAttachment(
+    id: Long, no: Int, fileName: String
+  ) = removeAttachmentFile(id, no, fileName, routes.NewsMaintenance.modifyNewsStart(_))
 }

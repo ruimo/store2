@@ -1,5 +1,6 @@
 package models
 
+import scala.language.postfixOps
 import anorm._
 import java.sql.{Connection, Timestamp}
 import java.time.Instant

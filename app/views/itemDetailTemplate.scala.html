@@ -58,7 +58,7 @@
 
   <div style="display: none;" id="itemAttachmentPanel">
     @attachmentNames.map { e =>
-      <a href="@routes.ItemPictures.getItemAttachment(detail.itemId, e._1, e._2)"
+      <a href="@routes.ItemPictures.getAttachment(detail.itemId, e._1, e._2)"
          id="itemAttachment@e._1" data-no="@e._1" data-name="@e._2">
       </a>
     }
