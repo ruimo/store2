@@ -27,3 +27,5 @@ libraryDependencies += "com.ruimo" %% "csvparser" % "1.2"
 libraryDependencies += "org.twitter4j" % "twitter4j-core" % "4.0.6"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.1.4"
 libraryDependencies += specs2 % Test
+
+javaOptions in test ++= Option(System.getProperty("GECKO_DRIVER_PATH")).map("-Dwebdriver.gecko.driver" + _).toSeq
