@@ -318,7 +318,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
         implicit val mp: MessagesProvider = new MessagesImpl(lang, Messages)
 
         downloadString(
-          browser.baseUrl.get + controllers.routes.ItemPictures.getItemAttachment(1, 2, "foo").url
+          browser.baseUrl.get + controllers.routes.ItemPictures.getAttachment(1, 2, "foo").url
         ) must throwA[FileNotFoundException]
       }
     }
@@ -341,7 +341,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
         Files.write(file, util.Arrays.asList("Hello"), Charset.forName("US-ASCII"))
         downloadString(
           Some(file.toFile.lastModified - 1000),
-          browser.baseUrl.get + controllers.routes.ItemPictures.getItemAttachment(1, 2, "file.jpg").url
+          browser.baseUrl.get + controllers.routes.ItemPictures.getAttachment(1, 2, "file.jpg").url
         )._2 === "Hello"
 
         Files.deleteIfExists(file)
@@ -366,12 +366,12 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
         Files.write(file, util.Arrays.asList("Hello"), Charset.forName("US-ASCII"))
         downloadString(
           Some(file.toFile.lastModified),
-          browser.baseUrl.get + controllers.routes.ItemPictures.getItemAttachment(1, 2, "file.jpg").url
+          browser.baseUrl.get + controllers.routes.ItemPictures.getAttachment(1, 2, "file.jpg").url
         )._1 === Status.NOT_MODIFIED
 
         downloadString(
           Some(file.toFile.lastModified + 1000),
-          browser.baseUrl.get + controllers.routes.ItemPictures.getItemAttachment(1, 2, "file.jpg").url
+          browser.baseUrl.get + controllers.routes.ItemPictures.getAttachment(1, 2, "file.jpg").url
         )._1 === Status.NOT_MODIFIED
 
         Files.deleteIfExists(file)
