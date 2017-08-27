@@ -23,6 +23,7 @@ class LoginSpec extends Specification with InjectorSupport {
       WebDriverFactory(FIREFOX),
       appl(inMemoryDatabase() ++ disableMailer)
     ) {
+println("setting = " + System.getProperty("webdriver.gecko.driver"))
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
         val localeInfo = inject[LocaleInfoRepo]
