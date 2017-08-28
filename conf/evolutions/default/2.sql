@@ -2,7 +2,7 @@
 
 # --- !Ups
 
-alter table news column store_user_id bigint default null;
+alter table news add column store_user_id bigint default null;
 
 # --- !Downs
 

@@ -783,3 +783,12 @@ tr.recommendationByAdminTable.body {
 #paypalimg {
   cursor: pointer;
 }
+
+table, tr, th, td {
+    border-collapse: collapse;
+    border:1px solid #333;
+}
+
+td, th {
+    padding: 0.3em 0.2em 0.2em;
+}

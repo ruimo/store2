@@ -21,7 +21,13 @@ class NewsSpec extends Specification with InjectorSupport {
 
       inject[Database].withConnection { implicit conn =>
         val site = inject[SiteRepo].createNew(localeInfo.Ja, "商店1")
-        val news = inject[NewsRepo].createNew(Some(site.id.get), "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L))
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
+        val news = inject[NewsRepo].createNew(
+          user1.id.get, Some(site.id.get), "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+        )
         news === inject[NewsRepo].apply(news.id.get)._1
         site === inject[NewsRepo].apply(news.id.get)._2.get
         val list = inject[NewsRepo].list()
@@ -37,7 +43,13 @@ class NewsSpec extends Specification with InjectorSupport {
       val currencyInfo = inject[CurrencyRegistry]
 
       inject[Database].withConnection { implicit conn =>
-        val news = inject[NewsRepo].createNew(None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L))
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
+        val news = inject[NewsRepo].createNew(
+          user1.id.get, None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+        )
         news === inject[NewsRepo].apply(news.id.get)._1
         val list = inject[NewsRepo].list()
         list.records.size === 1
@@ -53,10 +65,20 @@ class NewsSpec extends Specification with InjectorSupport {
 
       inject[Database].withConnection { implicit conn =>
         val site = inject[SiteRepo].createNew(localeInfo.Ja, "商店1")
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
         val news = Vector(
-          inject[NewsRepo].createNew(None, "title01", "contents01", releaseTime = Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)),
-          inject[NewsRepo].createNew(site.id, "title02", "contents02", releaseTime = Instant.ofEpochMilli(234L), Instant.ofEpochMilli(222L)),
-          inject[NewsRepo].createNew(None, "title03", "contents03", releaseTime = Instant.ofEpochMilli(345L), Instant.ofEpochMilli(111L))
+          inject[NewsRepo].createNew(
+            user1.id.get, None, "title01", "contents01", releaseTime = Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+          ),
+          inject[NewsRepo].createNew(
+            user1.id.get, site.id, "title02", "contents02", releaseTime = Instant.ofEpochMilli(234L), Instant.ofEpochMilli(222L)
+          ),
+          inject[NewsRepo].createNew(
+            user1.id.get, None, "title03", "contents03", releaseTime = Instant.ofEpochMilli(345L), Instant.ofEpochMilli(111L)
+          )
         )
         val list = inject[NewsRepo].list()
         list.records.size === 3
@@ -75,10 +97,19 @@ class NewsSpec extends Specification with InjectorSupport {
       val currencyInfo = inject[CurrencyRegistry]
 
       inject[Database].withConnection { implicit conn =>
-        val news = inject[NewsRepo].createNew(None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L))
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
+        val news = inject[NewsRepo].createNew(
+          user1.id.get, None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+        )
         news === inject[NewsRepo].apply(news.id.get)._1
         val site = inject[SiteRepo].createNew(localeInfo.Ja, "商店1")
-        inject[NewsRepo].update(news.id.get, Some(site.id.get), "title02", "contents02", Instant.ofEpochMilli(111L), Instant.ofEpochMilli(222L)) === 1
+        inject[NewsRepo].update(
+          news.id.get, Some(user1.id.get), Some(site.id.get), "title02", "contents02", Instant.ofEpochMilli(111L),
+          Instant.ofEpochMilli(222L)
+        ) === 1
         val list = inject[NewsRepo].list()
         list.records.size === 1
         list.records(0)._1 === news.copy(
@@ -98,9 +129,15 @@ class NewsSpec extends Specification with InjectorSupport {
       val currencyInfo = inject[CurrencyRegistry]
 
       inject[Database].withConnection { implicit conn =>
-        val news = inject[NewsRepo].createNew(None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L))
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
+        val news = inject[NewsRepo].createNew(
+          user1.id.get, None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+        )
         news === inject[NewsRepo].apply(news.id.get)._1
-        inject[NewsRepo].delete(news.id.get)
+        inject[NewsRepo].delete(news.id.get, user1.id)
 
         val list = inject[NewsRepo].list()
         list.records.size === 0

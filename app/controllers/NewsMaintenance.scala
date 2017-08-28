@@ -1,6 +1,7 @@
 package controllers
 
 import helpers.Forms._
+import helpers.Cache
 import javax.inject.{Inject, Singleton}
 
 import play.Logger
@@ -10,7 +11,7 @@ import play.api.data.validation.Constraints._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{Lang, Messages, MessagesProvider}
-import play.api.mvc.{AnyContent, MessagesAbstractController, MessagesControllerComponents}
+import play.api.mvc.{AnyContent, MessagesAbstractController, MessagesControllerComponents, Result}
 import play.api.db.Database
 
 @Singleton
@@ -18,11 +19,12 @@ class NewsMaintenance @Inject() (
   cc: MessagesControllerComponents,
   authenticated: Authenticated,
   newsPictures: NewsPictures,
+  val cache: Cache,
   implicit val newsRepo: NewsRepo,
   implicit val db: Database,
   implicit val siteRepo: SiteRepo,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
-) extends MessagesAbstractController(cc) {
+) extends MessagesAbstractController(cc) with NewsCommon {
   def createForm(implicit mp: MessagesProvider) = Form(
     mapping(
       "title" -> text.verifying(nonEmpty, maxLength(255)),
@@ -34,7 +36,7 @@ class NewsMaintenance @Inject() (
 
   def index = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
+    checkLogin(login) {
       Ok(views.html.admin.newsMaintenance())
     }
   }
@@ -42,7 +44,7 @@ class NewsMaintenance @Inject() (
   def startCreateNews = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     db.withConnection { implicit conn =>
-      NeedLogin.assumeSuperUser(login) {
+      checkLogin(login) {
         Ok(views.html.admin.createNews(createForm, siteRepo.tableForDropDown))
       }
     }
@@ -50,7 +52,7 @@ class NewsMaintenance @Inject() (
 
   def createNews = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
+    checkLogin(login) {
       createForm.bindFromRequest.fold(
         formWithErrors => {
           Logger.error("Validation error in NewsMaintenance.createNews. " + formWithErrors)
@@ -59,7 +61,7 @@ class NewsMaintenance @Inject() (
           }
         },
         news => db.withConnection { implicit conn =>
-          news.save()
+          news.save(login)
           Redirect(
             routes.NewsMaintenance.startCreateNews()
           ).flashing("message" -> Messages("newsIsCreated"))
@@ -72,37 +74,49 @@ class NewsMaintenance @Inject() (
     page: Int, pageSize: Int, orderBySpec: String
   ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
+    checkLogin(login) {
       db.withConnection { implicit conn =>
-        Ok(views.html.admin.editNews(newsRepo.list(page, pageSize, OrderBy(orderBySpec), newsRepo.MaxDate)))
-      }
-    }
-  }
-
-  def modifyNewsStart(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
-    implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
-      db.withConnection { implicit conn =>
-        val news = newsRepo(NewsId(id))
         Ok(
-          views.html.admin.modifyNews(
-            id,
-            createForm.fill(
-              CreateNews(
-                news._1.title, news._1.contents, news._1.releaseTime, news._1.siteId
-              )
-            ),
-            siteRepo.tableForDropDown,
-            newsPictures.retrieveAttachmentNames(id)
+          views.html.admin.editNews(
+            newsRepo.list(
+              page, pageSize, OrderBy(orderBySpec), newsRepo.MaxDate, if (login.isSuperUser) None else Some(login.userId)
+            )
           )
         )
       }
     }
   }
 
+  def modifyNewsStart(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    checkLogin(login) {
+      db.withConnection { implicit conn =>
+        val news = newsRepo(NewsId(id))
+        // Only super user or a user he/she owns this news entry can modify it.
+        if (login.isSuperUser || Some(login.userId) == news._1.userId) {
+          Ok(
+            views.html.admin.modifyNews(
+              id,
+              createForm.fill(
+                CreateNews(
+                  news._1.title, news._1.contents, news._1.releaseTime, news._1.siteId
+                )
+              ),
+              siteRepo.tableForDropDown,
+              newsPictures.retrieveAttachmentNames(id)
+            )
+          )
+        }
+        else {
+          Redirect(routes.Application.index)
+        }
+      }
+    }
+  }
+
   def modifyNews(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
+    checkLogin(login) {
       createForm.bindFromRequest.fold(
         formWithErrors => {
           Logger.error("Validation error in NewsMaintenance.modifyNews.")
@@ -117,7 +131,7 @@ class NewsMaintenance @Inject() (
           )
         },
         news => db.withConnection { implicit conn =>
-          news.update(id)
+          news.update(id, if (login.isSuperUser) None else Some(login.userId))
           Redirect(
             routes.NewsMaintenance.editNews()
           ).flashing("message" -> Messages("newsIsUpdated"))
@@ -128,10 +142,10 @@ class NewsMaintenance @Inject() (
 
   def deleteNews(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
-    NeedLogin.assumeSuperUser(login) {
+    checkLogin(login) {
       newsPictures.removeAllPictures(id)
       db.withConnection { implicit conn =>
-        newsRepo.delete(NewsId(id))
+        newsRepo.delete(NewsId(id), if (login.isSuperUser) None else Some(login.userId))
         Redirect(
           routes.NewsMaintenance.editNews()
         ).flashing("message" -> Messages("newsIsRemoved"))

@@ -1,5 +1,7 @@
 package functional
 
+import java.util.Arrays
+import org.specs2.runner._
 import java.text.SimpleDateFormat
 import play.api.test._
 import play.api.test.Helpers._
@@ -30,6 +32,7 @@ import com.ruimo.scoins.Scoping._
 
 class NewsMaintenanceSpec extends Specification with InjectorSupport {
   val testDir = Files.createTempDirectory(null)
+  val testAttachmentDir = Files.createTempDirectory(null)
   lazy val withTempDir = Map(
     "news.picture.path" -> testDir.toFile.getAbsolutePath,
     "news.picture.fortest" -> true
@@ -76,9 +79,9 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find("#releaseDateTextBox").fill().`with`("2016年01月02日")
         browser.find("#siteDropDown option[value='1001']").click()
         browser.find(".createNewsButton").click
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("createNewsTitle"))
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("createNewsTitle"))
+        }
         browser.find(".globalErrorMessage").size === 0
         browser.find(".message").text === Messages("newsIsCreated")
 
@@ -297,7 +300,9 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         allWindows.remove(currentWindow)
         browser.webDriver.switchTo().window(allWindows.iterator.next)
 
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("news"))
+        browser.waitUntil(
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("news"))
+        )
         browser.waitUntil(
           failFalse(browser.find(".newsTitle").text == "title01")
         )
@@ -362,6 +367,399 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find(".newsTable .body .title").index(1).text === "title03"
         browser.find(".newsTable .body .site").index(1).text === "商店333"
       }
+    }
+
+    "If normalUserCanCreateNews is false, login needed" in new WithBrowser(
+      WebDriverFactory(FIREFOX),
+      appl(
+        inMemoryDatabase() ++ withTempDir +
+          ("normalUserCanCreateNews" -> false)
+      )
+    ) {
+      inject[Database].withConnection { implicit conn =>
+        val currencyInfo = inject[CurrencyRegistry]
+        val localeInfo = inject[LocaleInfoRepo]
+        import localeInfo.{En, Ja}
+        implicit val lang = Lang("ja")
+        implicit val storeUserRepo = inject[StoreUserRepo]
+        val Messages = inject[MessagesApi]
+        implicit val mp: MessagesProvider = new MessagesImpl(lang, Messages)
+
+        val adminUser = loginWithTestUser(browser)
+        createNormalUser(
+          browser, "user01", "password01", "user01@mail.xxx", "firstName01", "lastName01", "company01"
+        )
+        logoff(browser)
+        login(browser, "user01", "password01")
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.startCreateNews().url
+        )
+
+        // Because logged in with normal user, redirected to top page.
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("company.name"))
+        }
+      }
+    }
+
+    "If normalUserCanCreateNews is true, normal user can start creating news" in new WithBrowser(
+      WebDriverFactory(FIREFOX),
+      appl(
+        inMemoryDatabase() ++ withTempDir +
+          ("normalUserCanCreateNews" -> true)
+      )
+    ) {
+      inject[Database].withConnection { implicit conn =>
+        val currencyInfo = inject[CurrencyRegistry]
+        val localeInfo = inject[LocaleInfoRepo]
+        import localeInfo.{En, Ja}
+        implicit val lang = Lang("ja")
+        implicit val storeUserRepo = inject[StoreUserRepo]
+        val Messages = inject[MessagesApi]
+        implicit val mp: MessagesProvider = new MessagesImpl(lang, Messages)
+
+        val adminUser = loginWithTestUser(browser)
+        createNormalUser(
+          browser, "user01", "password01", "user01@mail.xxx", "firstName01", "lastName01", "company01"
+        )
+        logoff(browser)
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.startCreateNews().url
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("loginTitle"))
+        }
+
+        login(browser, "user01", "password01")
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.startCreateNews().url
+        )
+
+        // Because logged in with normal user, redirected to top page.
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("createNewsTitle"))
+        }
+      }
+    }
+
+    "Normal user can create news if normalUserCanCreateNews is true" in new WithBrowser(
+      WebDriverFactory(FIREFOX),
+      appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin + (
+        ("normalUserCanCreateNews" -> true)
+      ))
+    ) {
+      inject[Database].withConnection { implicit conn =>
+        val currencyInfo = inject[CurrencyRegistry]
+        val localeInfo = inject[LocaleInfoRepo]
+        import localeInfo.{En, Ja}
+        implicit val lang = Lang("ja")
+        implicit val storeUserRepo = inject[StoreUserRepo]
+        val Messages = inject[MessagesApi]
+        implicit val mp: MessagesProvider = new MessagesImpl(lang, Messages)
+
+        loginWithTestUser(browser)
+        createNormalUser(
+          browser, "user01", "password01", "user01@mail.xxx", "firstName01", "lastName01", "company01"
+        )
+        logoff(browser)
+
+        val site1 = inject[SiteRepo].createNew(Ja, "商店111")
+        val site2 = inject[SiteRepo].createNew(Ja, "商店222")
+
+        login(browser, "user01", "password01")
+        browser.goTo(
+          controllers.routes.NewsMaintenance.startCreateNews().url
+        )
+
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+        browser.find(".createNewsButton").click
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.find(".globalErrorMessage").text === Messages("inputError")
+        browser.find("#title_field dd.error").text === Messages("error.required")
+        browser.find("#newsContents_field dd.error").text === Messages("error.required")
+
+        browser.find("#releaseDateTextBox_field dd.error").text === Messages("error.localDateTime")
+
+        browser.find("#title").fill().`with`("title01")
+        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("tinyMCE.activeEditor.setContent('Contents01');")
+        browser.find("#releaseDateTextBox").fill().`with`("2016年01月02日")
+        browser.find("#siteDropDown option[value='1001']").click()
+        browser.find(".createNewsButton").click
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.webDriver.getTitle === Messages("commonTitle", Messages("createNewsTitle"))
+        browser.find(".globalErrorMessage").size === 0
+        browser.find(".message").text === Messages("newsIsCreated")
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.webDriver.getTitle === Messages("commonTitle", Messages("editNewsTitle"))
+        browser.find(".newsTableBody .title").text === "title01"
+        browser.find(".newsTableBody .releaseTime").text === "2016年01月02日"
+        browser.find(".newsTableBody .site").text === "商店222"
+        browser.find(".newsTableBody .id a").click()
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.webDriver.getTitle === Messages("commonTitle", Messages("modifyNewsTitle"))
+        browser.find("#title").attribute("value") === "title01"
+        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("return tinyMCE.activeEditor.getContent();") === "<p>Contents01</p>"
+        browser.find("#siteDropDown option[selected='selected']").text === "商店222"
+        browser.find("#releaseDateTextBox").attribute("value") === "2016年01月02日"
+
+// Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361329
+        val id = browser.find("#idValue").attribute("value").toLong
+
+        // Add file
+        Files.copy(
+          Paths.get("testdata/kinseimaruIdx.jpg"),
+          testDir.resolve(id + "_0.jpg")
+        )
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
+        }
+        browser.find(".newsTableBody .id a").click()
+
+        browser.waitUntil {
+          browser.find("#pic0").text == controllers.routes.NewsPictures.getPicture(id, 0).url
+        }
+
+//        browser.webDriver
+//          .findElement(By.id("newsPictureUpload0"))
+//          .sendKeys(Paths.get("testdata/kinseimaruIdx.jpg").toFile.getAbsolutePath)
+        val now = System.currentTimeMillis
+//        browser.find("#newsPictureUploadSubmit0").click()
+
+//        testDir.resolve(id + "_0.jpg").toFile.exists === true
+        downloadBytes(
+          Some(now - 5000),
+          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
+        )._1 === Status.OK
+
+        downloadBytes(
+          Some(now + 10000),
+          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
+        )._1 === Status.NOT_MODIFIED
+
+        // Add attachment file
+        Files.write(
+          testDir.resolve("attachments").resolve(id + "_0_file000.txt"),
+          Arrays.asList("Hello")
+        )
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
+        }
+        browser.find(".newsTableBody .id a").click()
+
+        browser.waitUntil {
+          browser.find("#attachment0").text == controllers.routes.NewsPictures.getAttachment(id, 0, "file000.txt").url
+        }
+
+        // Delete file.
+        browser.find("#newsPictureRemove0").click()
+
+        browser.waitUntil {
+          testDir.resolve(id + "_0.jpg").toFile.exists == false
+        }
+
+        // Delete attachment.
+        browser.find("#newsAttachmentRemove0").click()
+        browser.waitUntil {
+          testDir.resolve("attachments").resolve(id + "_0_file000.txt").toFile.exists == false
+        }
+
+        browser.await().atMost(30, TimeUnit.SECONDS).until(browser.el("#title")).displayed()
+
+        browser.find("#title").fill().`with`("title02")
+        browser.find("#siteDropDown option[value='1000']").click()
+        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("tinyMCE.activeEditor.setContent('Contents02');")
+        browser.find("#releaseDateTextBox").fill().`with`("2016年02月02日")
+        browser.find(".updateButton").click
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.find(".message").text === Messages("newsIsUpdated")
+        browser.webDriver.getTitle === Messages("commonTitle", Messages("editNewsTitle"))
+        browser.find(".newsTableBody .title").text === "title02"
+        browser.find(".newsTableBody .releaseTime").text === "2016年02月02日"
+        browser.find(".newsTableBody .site").text === "商店111"
+        browser.find(".newsTableBody .id a").click()
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.webDriver.getTitle === Messages("commonTitle", Messages("modifyNewsTitle"))
+        browser.find("#title").attribute("value") === "title02"
+        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("return tinyMCE.activeEditor.getContent();") === "<p>Contents02</p>"
+        browser.find("#releaseDateTextBox").attribute("value") === "2016年02月02日"
+        browser.find("#siteDropDown option[selected='selected']").text === "商店111"
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.find(".deleteButton").click()
+        browser.waitUntil(
+          failFalse(browser.find(".no-button").first().displayed())
+        )
+        browser.find(".no-button").click()
+        browser.waitUntil(
+          failFalse(browser.find(".no-button").size != 0)
+        )
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.find(".deleteButton").click()
+        browser.waitUntil(
+          failFalse(browser.find(".yes-button").first().displayed())
+        )
+        browser.find(".yes-button").click()
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+        browser.find(".deleteButton").size === 0
+      }
+    }
+
+    "Normal user can modify his/her own news" in new WithBrowser(
+      WebDriverFactory(FIREFOX),
+      appl(
+        inMemoryDatabase() ++ withTempDir ++ avoidLogin +
+          ("normalUserCanCreateNews" -> true)
+      )
+    ) {
+      inject[Database].withConnection { implicit conn =>
+        val currencyInfo = inject[CurrencyRegistry]
+        val localeInfo = inject[LocaleInfoRepo]
+        import localeInfo.{En, Ja}
+        implicit val lang = Lang("ja")
+        implicit val storeUserRepo = inject[StoreUserRepo]
+        val Messages = inject[MessagesApi]
+        implicit val mp: MessagesProvider = new MessagesImpl(lang, Messages)
+
+        val adminUser = loginWithTestUser(browser)
+        createNormalUser(
+          browser, "user00", "password00", "user00@mail.xxx", "firstName00", "lastName00", "company00"
+        )
+        createNormalUser(
+          browser, "user01", "password01", "user01@mail.xxx", "firstName01", "lastName01", "company01"
+        )
+        logoff(browser)
+        login(browser, "user00", "password00")
+
+        val site1 = inject[SiteRepo].createNew(Ja, "商店111")
+        val site2 = inject[SiteRepo].createNew(Ja, "商店222")
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.startCreateNews().url.addParm("lang", lang.code).toString
+        )
+
+        browser.find("#title").fill().`with`("title01")
+        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("tinyMCE.activeEditor.setContent('Contents01');")
+        browser.find("#releaseDateTextBox").fill().`with`("2016年01月02日")
+        browser.find("#siteDropDown option[value='1001']").click()
+        browser.find(".createNewsButton").click
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("createNewsTitle"))
+        }
+        browser.find(".globalErrorMessage").size === 0
+        browser.find(".message").text === Messages("newsIsCreated")
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
+        }
+
+        browser.find(".newsTableBody .title").text === "title01"
+        browser.find(".newsTableBody .releaseTime").text === "2016年01月02日"
+        browser.find(".newsTableBody .site").text === "商店222"
+        val newsId = browser.find(".newsTableBody .id a").text.toLong
+        browser.find(".newsTableBody .id a").click()
+        browser.waitUntil {
+          browser.webDriver.getTitle === Messages("commonTitle", Messages("modifyNewsTitle"))
+        }
+
+        logoff(browser)
+        login(browser, "user01", "password01")
+
+        // user01 cannot modify news owned by user00.
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
+        }
+        browser.find(".newsTableBody").size === 0
+
+        // user01 cannot modify news owned by user00. Should navigate to top.
+        browser.goTo(
+          controllers.routes.NewsMaintenance.modifyNewsStart(newsId).url
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("company.name"))
+        }
+
+        // Login with super user
+        logoff(browser)
+        login(browser, "administrator", "password")
+
+        // super user can modify news owned by user00.
+        browser.goTo(
+          controllers.routes.NewsMaintenance.editNews().url
+        )
+        browser.waitUntil {
+          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
+        }
+        browser.find(".newsTableBody").size === 1
+
+        // super user can modify news owned by user00.
+        browser.goTo(
+          controllers.routes.NewsMaintenance.modifyNewsStart(newsId).url
+        )
+
+        browser.waitUntil {
+          browser.find("#title").first().displayed()
+        }
+        browser.find("#title").fill().`with`("title02")
+        browser.find(".updateButton").click()
+
+        browser.waitUntil {
+          browser.webDriver.getTitle === Messages("commonTitle", Messages("editNewsTitle"))
+        }
+        browser.find(".message").text === Messages("newsIsUpdated")
+        browser.find(".newsTableBody .title").text === "title02"
+      }
+
+      // Logoff and list news.
+      logoff(browser)
+      browser.goTo(
+        controllers.routes.NewsQuery.list().url
+      )
+
+      browser.waitUntil {
+        browser.find(".newsList tr").first().displayed()
+      }
+
+      browser.find(".newsList tr .newsTitle a").text === "title02"
     }
   }
 }

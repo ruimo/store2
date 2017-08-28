@@ -11,6 +11,7 @@ case class NewsId(id: Long) extends AnyVal
 
 case class News(
   id: Option[NewsId] = None,
+  userId: Option[Long],
   siteId: Option[Long],
   title: String,
   contents: String,
@@ -25,13 +26,14 @@ class NewsRepo @Inject() (
   val MaxDate: Long = java.sql.Date.valueOf("9999-12-31").getTime
   val simple = {
     SqlParser.get[Option[Long]]("news_id") ~
+    SqlParser.get[Option[Long]]("store_user_id") ~
     SqlParser.get[Option[Long]]("site_id") ~
     SqlParser.get[String]("title") ~
     SqlParser.get[String]("contents") ~
     SqlParser.get[java.time.Instant]("release_time") ~
     SqlParser.get[java.time.Instant]("updated_time") map {
-      case id~siteId~title~contents~releaseTime~updatedTime =>
-        News(id.map(NewsId.apply), siteId, title, contents, releaseTime, updatedTime)
+      case id~userId~siteId~title~contents~releaseTime~updatedTime =>
+        News(id.map(NewsId.apply), userId, siteId, title, contents, releaseTime, updatedTime)
     }
   }
 
@@ -53,7 +55,8 @@ class NewsRepo @Inject() (
     page: Int = 0,
     pageSize: Int = 10,
     orderBy: OrderBy = OrderBy("news.release_time desc"),
-    now: Long = MaxDate
+    now: Long = MaxDate,
+    specificUser: Option[Long] = None
   )(
     implicit conn: Connection
   ): PagedRecords[(News, Option[Site])] = {
@@ -62,6 +65,11 @@ class NewsRepo @Inject() (
       select * from news
       left join site s on s.site_id = news.site_id
       where release_time <= {now}
+      """ +
+        (specificUser.map { uid =>
+          "and news.store_user_id = " + uid
+        }).getOrElse("") +
+      """
       order by """ + orderBy + """
       limit {pageSize} offset {offset}
       """
@@ -81,15 +89,17 @@ class NewsRepo @Inject() (
   }
 
   def createNew(
+    userId: Long,
     siteId: Option[Long], title: String, contents: String, releaseTime: Instant, updatedTime: Instant = Instant.now()
   )(implicit conn: Connection): News = {
     SQL(
       """
-      insert into news (news_id, site_id, title, contents, release_time, updated_time) values (
-        (select nextval('news_seq')), {siteId}, {title}, {contents}, {releaseTime}, {updatedTime}
+      insert into news (news_id, store_user_id, site_id, title, contents, release_time, updated_time) values (
+        (select nextval('news_seq')), {userId}, {siteId}, {title}, {contents}, {releaseTime}, {updatedTime}
       )
       """
     ).on(
+      'userId -> userId,
       'siteId -> siteId,
       'title -> title,
       'contents -> contents,
@@ -99,11 +109,12 @@ class NewsRepo @Inject() (
 
     val newsId = SQL("select currval('news_seq')").as(SqlParser.scalar[Long].single)
 
-    News(Some(NewsId(newsId)), siteId, title, contents, releaseTime, updatedTime)
+    News(Some(NewsId(newsId)), Some(userId), siteId, title, contents, releaseTime, updatedTime)
   }
 
   def update(
-    id: NewsId, siteId: Option[Long], title: String, contents: String, releaseTime: Instant, updatedTime: Instant = Instant.now()
+    id: NewsId, userId: Option[Long], siteId: Option[Long], title: String, contents: String,
+    releaseTime: Instant, updatedTime: Instant = Instant.now()
   )(implicit conn: Connection): Int =
     SQL(
       """
@@ -114,7 +125,8 @@ class NewsRepo @Inject() (
         release_time = {releaseTime},
         updated_time = {updatedTime}
       where news_id = {newsId}
-      """
+      """ +
+      (userId.map(uid => "and store_user_id = " + uid).getOrElse(""))
     ).on(
       'newsId -> id.id,
       'siteId -> siteId,
@@ -124,11 +136,12 @@ class NewsRepo @Inject() (
       'updatedTime -> updatedTime
     ).executeUpdate()
 
-  def delete(newsId: NewsId)(implicit conn: Connection): Int =
+  def delete(newsId: NewsId, userId: Option[Long])(implicit conn: Connection): Int =
     SQL(
       """
       delete from news where news_id = {newsId}
-      """
+      """ +
+      (userId.map(uid => "and store_user_id = " + uid).getOrElse(""))
     ).on(
       'newsId -> newsId.id
     ).executeUpdate()

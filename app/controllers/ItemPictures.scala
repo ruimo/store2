@@ -45,7 +45,7 @@ class ItemPictures @Inject() (
   def detailNotfoundPath = picturePath.resolve("detailnotfound.jpg")
   lazy val attachmentCount = config.getOptional[Int]("item.attached.file.count").getOrElse(5)
 
-  def upload(itemId: Long, no: Int) = uploadPicture(itemId, no, routes.ItemMaintenance.startChangeItem(_))
+  def upload(itemId: Long, no: Int) = uploadPicture(itemId, no, routes.ItemMaintenance.startChangeItem(_), NeedLogin.assumeAdmin)
 
   def uploadDetail(itemId: Long) = authenticated(
     parse.multipartFormData
@@ -188,9 +188,9 @@ class ItemPictures @Inject() (
 
   def uploadAttachment(
     id: Long, no: Int
-  ) = uploadAttachmentFile(id, no, routes.ItemMaintenance.startChangeItem(_))
+  ) = uploadAttachmentFile(id, no, routes.ItemMaintenance.startChangeItem(_), NeedLogin.assumeAdmin)
 
   def removeAttachment(
     id: Long, no: Int, fileName: String
-  ) = removeAttachmentFile(id, no, fileName, routes.ItemMaintenance.startChangeItem(_))
+  ) = removeAttachmentFile(id, no, fileName, routes.ItemMaintenance.startChangeItem(_), NeedLogin.assumeAdmin)
 }

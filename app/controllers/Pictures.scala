@@ -61,26 +61,30 @@ trait Pictures extends MessagesAbstractController {
   }
 
   def uploadPicture(
-    id: Long, no: Int, retreat: Long => Call
-  ) = authenticated(parse.multipartFormData) { implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
-    request.body.file("picture").map { picture =>
-      val filename = picture.filename
-      val contentType = picture.contentType
-      if (contentType != Some("image/jpeg")) {
-        Redirect(
-          retreat(id)
-        ).flashing("errorMessage" -> Messages("jpeg.needed"))
+    id: Long, no: Int, retreat: Long => Call,
+    assumeOperator: LoginSession => (=> Result) => Result
+  ) = authenticated(parse.multipartFormData) { implicit request: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
+    implicit val login = request.login
+    assumeOperator(login) {
+      request.body.file("picture").map { picture =>
+        val filename = picture.filename
+        val contentType = picture.contentType
+        if (contentType != Some("image/jpeg")) {
+          Redirect(
+            retreat(id)
+          ).flashing("errorMessage" -> Messages("jpeg.needed"))
+        }
+        else {
+          picture.ref.moveTo(toPath(id, no).toFile, true)
+          Redirect(
+            retreat(id)
+          ).flashing("message" -> Messages("itemIsUpdated"))
+        }
+      }.getOrElse {
+        Redirect(retreat(id)).flashing(
+          "errorMessage" -> Messages("file.not.found")
+        )
       }
-      else {
-        picture.ref.moveTo(toPath(id, no).toFile, true)
-        Redirect(
-          retreat(id)
-        ).flashing("message" -> Messages("itemIsUpdated"))
-      }
-    }.getOrElse {
-      Redirect(retreat(id)).flashing(
-        "errorMessage" -> Messages("file.not.found")
-      )
     }
   }
 
@@ -222,35 +226,43 @@ def pictureName(id: Long, no: Int) = id + "_" + no + ".jpg"
   }
 
   def uploadAttachmentFile(
-    id: Long, no: Int, retreat: Long => Call
+    id: Long, no: Int, retreat: Long => Call,
+    assumeOperator: LoginSession => (=> Result) => Result
   ) = authenticated(parse.multipartFormData) {
-    implicit request: MessagesRequest[MultipartFormData[TemporaryFile]] =>
-    request.body.file("attachment").map { picture =>
-      val fileName = picture.filename
-      val contentType = picture.contentType
-      picture.ref.moveTo(toAttachmentPath(id, no, fileName).toFile, true)
-      Redirect(
-        retreat(id)
-      ).flashing("message" -> Messages("itemIsUpdated"))
-    }.getOrElse {
-      Redirect(retreat(id)).flashing(
-        "errorMessage" -> Messages("file.not.found")
-      )
+    implicit request: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
+    implicit val login = request.login
+    assumeOperator(login) {
+      request.body.file("attachment").map { picture =>
+        val fileName = picture.filename
+        val contentType = picture.contentType
+        picture.ref.moveTo(toAttachmentPath(id, no, fileName).toFile, true)
+        Redirect(
+          retreat(id)
+        ).flashing("message" -> Messages("itemIsUpdated"))
+      }.getOrElse {
+        Redirect(retreat(id)).flashing(
+          "errorMessage" -> Messages("file.not.found")
+        )
+      }
     }
   }
 
   def removeAttachmentFile(
-    itemId: Long, no: Int, fileName: String, retreat: Long => Call
-  ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
-    try {
-      Files.delete(toAttachmentPath(itemId, no, fileName))
+    itemId: Long, no: Int, fileName: String, retreat: Long => Call,
+    assumeOperator: LoginSession => (=> Result) => Result
+  ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    assumeOperator(login) {
+      try {
+        Files.delete(toAttachmentPath(itemId, no, fileName))
+      }
+      catch {
+        case e: NoSuchFileException =>
+        case e: Throwable => throw e
+      }
+      Redirect(
+        retreat(itemId)
+      ).flashing("message" -> Messages("itemIsUpdated"))
     }
-    catch {
-      case e: NoSuchFileException =>
-      case e: Throwable => throw e
-    }
-    Redirect(
-      retreat(itemId)
-    ).flashing("message" -> Messages("itemIsUpdated"))
   }
 }
