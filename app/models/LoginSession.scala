@@ -56,6 +56,11 @@ class LoginSessionRepo @Inject() (
 
   def serialize(storeUserId: Long, expirationTime: Long): String = storeUserId + ";" + expirationTime
 
+  def extend(sessionString: String): String = {
+    val args = sessionString.split(';').map(_.toLong)
+    args(0) + ";" + (System.currentTimeMillis + sessionTimeout)
+  }
+
   def fromRequest(
     request: RequestHeader, now: Long = System.currentTimeMillis
   )(implicit conn: Connection): Option[LoginSession] = {
