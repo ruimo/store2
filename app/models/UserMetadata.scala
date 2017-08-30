@@ -1,5 +1,7 @@
 package models
 
+import java.time.temporal.ChronoUnit
+import java.time.LocalDateTime
 import scala.language.postfixOps
 import java.sql.Connection
 import anorm._
@@ -117,10 +119,37 @@ object UserMetadata {
   )(implicit conn: Connection): Seq[UserMetadata] = SQL(
     """
     select * from user_metadata where joined_date > {dateAfter}
+    order by joined_date desc
     """
   ).on(
     'dateAfter -> dateAfter
   ).as(
     simple *
   )
+
+  def nearBirthDayUsers(
+    now: LocalDateTime = LocalDateTime.now()
+  )(implicit conn: Connection): Seq[UserMetadata] = {
+    val days: Seq[Int] = (0 to 7).map { day =>
+      val befo = now.plus(day, ChronoUnit.DAYS)
+      befo.getMonthValue() * 100 + befo.getDayOfMonth()
+    }
+
+    SQL(
+      """
+      select * from user_metadata where birth_month_day in ({day0}, {day1}, {day2}, {day3}, {day4}, {day5}, {day6}, {day7})
+      """
+    ).on(
+      'day0 -> days(0),
+      'day1 -> days(1),
+      'day2 -> days(2),
+      'day3 -> days(3),
+      'day4 -> days(4),
+      'day5 -> days(5),
+      'day6 -> days(6),
+      'day7 -> days(7),
+    ).as(
+      simple *
+    )
+  }
 }
