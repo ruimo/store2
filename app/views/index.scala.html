@@ -1,4 +1,6 @@
 @(
+  recentlyJoindUsers: Seq[(StoreUser, UserMetadata)],
+  nearBirthDayUsers: Seq[(StoreUser, UserMetadata)]
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
