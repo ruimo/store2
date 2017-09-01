@@ -1,0 +1,69 @@
+@(
+  page: Int, pageSize: Int, orderBySpec: String
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  flash: Flash,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.js"></script>
+    <script src="@routes.Assets.versioned("javascripts/clipboard.js-master/dist/clipboard.min.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/ng-file-upload-bower-12.2.13/ng-file-upload-all.min.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/file.js")"></script>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/file.css")"/>
+  </head>
+  <body>
+    <div ng-app="fileUpload" ng-controller="MyCtrl">
+      <div class="resizeFrame">
+        <div ngf-drop ngf-select ng-model="files" class="drop-box" 
+             ngf-drag-over-class="'dragover'" ngf-multiple="true" ngf-allow-dir="true"
+             >@Messages("selectFiles")</div>
+      </div>
+      <div ngf-no-file-drop>@Messages("noSupportDragDrop")</div>
+      <ul>
+        <li ng-repeat="f in allUploadFiles" class="uploadStatus" ng-show="! f.stored">
+          <div class="thumbnail-wrapper">
+            <img ngf-thumbnail="!f.$error && f" class="thumbnail">
+          </div>
+          <span class="progress" ng-show="f.progress >= 0">
+            <div class="progress-bar" style="width:{{f.progress}}%" ng-bind="f.progress + '%'"></div>
+          </span>
+          <button class="button" ng-click="f.upload.abort();f.upload.aborted=true"
+                  ng-show="f.upload != null && f.progress < 100 && !f.upload.aborted">
+            @Messages("abort")
+          </button>
+          {{f.name}} {{f.$error}}
+        </li>
+      </ul>
+      <table>
+        <tr ng-repeat="f in allFiles" class="fileRow">
+          <td ng-bind="f.fileName"></td>
+        </tr>
+      </table>
+
+      <div class="storedFilesWrapper">
+        <iframe id="storedFiles" src="@routes.FileServer.fileList(page, pageSize, orderBySpec)"></iframe>
+      </div>
+    </div>
+
+@helper.javascriptRouter("jsRoutes")(
+  routes.javascript.FileServer.create
+)
+
+<script>
+  app.run(['$rootScope', function($rootScope) {
+    $rootScope.routes = jsRoutes;
+    $rootScope.uploadErrorMsg = {
+      "Unknown": "@Messages("uploadErrorUnknown")",
+      "TooBig": "@Messages("uploadedFileTooBig")"
+    };
+  }]);
+</script>
+  </body>
+</html>

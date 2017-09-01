@@ -1,0 +1,65 @@
+@import java.time.format.DateTimeFormatter
+@import java.time.LocalDateTime
+@import play.api.i18n.{Messages => msg}
+@import java.time.Instant
+
+@(
+  page: Int, pageSize: Int, orderBy: OrderBy,
+  recs: PagedRecords[UploadedFile],
+  imageDateFormatter: DateTimeFormatter,
+  toLocalDateTime: Instant => LocalDateTime,
+  removeForm: Form[RemoveFile]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  flash: Flash,
+  loginSession: LoginSession
+)
+
+@import helper._
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"></script>
+    <script src="@routes.Assets.versioned("javascripts/clipboard.js-master/dist/clipboard.min.js")"></script>
+    <script src="@routes.Assets.versioned("javascripts/fileList.js")"></script>
+    <link rel="stylesheet" media="screen" href="https://code.jquery.com/ui/1.12.1/themes/redmond/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/fileList.css")"/>
+  </head>
+  <body>
+    @form(action = CSRF(routes.FileServer.remove(page, pageSize, orderBy.toString)), 'id -> "removeForm") {
+      <input type="hidden" name="fileId" id="fileId">
+    }
+
+    <div class="fileList">
+      @if(recs.isEmpty) {
+        @Messages("recordEmpty")
+      } else {
+        @pagingPanel(recs, routes.FileServer.fileList, 10, 25, 50)(implicitly, Some(loginSession))
+
+        <table class="fileListTable">
+          @recs.records.map { rec =>
+            <tr class="row">
+              <td class="fileName">
+                <a target="_blank" href="@routes.FileServer.getFile(rec.id.get.value)">
+                  @rec.fileName
+                </a>
+              </td>
+              <td class="createdTime">@imageDateFormatter.format(toLocalDateTime(rec.createdTime))</td>
+              <td class="link">
+                <span id="url@rec.id.get.value">@routes.FileServer.getFile(rec.id.get.value)</span>
+                <button class="copyBtn" data-clipboard-target="#url@rec.id.get.value">@msg("copyToClipboard")</button>
+              </td>
+              <td class="removeFile">
+                @if(loginSession.isSuperUser || loginSession.userId == rec.storeUserId) {
+                  <button class="removeBtn" data-id="@rec.id.get.value"></button>
+                }
+              </td>
+            </tr>
+          }
+        </table>
+      }
+    </div>
+  </body>
+</html>

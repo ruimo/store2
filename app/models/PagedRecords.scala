@@ -9,6 +9,7 @@ case class PagedRecords[+T] (
 ) {
   lazy val nextPageExists = currentPage + 1 < pageCount
   lazy val prevPageExists = currentPage > 0
+  val isEmpty: Boolean = records.isEmpty
 
   def map[B](f: (T) => B): PagedRecords[B] = PagedRecords[B](
     currentPage,
