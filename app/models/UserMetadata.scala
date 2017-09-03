@@ -23,7 +23,9 @@ case class UserMetadata(
   joinedDate: Option[Instant],
   birthMonthDay: Option[Int],
   profileComment: Option[String]
-)
+) {
+  lazy val fullKanaName = firstNameKana.getOrElse("") + middleNameKana.map(n => " " + n).getOrElse("") + " " + lastNameKana.getOrElse("")
+}
 
 object UserMetadata {
   val simple = {
