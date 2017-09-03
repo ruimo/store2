@@ -14,6 +14,7 @@
 @implicitLoginSessionOpt = @{Some(loginSession)}
 
 @main(Messages("editNewsTitle"), Some(loginSession), contentCssClass = "adminContents") {
+  <link rel="stylesheet" media="all" href="@routes.Assets.versioned("stylesheets/editNews.css")">
   <script>
     $(function() {
       $(".deleteButton").each(function(idx, b) {
