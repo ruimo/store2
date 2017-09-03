@@ -53,7 +53,7 @@
               </td>
               <td class="removeFile">
                 @if(loginSession.isSuperUser || loginSession.userId == rec.storeUserId) {
-                  <button class="removeBtn" data-id="@rec.id.get.value"></button>
+                  <button class="removeBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec.id.get.value"></button>
                 }
               </td>
             </tr>

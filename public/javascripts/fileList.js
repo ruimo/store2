@@ -9,7 +9,9 @@ $(function() {
     text: false
   });
   $(".removeBtn").click(function(e) {
-    $("#fileId").attr("value", $(this).attr("data-id"));
-    $("#removeForm").submit();
+    if (confirm($(this).attr("data-confirm"))) {
+      $("#fileId").attr("value", $(this).attr("data-id"));
+      $("#removeForm").submit();
+    }
   });
 });
