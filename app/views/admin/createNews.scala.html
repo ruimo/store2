@@ -16,9 +16,9 @@
   <script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
   <script>
     tinymce.init({
-      selector:'textarea',
-      plugins: "textcolor",
-      toolbar: "forecolor backcolor"
+        selector:'textarea',
+        plugins: "image textcolor link code",
+        toolbar: "forecolor backcolor code"
     });
   </script>
 } {
@@ -66,6 +66,9 @@
     }
     <input type="submit" class="createNewsButton" value=@Messages("register")>
   }
+
+  <iframe class="filesArea" src="@routes.FileServer.index()">
+  </iframe>
 
   <div class="menuPanel">
     <br>

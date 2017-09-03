@@ -792,3 +792,9 @@ table, tr, th, td {
 td, th {
     padding: 0.3em 0.2em 0.2em;
 }
+
+.filesArea {
+    width: 100%;
+    margin: 0.3em;
+    height: 30em;
+}

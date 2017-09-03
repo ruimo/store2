@@ -87,8 +87,8 @@
     $(function () {
         tinymce.init({
             selector:'textarea',
-            plugins: "image,textcolor,link",
-            toolbar: "forecolor backcolor"
+            plugins: "image textcolor link code",
+            toolbar: "forecolor backcolor code"
         });
         var clipboard = new Clipboard('.copyButton');
     });
@@ -145,13 +145,8 @@
     <input type="submit" class="updateButton" value=@Messages("register")>
   }
 
-  <h2 class="newsPicture">@Messages("newsPicture")</h2>
-
-  @{(0 until 5) map { idx => fileUpload(id, idx)}}
-
-  <h2 class="newsAttachment">@Messages("newsAttachment")</h2>
-
-  @{(0 until 5) map { idx => attachmentUpload(id, idx)}}
+  <iframe class="filesArea" src="@routes.FileServer.index()">
+  </iframe>
 
   <div class="menuPanel">
     <br>

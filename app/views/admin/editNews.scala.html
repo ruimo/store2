@@ -99,6 +99,10 @@
         @form(action = CSRF(routes.NewsMaintenance.deleteNews(n._1.id.get.id)), 'id -> ("deleteNews" + n._1.id.get.id)) {
         }
         <button type="button" style="float: left;"
+                onclick="location.href='@routes.NewsMaintenance.modifyNewsStart(n._1.id.get.id)'">
+          @Messages("edit")
+        </button>
+        <button type="button" style="float: left;"
                 data-news-id="@n._1.id.get.id" data-news-title="@n._1.title" class="deleteButton">
           @Messages("remove")
         </button>
