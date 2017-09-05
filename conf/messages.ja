@@ -1,6 +1,6 @@
 # --- Constraints
 error.localDateTime=日付、時刻エラー
-format.localDateTime=日付、時刻の形式が間違っています
+format.localDateTime=日付、時刻を {0} の形式で指定してください
 
 constraint.required=(必須)
 constraint.min=最小値は {0} です。
