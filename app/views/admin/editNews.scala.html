@@ -1,5 +1,5 @@
 @(
-  news: PagedRecords[(News, Option[Site])]
+  news: PagedRecords[(News, Option[Site], Option[StoreUser])]
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],

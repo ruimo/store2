@@ -34,6 +34,7 @@ class NewsSpec extends Specification with InjectorSupport {
         list.records.size === 1
         list.records(0)._1 === news
         list.records(0)._2 === Some(site)
+        list.records(0)._3 === Some(user1)
       }
     }
 
@@ -69,12 +70,16 @@ class NewsSpec extends Specification with InjectorSupport {
           "userName", "firstName", Some("middleName"), "lastName", "email",
           1L, 2L, UserRole.NORMAL, Some("companyName")
         )
+        val user2 = inject[StoreUserRepo].create(
+          "userName2", "firstName2", Some("middleName2"), "lastName2", "email2",
+          1L, 2L, UserRole.NORMAL, Some("companyName2")
+        )
         val news = Vector(
           inject[NewsRepo].createNew(
             user1.id.get, None, "title01", "contents01", releaseTime = Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
           ),
           inject[NewsRepo].createNew(
-            user1.id.get, site.id, "title02", "contents02", releaseTime = Instant.ofEpochMilli(234L), Instant.ofEpochMilli(222L)
+            user2.id.get, site.id, "title02", "contents02", releaseTime = Instant.ofEpochMilli(234L), Instant.ofEpochMilli(222L)
           ),
           inject[NewsRepo].createNew(
             user1.id.get, None, "title03", "contents03", releaseTime = Instant.ofEpochMilli(345L), Instant.ofEpochMilli(111L)
@@ -84,10 +89,13 @@ class NewsSpec extends Specification with InjectorSupport {
         list.records.size === 3
         list.records(0)._1 === news(2)
         list.records(0)._2 === None
+        list.records(0)._3 === Some(user1)
         list.records(1)._1 === news(1)
         list.records(1)._2 === Some(site)
+        list.records(1)._3 === Some(user2)
         list.records(2)._1 === news(0)
         list.records(2)._2 === None
+        list.records(2)._3 === Some(user1)
       }
     }
 

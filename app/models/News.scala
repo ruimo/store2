@@ -21,7 +21,8 @@ case class News(
 
 @Singleton
 class NewsRepo @Inject() (
-  siteRepo: SiteRepo
+  siteRepo: SiteRepo,
+  storeUserRepo: StoreUserRepo
 ) {
   val MaxDate: Long = java.sql.Date.valueOf("9999-12-31").getTime
   val simple = {
@@ -39,6 +40,10 @@ class NewsRepo @Inject() (
 
   val withSite = simple ~ (SiteRepo.simple ?) map {
     case news~site => (news, site)
+  }
+
+  val withSiteUser = simple ~ (SiteRepo.simple ?) ~ (storeUserRepo.simple ?) map {
+    case news~site~user => (news, site, user)
   }
 
   def apply(id: NewsId)(implicit conn: Connection): (News, Option[Site]) = SQL(
@@ -59,11 +64,12 @@ class NewsRepo @Inject() (
     specificUser: Option[Long] = None
   )(
     implicit conn: Connection
-  ): PagedRecords[(News, Option[Site])] = {
-    val records: Seq[(News, Option[Site])] = SQL(
+  ): PagedRecords[(News, Option[Site], Option[StoreUser])] = {
+    val records: Seq[(News, Option[Site], Option[StoreUser])] = SQL(
       """
       select * from news
       left join site s on s.site_id = news.site_id
+      left join store_user u on u.store_user_id = news.store_user_id
       where release_time <= {now}
       """ +
         (specificUser.map { uid =>
@@ -78,7 +84,7 @@ class NewsRepo @Inject() (
       'offset -> page * pageSize,
       'now -> java.time.Instant.ofEpochMilli(now)
     ).as(
-      withSite *
+      withSiteUser *
     )
 
     val count = SQL(

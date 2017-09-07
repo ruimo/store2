@@ -27,7 +27,9 @@ class NewsQuery @Inject() (
   ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
     implicit val optLogin = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
     db.withConnection { implicit conn =>
-      Ok(views.html.newsList(newsRepo.list(page, pageSize, OrderBy(orderBySpec), System.currentTimeMillis)))
+      Ok(views.html.newsList(
+        newsRepo.list(page, pageSize, OrderBy(orderBySpec), System.currentTimeMillis))
+      )
     }
   }
 
