@@ -101,51 +101,6 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find("#siteDropDown option[selected='selected']").text === "商店222"
         browser.find("#releaseDateTextBox").attribute("value") === "2016年01月02日"
 
-// Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361329
-//        browser.webDriver
-//          .findElement(By.id("newsPictureUpload0"))
-//          .sendKeys(Paths.get("testdata/kinseimaruIdx.jpg").toFile.getAbsolutePath)
-//        val now = System.currentTimeMillis
-//        browser.find("#newsPictureUploadSubmit0").click()
-
-        val id = browser.find("#idValue").attribute("value").toLong
-//        testDir.resolve(id + "_0.jpg").toFile.exists === true
-//        downloadBytes(
-//          Some(now - 1000),
-//          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
-//        )._1 === Status.OK
-
-//        downloadBytes(
-//          Some(now + 10000),
-//          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
-//        )._1 === Status.NOT_MODIFIED
-
-        // Delete file.
-        browser.find("#newsPictureRemove0").click()
-
-        testDir.resolve(id + "_0.jpg").toFile.exists === false
-
-        browser.find("#title").fill().`with`("title02")
-        browser.find("#siteDropDown option[value='1000']").click()
-        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("tinyMCE.activeEditor.setContent('Contents02');")
-        browser.find("#releaseDateTextBox").fill().`with`("2016年02月02日")
-        browser.find(".updateButton").click
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.find(".message").text === Messages("newsIsUpdated")
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("editNewsTitle"))
-        browser.find(".newsTableBody .title").text === "title02"
-        browser.find(".newsTableBody .releaseTime").text === "2016年02月02日"
-        browser.find(".newsTableBody .site").text === "商店111"
-        browser.find(".newsTableBody .id a").click()
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("modifyNewsTitle"))
-        browser.find("#title").attribute("value") === "title02"
-        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("return tinyMCE.activeEditor.getContent();") === "<p>Contents02</p>"
-        browser.find("#releaseDateTextBox").attribute("value") === "2016年02月02日"
-        browser.find("#siteDropDown option[selected='selected']").text === "商店111"
-
         browser.goTo(
           controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
         )
@@ -315,18 +270,20 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
           controllers.routes.NewsQuery.pagedList().url.addParm("lang", lang.code).toString
         )
         browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
         browser.find(".newsTable .body").size === 3
 
         browser.find(".newsTable .body .date").index(0).text === "2016年01月04日"
+        browser.find(".newsTable .body .newsCreatedUser").index(0).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(0).text === "title02"
         browser.find(".newsTable .body .site").index(0).text === "商店222"
 
         browser.find(".newsTable .body .date").index(1).text === "2016年01月03日"
+        browser.find(".newsTable .body .newsCreatedUser").index(1).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(1).text === "title03"
         browser.find(".newsTable .body .site").index(1).text === "商店333"
 
         browser.find(".newsTable .body .date").index(2).text === "2016年01月02日"
+        browser.find(".newsTable .body .newsCreatedUser").index(2).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(2).text === "title01"
         browser.find(".newsTable .body .site").index(2).text === "商店111"
 
@@ -338,10 +295,12 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find(".newsTable .body").size === 2
 
         browser.find(".newsTable .body .date").index(0).text === "2016年01月04日"
+        browser.find(".newsTable .body .newsCreatedUser").index(0).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(0).text === "title02"
         browser.find(".newsTable .body .site").index(0).text === "商店222"
 
         browser.find(".newsTable .body .date").index(1).text === "2016年01月03日"
+        browser.find(".newsTable .body .newsCreatedUser").index(1).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(1).text === "title03"
         browser.find(".newsTable .body .site").index(1).text === "商店333"
 
@@ -351,6 +310,7 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find(".newsTable .body").size === 1
 
         browser.find(".newsTable .body .date").index(0).text === "2016年01月02日"
+        browser.find(".newsTable .body .newsCreatedUser").index(0).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(0).text === "title01"
         browser.find(".newsTable .body .site").index(0).text === "商店111"
 
@@ -360,10 +320,12 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.find(".newsTable .body").size === 2
 
         browser.find(".newsTable .body .date").index(0).text === "2016年01月04日"
+        browser.find(".newsTable .body .newsCreatedUser").index(0).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(0).text === "title02"
         browser.find(".newsTable .body .site").index(0).text === "商店222"
 
         browser.find(".newsTable .body .date").index(1).text === "2016年01月03日"
+        browser.find(".newsTable .body .newsCreatedUser").index(1).text === "Admin Manager"
         browser.find(".newsTable .body .title").index(1).text === "title03"
         browser.find(".newsTable .body .site").index(1).text === "商店333"
       }
@@ -510,98 +472,6 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
         browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("return tinyMCE.activeEditor.getContent();") === "<p>Contents01</p>"
         browser.find("#siteDropDown option[selected='selected']").text === "商店222"
         browser.find("#releaseDateTextBox").attribute("value") === "2016年01月02日"
-
-// Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361329
-        val id = browser.find("#idValue").attribute("value").toLong
-
-        // Add file
-        Files.copy(
-          Paths.get("testdata/kinseimaruIdx.jpg"),
-          testDir.resolve(id + "_0.jpg")
-        )
-
-        browser.goTo(
-          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
-        )
-        browser.waitUntil {
-          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
-        }
-        browser.find(".newsTableBody .id a").click()
-
-        browser.waitUntil {
-          browser.find("#pic0").text == controllers.routes.NewsPictures.getPicture(id, 0).url
-        }
-
-//        browser.webDriver
-//          .findElement(By.id("newsPictureUpload0"))
-//          .sendKeys(Paths.get("testdata/kinseimaruIdx.jpg").toFile.getAbsolutePath)
-        val now = System.currentTimeMillis
-//        browser.find("#newsPictureUploadSubmit0").click()
-
-//        testDir.resolve(id + "_0.jpg").toFile.exists === true
-        downloadBytes(
-          Some(now - 5000),
-          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
-        )._1 === Status.OK
-
-        downloadBytes(
-          Some(now + 10000),
-          browser.baseUrl.get + controllers.routes.NewsPictures.getPicture(id, 0).url
-        )._1 === Status.NOT_MODIFIED
-
-        // Add attachment file
-        Files.write(
-          testDir.resolve("attachments").resolve(id + "_0_file000.txt"),
-          Arrays.asList("Hello")
-        )
-
-        browser.goTo(
-          controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
-        )
-        browser.waitUntil {
-          browser.webDriver.getTitle == Messages("commonTitle", Messages("editNewsTitle"))
-        }
-        browser.find(".newsTableBody .id a").click()
-
-        browser.waitUntil {
-          browser.find("#attachment0").text == controllers.routes.NewsPictures.getAttachment(id, 0, "file000.txt").url
-        }
-
-        // Delete file.
-        browser.find("#newsPictureRemove0").click()
-
-        browser.waitUntil {
-          testDir.resolve(id + "_0.jpg").toFile.exists == false
-        }
-
-        // Delete attachment.
-        browser.find("#newsAttachmentRemove0").click()
-        browser.waitUntil {
-          testDir.resolve("attachments").resolve(id + "_0_file000.txt").toFile.exists == false
-        }
-
-        browser.await().atMost(30, TimeUnit.SECONDS).until(browser.el("#title")).displayed()
-
-        browser.find("#title").fill().`with`("title02")
-        browser.find("#siteDropDown option[value='1000']").click()
-        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("tinyMCE.activeEditor.setContent('Contents02');")
-        browser.find("#releaseDateTextBox").fill().`with`("2016年02月02日")
-        browser.find(".updateButton").click
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.find(".message").text === Messages("newsIsUpdated")
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("editNewsTitle"))
-        browser.find(".newsTableBody .title").text === "title02"
-        browser.find(".newsTableBody .releaseTime").text === "2016年02月02日"
-        browser.find(".newsTableBody .site").text === "商店111"
-        browser.find(".newsTableBody .id a").click()
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("modifyNewsTitle"))
-        browser.find("#title").attribute("value") === "title02"
-        browser.webDriver.asInstanceOf[JavascriptExecutor].executeScript("return tinyMCE.activeEditor.getContent();") === "<p>Contents02</p>"
-        browser.find("#releaseDateTextBox").attribute("value") === "2016年02月02日"
-        browser.find("#siteDropDown option[selected='selected']").text === "商店111"
 
         browser.goTo(
           controllers.routes.NewsMaintenance.editNews().url.addParm("lang", lang.code).toString
@@ -760,6 +630,7 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
       }
 
       browser.find(".newsList tr .newsTitle a").text === "title02"
+      browser.find(".newsCreatedUser").text === "firstName00 lastName00"
     }
   }
 }

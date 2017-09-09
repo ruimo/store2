@@ -59,11 +59,9 @@
       '_label -> Messages("releaseDate"), 'id-> "releaseDateTextBox"
     )
 
-    @if(loginSession.isSuperUser) {
-      @select(
-        myForm("site"), siteDropDown, '_showConstraints -> false, 'id -> "siteDropDown"
-      )
-    }
+    @select(
+      myForm("site"), siteDropDown, '_showConstraints -> false, 'id -> "siteDropDown"
+    )
     <input type="submit" class="createNewsButton" value=@Messages("register")>
   }
 
