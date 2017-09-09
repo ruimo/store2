@@ -360,7 +360,7 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
 
         // Because logged in with normal user, redirected to top page.
         browser.waitUntil {
-          browser.webDriver.getTitle == Messages("commonTitle", Messages("company.name"))
+          browser.webDriver.getTitle.trim == Messages("commonTitle", Messages("company.name")).trim
         }
       }
     }
@@ -585,7 +585,7 @@ class NewsMaintenanceSpec extends Specification with InjectorSupport {
           controllers.routes.NewsMaintenance.modifyNewsStart(newsId).url
         )
         browser.waitUntil {
-          browser.webDriver.getTitle == Messages("commonTitle", Messages("company.name"))
+          browser.webDriver.getTitle.trim == Messages("commonTitle", Messages("company.name")).trim
         }
 
         // Login with super user
