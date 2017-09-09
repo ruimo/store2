@@ -8,13 +8,15 @@ case class CreateNews(
   title: String,
   contents: String,
   releaseTime: Instant,
-  siteId: Option[Long]
+  siteId: Option[Long],
+  categoryId: Option[Long]
 ) (
   implicit newsRepo: NewsRepo
 ) {
   def save(login: LoginSession)(implicit conn: Connection): News = newsRepo.createNew(
     login.userId,
     siteId,
+    categoryId.map(NewsCategoryId.apply),
     title,
     contents,
     releaseTime
@@ -24,6 +26,7 @@ case class CreateNews(
     NewsId(id),
     userId,
     siteId,
+    categoryId.map(NewsCategoryId.apply),
     title,
     contents,
     releaseTime = releaseTime

@@ -30,7 +30,8 @@ class NewsMaintenance @Inject() (
       "title" -> text.verifying(nonEmpty, maxLength(255)),
       "contents" ->  text.verifying(nonEmpty, maxLength(65535)),
       "releaseDate" -> instant(Messages("news.date.format")),
-      "site" -> optional(longNumber)
+      "site" -> optional(longNumber),
+      "category" -> optional(longNumber)
     )(CreateNews.apply)(CreateNews.unapply)
   )
 
@@ -99,7 +100,7 @@ class NewsMaintenance @Inject() (
               id,
               createForm.fill(
                 CreateNews(
-                  news._1.title, news._1.contents, news._1.releaseTime, news._1.siteId
+                  news._1.title, news._1.contents, news._1.releaseTime, news._1.siteId, news._1.categoryId.map(_.value)
                 )
               ),
               siteRepo.tableForDropDown,

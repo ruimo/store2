@@ -1,5 +1,5 @@
 @(
-  news: PagedRecords[(News, Option[Site], Option[StoreUser])]
+  news: PagedRecords[(News, Option[Site], Option[StoreUser], Option[NewsCategory])]
 )(
   implicit request: MessagesRequest[AnyContent],
   optLoginSession: Option[LoginSession]
