@@ -1,6 +1,7 @@
 @(
   myForm: Form[CreateNews],
-  siteDropDown: Seq[(String, String)]
+  siteDropDown: Seq[(String, String)],
+  categoryDropDown: Seq[(String, String)]
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
@@ -61,6 +62,10 @@
 
     @select(
       myForm("site"), siteDropDown, '_showConstraints -> false, 'id -> "siteDropDown"
+    )
+
+    @select(
+      myForm("category"), categoryDropDown, '_showConstraints -> false, 'id -> "categoryDropDown"
     )
     <input type="submit" class="createNewsButton" value=@Messages("register")>
   }

@@ -63,6 +63,13 @@
         "news.news_id", news
       )
     </th>
+    <th class="id">
+      @orderMark(
+        Messages("category"),
+        routes.NewsMaintenance.editNews,
+        "news.news_category_id", news
+      )
+    </th>
     <th class="title">
       @orderMark(
         Messages("newsTitle"),
@@ -92,6 +99,11 @@
         <a href="@routes.NewsMaintenance.modifyNewsStart(n._1.id.get.id)">
           @n._1.id.get.id
         </a>
+      </td>
+      <td class="newsCategoryIcon">
+        @n._4.map { cat =>
+          <img src="@cat.iconUrl">
+        }.getOrElse("")
       </td>
       <td class="title">@n._1.title</td>
       <td class="releaseTime">@DateTimeFormatter.ofPattern(Messages("news.date.format")).format(n._1.releaseTime.atZone(java.time.ZoneId.systemDefault()))</td>

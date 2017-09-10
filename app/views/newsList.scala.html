@@ -17,6 +17,11 @@
     <table class="newsList">
       @news.records.map { rec =>
         <tr>
+          <td class="newsCategoryIcon">
+            @rec._4.map { iconUrl =>
+              <img src="@iconUrl">
+            }.getOrElse("")
+          </td>
           <td class="newsReleaseDate">@publishedDate(rec._1.releaseTime)</td>
           <td class="newsCreatedUser">@rec._3.map(_.fullName).getOrElse("")</td>
           <td class="newsTitle"><a target="_blank" href="@routes.NewsQuery.show(rec._1.id.get.id)">@rec._1.title</a></td>

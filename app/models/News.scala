@@ -204,4 +204,14 @@ class NewsCategoryRepo @Inject() (
 
     NewsCategory(Some(NewsCategoryId(id)), categoryName, iconUrl)
   }
+
+  def tableForDropDown(implicit conn: Connection): Seq[(String, String)] =
+    SQL(
+      """
+      select * from news_category
+      order by category_name
+      """
+    ).as(simple *).map {
+      e => e.id.get.value.toString -> e.categoryName
+    }
 }

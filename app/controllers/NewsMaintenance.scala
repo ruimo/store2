@@ -21,6 +21,7 @@ class NewsMaintenance @Inject() (
   newsPictures: NewsPictures,
   val cache: Cache,
   implicit val newsRepo: NewsRepo,
+  implicit val newsCategoryRepo: NewsCategoryRepo,
   implicit val db: Database,
   implicit val siteRepo: SiteRepo,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
@@ -46,7 +47,7 @@ class NewsMaintenance @Inject() (
     implicit val login = request.login
     db.withConnection { implicit conn =>
       checkLogin(login) {
-        Ok(views.html.admin.createNews(createForm, siteRepo.tableForDropDown))
+        Ok(views.html.admin.createNews(createForm, siteRepo.tableForDropDown, newsCategoryRepo.tableForDropDown))
       }
     }
   }
@@ -58,7 +59,7 @@ class NewsMaintenance @Inject() (
         formWithErrors => {
           Logger.error("Validation error in NewsMaintenance.createNews. " + formWithErrors)
           db.withConnection { implicit conn =>
-            BadRequest(views.html.admin.createNews(formWithErrors, siteRepo.tableForDropDown))
+            BadRequest(views.html.admin.createNews(formWithErrors, siteRepo.tableForDropDown, newsCategoryRepo.tableForDropDown))
           }
         },
         news => db.withConnection { implicit conn =>
@@ -104,7 +105,7 @@ class NewsMaintenance @Inject() (
                 )
               ),
               siteRepo.tableForDropDown,
-              newsPictures.retrieveAttachmentNames(id)
+              newsCategoryRepo.tableForDropDown
             )
           )
         }
@@ -122,13 +123,13 @@ class NewsMaintenance @Inject() (
         formWithErrors => {
           Logger.error("Validation error in NewsMaintenance.modifyNews.")
           BadRequest(
-            views.html.admin.modifyNews(
-              id, formWithErrors,
-              db.withConnection { implicit conn =>
-                siteRepo.tableForDropDown
-              },
-              newsPictures.retrieveAttachmentNames(id)
-            )
+            db.withConnection { implicit conn =>
+              views.html.admin.modifyNews(
+                id, formWithErrors,
+                siteRepo.tableForDropDown,
+                newsCategoryRepo.tableForDropDown
+              )
+            }
           )
         },
         news => db.withConnection { implicit conn =>
