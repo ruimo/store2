@@ -83,8 +83,12 @@ class HelperBase {
     browser.find("#email").fill().`with`(email)
     browser.find("#password_main").fill().`with`(password)
     browser.find("#password_confirm").fill().`with`(password)
-    browser.find("#registerNormalUser").click()
-    browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
+    browser.webDriver
+      .findElement(By.id("registerNormalUser"))
+      .sendKeys(Keys.ENTER)
+    browser.waitUntil(
+      failFalse(browser.find(".message").first().displayed())
+    )
   }
 
   def takeScreenShot(browser: TestBrowser) {
