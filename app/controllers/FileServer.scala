@@ -46,37 +46,40 @@ class FileServer @Inject() (
   def onPictureNotFound(id: Long, no: Int): Result = Results.NotFound
 
   def index(
-    page: Int, pageSize: Int, orderBySpec: String
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
   ) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
     implicit val login: LoginSession = req.login
     Ok(views.html.files(page, pageSize, orderBySpec))
   }
 
   def fileList(
-    page: Int, pageSize: Int, orderBySpec: String
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
   ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     db.withConnection { implicit conn =>
       implicit val login: LoginSession = request.login
       Ok(
         views.html.fileList(
           page, pageSize, OrderBy(orderBySpec),
-          UploadedFile.list(page, pageSize, OrderBy(orderBySpec)),
+          UploadedFile.list(page, pageSize, OrderBy(orderBySpec), categoryName),
           TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
           toLocalDateTime(_)(implicitly),
-          removeForm
+          removeForm,
+          categoryName
         )
       )
     }
   }
 
-  def create() = authenticated(parse.multipartFormData) { implicit req: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
+  def create(
+    categoryName: String
+  ) = authenticated(parse.multipartFormData) { implicit req: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
     implicit val login = req.login
     db.withConnection { implicit conn =>
       req.body.files.foreach { file =>
         val fileName = file.filename
         val contentType = file.contentType
         val ufid = UploadedFile.create(
-          login.userId, fileName, contentType, Instant.now()
+          login.userId, fileName, contentType, Instant.now(), categoryName
         )
 
         file.ref.moveTo(attachmentPath.resolve(f"${ufid.value}%016d"), true)

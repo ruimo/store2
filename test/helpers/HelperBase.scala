@@ -1,5 +1,6 @@
 package helpers
 
+import org.openqa.selenium.{By, Keys}
 import java.time.Instant
 import play.api.Application
 import java.sql.Connection

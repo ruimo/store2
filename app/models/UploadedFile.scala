@@ -16,7 +16,8 @@ case class UploadedFile(
   storeUserId: Long,
   fileName: String,
   contentType: Option[String],
-  createdTime: Instant = Instant.now()
+  createdTime: Instant = Instant.now(),
+  category_name: String
 )
 
 object UploadedFile {
@@ -25,9 +26,10 @@ object UploadedFile {
     SqlParser.get[Long]("uploaded_file.store_user_id") ~
     SqlParser.get[String]("uploaded_file.file_name") ~
     SqlParser.get[Option[String]]("uploaded_file.content_type") ~
-    SqlParser.get[Instant]("uploaded_file.created_time") map {
-      case id~storeUserId~fileName~contentType~createdTime => UploadedFile(
-        id.map(UploadedFileId.apply), storeUserId, fileName, contentType, createdTime
+    SqlParser.get[Instant]("uploaded_file.created_time") ~
+    SqlParser.get[String]("uploaded_file.category_name") map {
+      case id~storeUserId~fileName~contentType~createdTime~categoryName => UploadedFile(
+        id.map(UploadedFileId.apply), storeUserId, fileName, contentType, createdTime, categoryName
       )
     }
   }
@@ -46,16 +48,21 @@ object UploadedFile {
     'id -> id.value
   ).executeUpdate()
 
-  def list(page: Int, pageSize: Int, orderBy: OrderBy)(implicit conn: Connection): PagedRecords[UploadedFile] = {
+  def list(
+    page: Int = 0, pageSize: Int = 10, orderBy: OrderBy, categoryName: String
+  )(
+    implicit conn: Connection
+  ): PagedRecords[UploadedFile] = {
     import scala.language.postfixOps
     val offset: Int = pageSize * page
     val records: Seq[UploadedFile] = SQL(
       s"""
-      select * from uploaded_file order by $orderBy limit {pageSize} offset {offset}
+      select * from uploaded_file where category_name = {categoryName} order by $orderBy limit {pageSize} offset {offset}
       """
     ).on(
       'pageSize -> pageSize,
-      'offset -> offset
+      'offset -> offset,
+      'categoryName -> categoryName
     ).as(
       simple *
     )
@@ -68,22 +75,23 @@ object UploadedFile {
   }
 
   def create(
-    storeUserId: Long, fileName: String, contentType: Option[String], createdTime: Instant
+    storeUserId: Long, fileName: String, contentType: Option[String], createdTime: Instant, categoryName: String
   )(implicit conn: Connection): UploadedFileId = {
     SQL(
       """
       insert into uploaded_file(
-        uploaded_file_id, store_user_id, file_name, content_type, created_time
+        uploaded_file_id, store_user_id, file_name, content_type, created_time, category_name
       ) values (
         (select nextval('uploaded_file_seq')),
-        {storeUserId}, {fileName}, {contentType}, {createdTime}
+        {storeUserId}, {fileName}, {contentType}, {createdTime}, {categoryName}
       )
       """
     ).on(
       'storeUserId -> storeUserId,
       'fileName -> fileName,
       'contentType -> contentType,
-      'createdTime -> createdTime
+      'createdTime -> createdTime,
+      'categoryName -> categoryName
     ).executeUpdate()
 
     UploadedFileId(SQL("select currval('uploaded_file_seq')").as(SqlParser.scalar[Long].single))

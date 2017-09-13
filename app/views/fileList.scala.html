@@ -8,7 +8,8 @@
   recs: PagedRecords[UploadedFile],
   imageDateFormatter: DateTimeFormatter,
   toLocalDateTime: Instant => LocalDateTime,
-  removeForm: Form[RemoveFile]
+  removeForm: Form[RemoveFile],
+  categoryName: String
 )(
   implicit request: MessagesRequest[AnyContent],
   flash: Flash,
@@ -37,7 +38,7 @@
       @if(recs.isEmpty) {
         @Messages("recordEmpty")
       } else {
-        @pagingPanel(recs, routes.FileServer.fileList, 10, 25, 50)(implicitly, Some(loginSession))
+        @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName), 10, 25, 50)(implicitly, Some(loginSession))
 
         <table class="fileListTable">
           @recs.records.map { rec =>

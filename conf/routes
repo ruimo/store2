@@ -282,10 +282,10 @@ GET     /getNewsAttachment               controllers.NewsPictures.getAttachment(
 POST    /admin/uploadNewsAttachment      controllers.NewsPictures.uploadAttachment(itemId: Long, no: Int)
 POST    /admin/removeNewsAttachment      controllers.NewsPictures.removeAttachment(id: Long, no: Int, fileName: String)
 
-GET     /files                           controllers.FileServer.index(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "created_time desc")
+GET     /files                           controllers.FileServer.index(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "created_time desc", categoryName: String ?= "")
 + nocsrf
-POST    /uploadFile                      controllers.FileServer.create()
-GET     /fileList                        controllers.FileServer.fileList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "created_time desc")
+POST    /uploadFile                      controllers.FileServer.create(categoryName: String ?= "")
+GET     /fileList                        controllers.FileServer.fileList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "created_time desc", categoryName: String ?= "")
 GET     /getFile                         controllers.FileServer.getFile(id: Long)
 POST    /removeFile                      controllers.FileServer.remove(page: Int, pageSize: Int, orderBySpec: String)
 
