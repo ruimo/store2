@@ -10,7 +10,7 @@ import java.nio.file.{Files, NoSuchFileException, Path, Paths}
 import play.Logger
 import play.api.mvc._
 import javax.inject.{Inject, Singleton}
-import models.{LoginSessionRepo, StoreUserRepo, UploadedFile, UploadedFileId, OrderBy, LoginSession, RemoveFile}
+import models._
 import play.api.db.Database
 import helpers.Cache
 import play.api.libs.Files.TemporaryFile
@@ -22,6 +22,9 @@ class FileServer @Inject() (
   val authenticated: Authenticated,
   val optAuthenticated: OptAuthenticated,
   val cache: Cache,
+  uploadedFileRepo: UploadedFileRepo,
+  fileCategories: FileCategories,
+  implicit val shoppingCartItemRepo: ShoppingCartItemRepo,
   implicit val db: Database,
   implicit val storeUserRepo: StoreUserRepo,
   implicit val loginSessionRepo: LoginSessionRepo
@@ -49,7 +52,7 @@ class FileServer @Inject() (
     page: Int, pageSize: Int, orderBySpec: String, categoryName: String
   ) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
     implicit val login: LoginSession = req.login
-    Ok(views.html.files(page, pageSize, orderBySpec))
+    Ok(views.html.files(page, pageSize, orderBySpec, categoryName))
   }
 
   def fileList(
@@ -60,7 +63,7 @@ class FileServer @Inject() (
       Ok(
         views.html.fileList(
           page, pageSize, OrderBy(orderBySpec),
-          UploadedFile.list(page, pageSize, OrderBy(orderBySpec), categoryName),
+          uploadedFileRepo.list(page, pageSize, OrderBy(orderBySpec), categoryName),
           TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
           toLocalDateTime(_)(implicitly),
           removeForm,
@@ -78,7 +81,7 @@ class FileServer @Inject() (
       req.body.files.foreach { file =>
         val fileName = file.filename
         val contentType = file.contentType
-        val ufid = UploadedFile.create(
+        val ufid = uploadedFileRepo.create(
           login.userId, fileName, contentType, Instant.now(), categoryName
         )
 
@@ -90,7 +93,7 @@ class FileServer @Inject() (
 
   def getFile(id: Long) = authenticated { implicit req =>
     db.withConnection { implicit conn =>
-      UploadedFile.get(UploadedFileId(id)).map { uf =>
+      uploadedFileRepo.get(UploadedFileId(id)).map { uf =>
         val path = attachmentPath.resolve(f"${uf.id.get.value}%016d")
         if (Files.isReadable(path)) {
           if (isModified(path, req))
@@ -115,17 +118,34 @@ class FileServer @Inject() (
         val id = removeData.fileId
         db.withConnection { implicit conn =>
           val ufid = UploadedFileId(id)
-          UploadedFile.get(ufid).map { uf =>
+          uploadedFileRepo.get(ufid).map { uf =>
             if (uf.storeUserId != login.userId  && ! login.isSuperUser) {
               Forbidden
             }
             else {
-              UploadedFile.remove(ufid)
+              uploadedFileRepo.remove(ufid)
               Redirect(routes.FileServer.fileList(0, pageSize, orderBySpec))
             }
           }.getOrElse(Redirect(routes.FileServer.fileList(0, pageSize, orderBySpec)))
         }
       }
+    )
+  }
+
+  def showFilesInCategory(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
+  ) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
+    implicit val login = req.login
+    Ok(
+      views.html.showFilesInCategory(
+        page, pageSize, OrderBy(orderBySpec),
+        fileCategories.values.filter(_.value == categoryName).headOption.map(_.menuText).getOrElse(""),
+        TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
+        toLocalDateTime(_)(implicitly),
+        db.withConnection { implicit conn =>
+          uploadedFileRepo.list(page, pageSize, OrderBy(orderBySpec), categoryName)
+        }
+      )
     )
   }
 }

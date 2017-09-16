@@ -538,3 +538,5 @@ selectFiles=Drag/Drop files to upload or click here to open file dialog.
 copyToClipboard=COPY
 uploadErrorUnknown=Server error
 uploadedFileTooBig=File too big
+fileMaintenanceTitle=File maintenance
+fileListTitle=File list {0}

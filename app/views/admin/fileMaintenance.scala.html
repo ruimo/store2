@@ -1,0 +1,49 @@
+@import scala.collection.{immutable => imm}
+
+@(
+  fileCategories: imm.Seq[FileCategory]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@main(Messages("fileMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.FileServer.index
+  )
+
+  <script>
+    $(function() {
+      var showCategory = function(cat) {
+        $(".filesArea").attr("src", jsRoutes.controllers.FileServer.index(0, 10, "uf.created_time desc", cat).url);
+      };
+
+      $("#selectFileCategory").selectmenu({
+        change: function(e, data) {
+          showCategory(e.target.value);
+        },
+        create: function(e, data) {
+          showCategory(e.target.value);
+        }
+      });
+    });
+  </script>
+} {
+  <h1 class="title">@Messages("fileMaintenanceTitle")</h1>
+
+  <select id="selectFileCategory">
+    @fileCategories.map { fc =>
+      <option value='@fc.value'>@fc.menuText</option>
+    }
+  </select>
+
+  <iframe class="filesArea" src="@routes.FileServer.index()">
+  </iframe>
+
+  <div class="menuPanel">
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}

@@ -570,3 +570,5 @@ selectFiles=アップロードしたいファイルをここにドラッグド�
 copyToClipboard=COPY
 uploadErrorUnknown=ただいま混雑しております。しばらくしてからやり直してください。
 uploadedFileTooBig=ファイルが大き過ぎます。
+fileMaintenanceTitle=ファイルの管理
+fileListTitle=ファイル・リスト {0}

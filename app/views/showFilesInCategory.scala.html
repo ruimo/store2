@@ -1,0 +1,54 @@
+@import java.time.format.DateTimeFormatter
+@import java.time.Instant
+@import java.time.LocalDateTime
+@import play.api.i18n.{Messages => msg}
+
+@(
+  page: Int, pageSize: Int, orderBy: OrderBy,
+  categoryName: String,
+  imageDateFormatter: DateTimeFormatter,
+  toLocalDateTime: Instant => LocalDateTime,
+  recs: PagedRecords[(UploadedFile, StoreUser)]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  flash: Flash,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database,
+  loginSession: LoginSession
+)
+
+@main(Messages("fileListTitle", categoryName), Some(loginSession)) {
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/fileList.css")"/>
+  <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/showFilesInCategory.css")"/>
+  <script>
+    $(function() {
+      $(".pagingPanel button").button();
+    });
+  </script>
+} {
+  <h1>@categoryName</h1>
+
+  <div class="fileList">
+    @if(recs.isEmpty) {
+      @Messages("recordEmpty")
+    } else {
+      @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName), 10, 25, 50)(implicitly, Some(loginSession))
+
+      <table class="fileListTable">
+        @recs.records.map { rec =>
+          <tr class="row">
+            <td class="fileName">
+              <a target="_blank" href="@routes.FileServer.getFile(rec._1.id.get.value)">
+                @rec._1.fileName
+              </a>
+            </td>
+            <td class="createdTime">@imageDateFormatter.format(toLocalDateTime(rec._1.createdTime))</td>
+            <td class="createdUser">
+              @rec._2.fullName
+            </td>
+          </tr>
+        }
+      </table>
+    }
+  </div>
+}

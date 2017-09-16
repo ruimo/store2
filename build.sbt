@@ -27,5 +27,7 @@ libraryDependencies += "com.ruimo" %% "csvparser" % "1.2"
 libraryDependencies += "org.twitter4j" % "twitter4j-core" % "4.0.6"
 libraryDependencies += "org.postgresql" % "postgresql" % "42.1.4"
 libraryDependencies += specs2 % Test
+libraryDependencies += "org.seleniumhq.selenium" % "selenium-java" % "3.5.3" % "test"
+libraryDependencies += "org.seleniumhq.selenium" % "selenium-chrome-driver" % "3.5.3" % "test"
 
 fork in test := true

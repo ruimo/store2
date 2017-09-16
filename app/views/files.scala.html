@@ -1,5 +1,5 @@
 @(
-  page: Int, pageSize: Int, orderBySpec: String
+  page: Int, pageSize: Int, orderBySpec: String, categoryName: String
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
@@ -10,7 +10,7 @@
 @import helper._
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.1/angular.js"></script>
     <script src="@routes.Assets.versioned("javascripts/clipboard.js-master/dist/clipboard.min.js")"></script>
@@ -48,7 +48,7 @@
       </table>
 
       <div class="storedFilesWrapper">
-        <iframe id="storedFiles" src="@routes.FileServer.fileList(page, pageSize, orderBySpec)"></iframe>
+        <iframe id="storedFiles" src="@routes.FileServer.fileList(page, pageSize, orderBySpec, categoryName)"></iframe>
       </div>
     </div>
 
@@ -59,6 +59,7 @@
 <script>
   app.run(['$rootScope', function($rootScope) {
     $rootScope.routes = jsRoutes;
+    $rootScope.categoryName = '@categoryName';
     $rootScope.uploadErrorMsg = {
       "Unknown": "@Messages("uploadErrorUnknown")",
       "TooBig": "@Messages("uploadedFileTooBig")"

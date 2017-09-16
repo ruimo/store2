@@ -45,10 +45,10 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           user4.id.get, "fileName888", None, Instant.ofEpochMilli(6), "category01"
         )
         val id3 = UploadedFile.create(
-          user3.id.get, "fileName777", Some("cont2"), Instant.ofEpochMilli(7), "category01",
+          user3.id.get, "fileName777", Some("cont2"), Instant.ofEpochMilli(7), "category01"
         )
         val id4 = UploadedFile.create(
-          user1.id.get, "fileName666", Some("cont3"), Instant.ofEpochMilli(4), "category01",
+          user1.id.get, "fileName666", Some("cont3"), Instant.ofEpochMilli(4), "category01"
         )
 
         doWith(
@@ -123,6 +123,54 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           list.records === Seq(
             UploadedFile.get(id4).get
           )
+        }
+      }
+    }
+
+    "Specify category name" in {
+      implicit val app: Application = GuiceApplicationBuilder().configure(inMemoryDatabase()).build()
+      val localeInfo = inject[LocaleInfoRepo]
+      val currencyInfo = inject[CurrencyRegistry]
+
+      inject[Database].withConnection { implicit conn =>
+        val user1 = inject[StoreUserRepo].create(
+          "userName1", "firstName1", Some("middleName1"), "lastName1", "email1",
+          1L, 2L, UserRole.NORMAL, Some("companyName1")
+        )
+        val id1 = UploadedFile.create(
+          user1.id.get, "fileName999", Some("cont1"), Instant.ofEpochMilli(5), "category01"
+        )
+        val id2 = UploadedFile.create(
+          user1.id.get, "fileName888", None, Instant.ofEpochMilli(6), "category01"
+        )
+        val id3 = UploadedFile.create(
+          user1.id.get, "fileName777", Some("cont2"), Instant.ofEpochMilli(7), "category01"
+        )
+        val id4 = UploadedFile.create(
+          user1.id.get, "fileName666", Some("cont3"), Instant.ofEpochMilli(4), "category02"
+        )
+        val id5 = UploadedFile.create(
+          user1.id.get, "fileName555", Some("cont4"), Instant.ofEpochMilli(4), "category02"
+        )
+
+        doWith(
+          UploadedFile.list(
+            page = 0, pageSize = 2, categoryName = "category01", orderBy = OrderBy("file_name asc")
+          )
+        ) { list =>
+          list.currentPage === 0
+          list.pageSize === 2
+          list.pageCount === 2
+        }
+
+        doWith(
+          UploadedFile.list(
+            page = 0, pageSize = 2, categoryName = "category02", orderBy = OrderBy("file_name asc")
+          )
+        ) { list =>
+          list.currentPage === 0
+          list.pageSize === 2
+          list.pageCount === 1
         }
       }
     }

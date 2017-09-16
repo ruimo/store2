@@ -5,7 +5,7 @@
 
 @(
   page: Int, pageSize: Int, orderBy: OrderBy,
-  recs: PagedRecords[UploadedFile],
+  recs: PagedRecords[(UploadedFile, StoreUser)],
   imageDateFormatter: DateTimeFormatter,
   toLocalDateTime: Instant => LocalDateTime,
   removeForm: Form[RemoveFile],
@@ -19,7 +19,7 @@
 @import helper._
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
     <script src="@routes.Assets.versioned("javascripts/jquery-ui-1.12.1.custom/jquery-ui.min.js")"></script>
@@ -44,18 +44,21 @@
           @recs.records.map { rec =>
             <tr class="row">
               <td class="fileName">
-                <a target="_blank" href="@routes.FileServer.getFile(rec.id.get.value)">
-                  @rec.fileName
+                <a target="_blank" href="@routes.FileServer.getFile(rec._1.id.get.value)">
+                  @rec._1.fileName
                 </a>
               </td>
-              <td class="createdTime">@imageDateFormatter.format(toLocalDateTime(rec.createdTime))</td>
+              <td class="createdTime">@imageDateFormatter.format(toLocalDateTime(rec._1.createdTime))</td>
+              <td class="createdUser">
+                @rec._2.fullName
+              </td>
               <td class="link">
-                <span id="url@rec.id.get.value">@routes.FileServer.getFile(rec.id.get.value)</span>
-                <button class="copyBtn" data-clipboard-target="#url@rec.id.get.value">@msg("copyToClipboard")</button>
+                <span id="url@rec._1.id.get.value">@routes.FileServer.getFile(rec._1.id.get.value)</span>
+                <button class="copyBtn" data-clipboard-target="#url@rec._1.id.get.value">@msg("copyToClipboard")</button>
               </td>
               <td class="removeFile">
-                @if(loginSession.isSuperUser || loginSession.userId == rec.storeUserId) {
-                  <button class="removeBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec.id.get.value"></button>
+                @if(loginSession.isSuperUser || loginSession.userId == rec._1.storeUserId) {
+                  <button class="removeBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec._1.id.get.value"></button>
                 }
               </td>
             </tr>
