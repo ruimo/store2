@@ -9,6 +9,7 @@ services:
      - /var/pictures:/var/pictures
     environment:
      - APP_SECRET
+     - CONF_FILE
   postgres:
     image: ruimo/df-ub1604-pgsql96x
     volumes:
