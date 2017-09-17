@@ -540,3 +540,5 @@ uploadErrorUnknown=Server error
 uploadedFileTooBig=File too big
 fileMaintenanceTitle=File maintenance
 fileListTitle=File list {0}
+loginWithOffice365=Login with Office365
+unregisteredUserEmail=Unregistered user email {0}

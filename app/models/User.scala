@@ -180,6 +180,12 @@ class StoreUserRepo @Inject() (
       'user_name -> userName
     ).as(simple.singleOpt)
 
+  def getByEmail(email: String)(implicit conn: Connection): Option[StoreUser] = SQL(
+    "select * from store_user where email = {email} and deleted = FALSE limit 1"
+  ).on(
+    'email -> email
+  ).as(simple.singleOpt)
+
   def all(implicit conn: Connection): Seq[StoreUser] =
     SQL(
       "select * from store_user where deleted = FALSE"

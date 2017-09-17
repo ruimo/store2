@@ -38,90 +38,90 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           1L, 2L, UserRole.NORMAL, Some("companyName4")
         )
 
-        val id1 = UploadedFile.create(
+        val id1 = inject[UploadedFileRepo].create(
           user2.id.get, "fileName999", Some("cont1"), Instant.ofEpochMilli(5), "category01"
         )
-        val id2 = UploadedFile.create(
+        val id2 = inject[UploadedFileRepo].create(
           user4.id.get, "fileName888", None, Instant.ofEpochMilli(6), "category01"
         )
-        val id3 = UploadedFile.create(
+        val id3 = inject[UploadedFileRepo].create(
           user3.id.get, "fileName777", Some("cont2"), Instant.ofEpochMilli(7), "category01"
         )
-        val id4 = UploadedFile.create(
+        val id4 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName666", Some("cont3"), Instant.ofEpochMilli(4), "category01"
         )
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", orderBy = OrderBy("file_name asc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id4).get,
-            UploadedFile.get(id3).get,
-            UploadedFile.get(id2).get,
-            UploadedFile.get(id1).get
+            inject[UploadedFileRepo].get(id4).get,
+            inject[UploadedFileRepo].get(id3).get,
+            inject[UploadedFileRepo].get(id2).get,
+            inject[UploadedFileRepo].get(id1).get
           )
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", orderBy = OrderBy("file_name desc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id1).get,
-            UploadedFile.get(id2).get,
-            UploadedFile.get(id3).get,
-            UploadedFile.get(id4).get
+            inject[UploadedFileRepo].get(id1).get,
+            inject[UploadedFileRepo].get(id2).get,
+            inject[UploadedFileRepo].get(id3).get,
+            inject[UploadedFileRepo].get(id4).get
           )
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", orderBy = OrderBy("created_time asc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id4).get,
-            UploadedFile.get(id1).get,
-            UploadedFile.get(id2).get,
-            UploadedFile.get(id3).get
+            inject[UploadedFileRepo].get(id4).get,
+            inject[UploadedFileRepo].get(id1).get,
+            inject[UploadedFileRepo].get(id2).get,
+            inject[UploadedFileRepo].get(id3).get
           )
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", orderBy = OrderBy("store_user_id asc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id4).get,
-            UploadedFile.get(id1).get,
-            UploadedFile.get(id3).get,
-            UploadedFile.get(id2).get
+            inject[UploadedFileRepo].get(id4).get,
+            inject[UploadedFileRepo].get(id1).get,
+            inject[UploadedFileRepo].get(id3).get,
+            inject[UploadedFileRepo].get(id2).get
           )
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", page = 0, pageSize = 3, orderBy = OrderBy("file_name desc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id1).get,
-            UploadedFile.get(id2).get,
-            UploadedFile.get(id3).get
+            inject[UploadedFileRepo].get(id1).get,
+            inject[UploadedFileRepo].get(id2).get,
+            inject[UploadedFileRepo].get(id3).get
           )
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             categoryName = "category01", page = 1, pageSize = 3, orderBy = OrderBy("file_name desc")
           )
         ) { list =>
           list.records === Seq(
-            UploadedFile.get(id4).get
+            inject[UploadedFileRepo].get(id4).get
           )
         }
       }
@@ -137,24 +137,24 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           "userName1", "firstName1", Some("middleName1"), "lastName1", "email1",
           1L, 2L, UserRole.NORMAL, Some("companyName1")
         )
-        val id1 = UploadedFile.create(
+        val id1 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName999", Some("cont1"), Instant.ofEpochMilli(5), "category01"
         )
-        val id2 = UploadedFile.create(
+        val id2 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName888", None, Instant.ofEpochMilli(6), "category01"
         )
-        val id3 = UploadedFile.create(
+        val id3 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName777", Some("cont2"), Instant.ofEpochMilli(7), "category01"
         )
-        val id4 = UploadedFile.create(
+        val id4 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName666", Some("cont3"), Instant.ofEpochMilli(4), "category02"
         )
-        val id5 = UploadedFile.create(
+        val id5 = inject[UploadedFileRepo].create(
           user1.id.get, "fileName555", Some("cont4"), Instant.ofEpochMilli(4), "category02"
         )
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             page = 0, pageSize = 2, categoryName = "category01", orderBy = OrderBy("file_name asc")
           )
         ) { list =>
@@ -164,7 +164,7 @@ class UploadedFileSpec extends Specification with InjectorSupport {
         }
 
         doWith(
-          UploadedFile.list(
+          inject[UploadedFileRepo].list(
             page = 0, pageSize = 2, categoryName = "category02", orderBy = OrderBy("file_name asc")
           )
         ) { list =>

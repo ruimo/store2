@@ -1,0 +1,16 @@
+include "application.conf"
+
+loginAgents = [
+  {
+    # Use this for Microsoft Office365 OAuth2
+    type = "office365"
+    # Specify Application ID
+    clientId = "46b83353-5e24-410b-84ca-5b6c746e81f4"
+    # Redirect URL
+    redirectUri = "http://localhost:9000/login/office365"
+    # Specify your Key(Navigate API access => Key)
+    clientSecret = "client secret"
+    # If true, Office365 login is required.
+    alwaysLogin = true
+  }
+]

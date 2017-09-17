@@ -541,6 +541,26 @@ class UserSpec extends Specification with InjectorSupport {
       }
     }
 
+    "Can query store user by email" in {
+      implicit val app: Application = GuiceApplicationBuilder().configure(inMemoryDatabase()).build()
+      val localeInfo = inject[LocaleInfoRepo]
+      val currencyInfo = inject[CurrencyRegistry]
+
+      inject[Database].withConnection { implicit conn =>
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.ADMIN, Some("companyName")
+        )
+        val user2 = inject[StoreUserRepo].create(
+          "userName2", "firstName2", Some("middleName2"), "lastName2", "email2",
+          111L, 222L, UserRole.ADMIN, Some("companyName2")
+        )
+
+        inject[StoreUserRepo].getByEmail("email3") === None
+        inject[StoreUserRepo].getByEmail("email2") === Some(user2)
+      }
+    }
+
     "Can query registered employees." in {
       implicit val app: Application = GuiceApplicationBuilder().configure(inMemoryDatabase()).build()
       val localeInfo = inject[LocaleInfoRepo]

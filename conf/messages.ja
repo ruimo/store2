@@ -572,3 +572,5 @@ uploadErrorUnknown=ただいま混雑しております。しばらくしてか�
 uploadedFileTooBig=ファイルが大き過ぎます。
 fileMaintenanceTitle=ファイルの管理
 fileListTitle=ファイル・リスト {0}
+loginWithOffice365=Office365でログイン
+unregisteredUserEmail=このemailを持ったは未登録です {0}

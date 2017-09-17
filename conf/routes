@@ -292,5 +292,7 @@ GET     /showFilesInCategory             controllers.FileServer.showFilesInCateg
 
 GET     /fileMaintenance                 controllers.FileMaintenance.index()
 
+GET     /login/office365                 controllers.LoginAgentController.loginOffice365(code: String)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

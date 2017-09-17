@@ -22,6 +22,7 @@ class Admin @Inject() (
   cache: Cache,
   fc: FormConstraints,
   authenticated: NeedLogin.Authenticated,
+  loginAgentTable: LoginAgentTable,
   implicit val loginSessionRepo: LoginSessionRepo,
   implicit val storeUserRepo: StoreUserRepo,
   conf: Configuration,
@@ -110,13 +111,21 @@ class Admin @Inject() (
       if (loginSessionRepo.fromRequest(request).isDefined)
         Redirect(uriOnLoginSuccess)
       else
-        Ok(views.html.admin.login(loginForm, anonymousCanPurchase(), sanitize(uriOnLoginSuccess)))
+        Ok(
+          views.html.admin.login(
+            loginForm, anonymousCanPurchase(), sanitize(uriOnLoginSuccess), loginAgentTable.candidates
+          )
+        )
     }
   }
 
   def onValidationErrorInLogin(form: Form[LoginUser])(implicit request: MessagesRequest[AnyContent]) = {
     Logger.error("Validation error in NeedLogin.login.")
-    BadRequest(views.html.admin.login(form, anonymousCanPurchase(), form("uri").value.get))
+    BadRequest(
+      views.html.admin.login(
+        form, anonymousCanPurchase(), form("uri").value.get, loginAgentTable.candidates
+      )
+    )
   }
 
   def login = Action { implicit request: MessagesRequest[AnyContent] =>
@@ -158,22 +167,28 @@ class Admin @Inject() (
         }
         else {
           Logger.error("Password doesnot match '" + user.compoundUserName + "'")
-          BadRequest(views.html.admin.login(
-            form.withGlobalError(Messages("cannotLogin")),
-            anonymousCanPurchase(),
-            form("uri").value.get
-          ))
+          BadRequest(
+            views.html.admin.login(
+              form.withGlobalError(Messages("cannotLogin")),
+              anonymousCanPurchase(),
+              form("uri").value.get,
+              loginAgentTable.candidates
+            )
+          )
         }
     }
   }
 
   def onLoginUserNotFound(form: Form[LoginUser])(implicit request: MessagesRequest[AnyContent]) = {
     Logger.error("User '" + form.data("userName") + "' not found.")
-    BadRequest(views.html.admin.login(
-      form.withGlobalError(Messages("cannotLogin")),
-      anonymousCanPurchase(), 
-      form("uri").value.get
-    ))
+    BadRequest(
+      views.html.admin.login(
+        form.withGlobalError(Messages("cannotLogin")),
+        anonymousCanPurchase(),
+        form("uri").value.get,
+        loginAgentTable.candidates
+      )
+    )
   }
 
   val anonymousLoginForm = Form(
@@ -199,7 +214,8 @@ class Admin @Inject() (
                 )
               ),
               anonymousCanPurchase(),
-              errorForm("uri").value.get
+              errorForm("uri").value.get,
+              loginAgentTable.candidates
             )
           )
         },

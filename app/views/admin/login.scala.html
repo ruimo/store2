@@ -1,16 +1,26 @@
+@import scala.collection.{immutable => imm}
+
 @(
   myForm: Form[models.LoginUser],
   anonymousCanPurchase: Boolean,
-  uri: String
+  uri: String,
+  loginAgents: imm.Seq[LoginAgent]
 )(
   implicit request: MessagesRequest[AnyContent],
   shoppingCartItemRepo: ShoppingCartItemRepo,
-  db: play.api.db.Database
+  db: play.api.db.Database,
+  flash: play.api.mvc.Flash
 )
 
 @main(Messages("loginTitle"), None) {
 } {
   <h1 class="title">@Messages("loginTitle")</h1>
+
+  @flash.get("errorMessage").map { message =>
+    <div class="globalErrorMessage">
+      @message
+    </div>
+  }
 
   @if(myForm.hasErrors) {
     <div class="globalErrorMessage">
@@ -53,7 +63,19 @@
     <br>
   }
 
-  <a id="forgetPasword" href="@routes.UserEntry.resetPasswordStart()">
-    @Messages("forgetPassword")
-  </a>
+  <div id="forgetPaswordWrapper">
+    <a id="forgetPasword" href="@routes.UserEntry.resetPasswordStart()">
+      @Messages("forgetPassword")
+    </a>
+  </div>
+
+  @loginAgents.map { la =>
+    @la match {
+      case office365: Office365LoginAgent => {
+        <div id="office365LoginWrapper" class="loginAgent">
+          <a id="office365Login" href="@office365.loginUrl">@Messages("loginWithOffice365")</a>
+        </div>
+      }
+    }
+  }
 }
