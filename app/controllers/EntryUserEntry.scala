@@ -115,9 +115,7 @@ class EntryUserEntry @Inject() (
           else {
             try {
               val user = newUser.save(CountryCode.JPN, storeUserRepo.PasswordHashStretchCount())
-              Redirect(url).flashing(
-                "message" -> Messages("welcome")
-              ).withSession {
+              Redirect(url).withSession {
                 (loginSessionRepo.loginUserKey, loginSessionRepo.serialize(user.id.get, System.currentTimeMillis + loginSessionRepo.sessionTimeout))
               }
             }

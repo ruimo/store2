@@ -29,12 +29,15 @@ class LoginAgentController @Inject() (
               storeUserRepo.getByEmail(email) match {
                 case None =>
                   Redirect(routes.Admin.startLogin("/")).flashing("errorMessage" -> Messages("unregisteredUserEmail", email))
-                case Some(user) =>
-                  Redirect("/").flashing(
-                    "message" -> Messages("welcome")
-                  ).withSession {
-                    (loginSessionRepo.loginUserKey, loginSessionRepo.serialize(user.id.get, System.currentTimeMillis + loginSessionRepo.sessionTimeout))
+                case Some(user) => {
+                  val resp = Redirect("/").withSession {
+                    (loginSessionRepo.loginUserKey,
+                     loginSessionRepo.serialize(user.id.get, System.currentTimeMillis + loginSessionRepo.sessionTimeout))
                   }
+                  val msg = Messages("welcome")
+                  if (! msg.isEmpty) resp.flashing("message" -> msg) else resp
+                  resp
+                }
               }
             }
           }

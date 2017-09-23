@@ -93,7 +93,9 @@ class Admin @Inject() (
         BadRequest(views.html.admin.firstSetup(formWithErrors)),
       firstSetup => db.withConnection { implicit conn => {
         val createdUser = firstSetup.save
-        Redirect(routes.Admin.index).flashing("message" -> Messages("welcome"))
+        val resp = Redirect(routes.Admin.index)
+        val msg = Messages("welcome")
+        if (! msg.isEmpty) resp.flashing("message" -> msg) else resp
       }}
     )
   }
@@ -158,11 +160,13 @@ class Admin @Inject() (
           }
           else {
             Logger.info("Login success '" + user.compoundUserName + "'")
-            Redirect(user.uri).flashing(
-              "message" -> Messages("welcome")
-            ).withSession {
-              (loginSessionRepo.loginUserKey, loginSessionRepo.serialize(rec.id.get, System.currentTimeMillis + loginSessionRepo.sessionTimeout))
+            val resp = Redirect(user.uri).withSession {
+              (loginSessionRepo.loginUserKey,
+               loginSessionRepo.serialize(rec.id.get, System.currentTimeMillis + loginSessionRepo.sessionTimeout))
             }
+            val msg = Messages("welcome")
+            if (! msg.isEmpty) resp.flashing("message" -> msg) else resp
+            resp
           }
         }
         else {
