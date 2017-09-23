@@ -97,7 +97,7 @@ object UserMetadata {
         {telNo2},
         {joinedDate},
         {birthMonthDay},
-        {profileComment},
+        {profileComment}
       )
       """
     ).on(
