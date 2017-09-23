@@ -1,0 +1,122 @@
+@(
+  storeUserId: Long,
+  myForm: Form[UpdateUserMetadata]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  flash: play.api.mvc.Flash,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@main(Messages("modifyUserMetadataTitle"), Some(loginSession), contentCssClass = "adminContents") {
+  <script src="@routes.Assets.versioned("javascripts/jquery.ui.datepicker-ja.js")" type="text/javascript"></script>
+  <script src="@routes.Assets.versioned("javascripts/clipboard.js-master/dist/clipboard.min.js")" type="text/javascript"></script>
+} {
+  <script type="text/javascript">
+    $(function() {
+      $("#joinedDateTextBox").datepicker({
+        dateFormat: 'yy年mm月dd日'
+      });
+    });
+  </script>
+  <h1 class="title">@Messages("modifyUserMetadataTitle")</h1>
+
+  @flash.get("errorMessage").map { message =>
+    <div class="globalErrorMessage">
+      @message
+    </div>
+  }
+
+  @if(myForm.hasErrors) {
+    <div class="globalErrorMessage">
+      @Messages("inputError")
+    </div>
+  }
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+  @helper.form(action = helper.CSRF(routes.UserMetadataMaintenance.modify(storeUserId)), 'id -> "modifyUserMetadataForm") {
+    @helper.inputText(
+      myForm("firstNameKana"),
+      '_label -> Messages("firstNameKana"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @helper.inputText(
+      myForm("middleNameKana"),
+      '_label -> Messages("middleNameKana"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @helper.inputText(
+      myForm("lastNameKana"),
+      '_label -> Messages("lastNameKana"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @helper.inputText(
+      myForm("telNo0"),
+      '_label -> Messages("telNo0"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @helper.inputText(
+      myForm("telNo1"),
+      '_label -> Messages("telNo1"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @helper.inputText(
+      myForm("telNo2"),
+      '_label -> Messages("telNo2"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @inputText(
+      myForm("joinedDate"),
+      '_label -> Messages("joinedDate"), 'id-> "joinedDateTextBox"
+    )
+
+    <div>
+      @myForm("photoUrl").value.map { v =>
+        <img src='@v'>
+      }.getOrElse("")
+    </div>
+    @helper.inputText(
+      myForm("photoUrl"),
+      '_label -> Messages("photoUrl"), 'size -> 80, 'maxlength -> 1024
+    )
+
+    @helper.inputText(
+      myForm("birthMonthDay"),
+      '_label -> Messages("birthMonthDay"), 'size -> 4, 'maxlength -> 4
+    )
+
+    @textarea(
+      myForm("profileComment"), 'rows -> 20, 'cols -> 80
+    )
+
+    <input id="submitUserMetadata" type="submit">    
+  }
+
+  <iframe class="filesArea" src="@routes.FileServer.index()">
+  </iframe>
+
+  <div class="menuPanel">
+    <br>
+    <a href="@routes.UserMaintenance.editUser()">
+      @Messages("editUserMenu")
+    </a>
+
+    <br>
+    <a class="backLink" href="@routes.UserMaintenance.index">
+      @Messages("backTo", Messages("userMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}
+
+

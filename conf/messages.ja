@@ -581,4 +581,16 @@ iconUrl=アイコンURL
 newsCategoryIsUpdated=ニュース・カテゴリが更新されました
 newsCategoryIsRemoved=ニュース・カテゴリが削除されました
 icon=アイコン
-
+joind.date.format=yyyy年MM月dd日
+birthMonthDay.info=誕生日の、月日 (mmdd)
+birthMonthDay.error=誕生日の指定が不正です。月と日で4桁で指定してください
+modifyUserMetadata=詳細...
+middleNameKana=ミドル・ネーム(カナ)
+telNo0=電話番号0
+telNo1=電話番号1
+telNo2=電話番号2
+joinedDate=入社年月日
+photoUrl=写真URL
+profileComment=プロフィール
+birthMonthDay=誕生日
+modifyUserMetadataTitle=ユーザ詳細情報の更新

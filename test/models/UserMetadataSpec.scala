@@ -58,6 +58,8 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           companyName = None
         )
 
+        UserMetadata.getByStoreUserId(user01.id.get) === None
+
         val um01 = UserMetadata.createNew(
           user01.id.get,
           Some("url01"),
@@ -71,6 +73,8 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           birthMonthDay = Some(123),
           profileComment = Some("comment01")
         )
+
+        UserMetadata.getByStoreUserId(user01.id.get) === Some(um01)
 
         val um02 = UserMetadata.createNew(
           user02.id.get,

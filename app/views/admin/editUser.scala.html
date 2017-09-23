@@ -122,6 +122,11 @@
                 data-user-id="@user.user.id.get" data-user-name="@user.user.userName" class="deleteButton">
           @Messages("remove")
         </button>
+        <button type="button" style="float: left;"
+                onclick="location.href='@routes.UserMetadataMaintenance.startModify(user.user.id.get)'"
+                class="modifyUserMetadataButton">
+          @Messages("modifyUserMetadata")
+        </button>
       </td>
     </tr>
   }

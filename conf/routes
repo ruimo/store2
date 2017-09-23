@@ -302,5 +302,8 @@ POST    /admin/modifyNewsCategory        controllers.NewsMaintenance.modifyNewsC
 GET     /admin/listNewsCategory          controllers.NewsMaintenance.listNewsCategory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "news_category.category_name")
 POST    /admin/deleteNewsCategory        controllers.NewsMaintenance.deleteNewsCategory(id: Long)
 
+GET     /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.startModify(storeUserId: Long)
+POST    /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.modify(storeUserId: Long)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

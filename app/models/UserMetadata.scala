@@ -49,6 +49,14 @@ object UserMetadata {
     }
   }
 
+  def getByStoreUserId(storeUserId: Long)(implicit conn: Connection): Option[UserMetadata] = SQL(
+    "select * from user_Metadata where store_user_id = {id}"
+  ).on(
+    'id -> storeUserId
+  ).as(
+    simple.singleOpt
+  )
+
   def createNew(
     storeUserId: Long,
     photoUrl: Option[String] = None,
@@ -153,5 +161,48 @@ object UserMetadata {
     ).as(
       simple *
     )
+  }
+
+  def update(
+    storeUserId: Long,
+    photoUrl: Option[String] = None,
+    firstNameKana: Option[String] = None,
+    middleNameKana: Option[String] = None,
+    lastNameKana: Option[String] = None,
+    telNo0: Option[String] = None,
+    telNo1: Option[String] = None,
+    telNo2: Option[String] = None,
+    joinedDate: Option[Instant] = None,
+    birthMonthDay: Option[Int] = None,
+    profileComment: Option[String] = None
+  )(implicit conn: Connection) = {
+    SQL(
+      """
+      update user_metadata set
+        photo_url = {photoUrl},
+        first_name_kana = {firstNameKana},
+        middle_name_kana = {middleNameKana},
+        last_name_kana = {lastNameKana},
+        tel_no0 = {telNo0},
+        tel_no1 = {telNo1},
+        tel_no2 = {telNo2},
+        joined_date = {joinedDate},
+        birth_month_day = {birthMonthDay},
+        profile_comment = {profileComment}
+      where store_user_id = {storeUserId}
+      """
+    ).on(
+      'storeUserId -> storeUserId,
+      'photoUrl -> photoUrl,
+      'firstNameKana -> firstNameKana,
+      'middleNameKana -> middleNameKana,
+      'lastNameKana -> lastNameKana,
+      'telNo0 -> telNo0,
+      'telNo1 -> telNo1,
+      'telNo2 -> telNo2,
+      'joinedDate -> joinedDate,
+      'birthMonthDay -> birthMonthDay,
+      'profileComment -> profileComment
+    ).executeUpdate()
   }
 }
