@@ -20,7 +20,7 @@
       $(".deleteButton").each(function(idx, b) {
         $(b).click(function(e) {
           var formId = "deleteNewsCategory" + $(b).data("news-category-id");
-          var dlg = $('<div>@Messages("deleteConfirm") ' + $(b).data("news-category-category-name") + '</div>');
+          var dlg = $('<div>@Messages("deleteConfirm") ' + $(b).data("news-category-name") + '</div>');
           dlg.dialog({
             modal: true,
             buttons: [
@@ -35,7 +35,7 @@
                 text: '@Messages("no")',
                 class: 'no-button',
                 click: function() {
-                  $(this).dialog('close');
+                  $(this).dialog('destroy');
                 }
               }
             ]
@@ -87,14 +87,16 @@
       </td>
       <td class="newsCategoryIcon"><img src="@n.iconUrl"></td>
       <td class="action">
-        @form(action = CSRF(routes.NewsMaintenance.deleteNewsCategory(n.id.get.value)), 'id -> ("deleteNews" + n.id.get.value)) {
+        @form(action = CSRF(routes.NewsMaintenance.deleteNewsCategory(n.id.get.value)), 'id -> ("deleteNewsCategory" + n.id.get.value)) {
         }
-        <button type="button" style="float: left;"
+        <button class="editButton" type="button" style="float: left;"
                 onclick="location.href='@routes.NewsMaintenance.startModifyNewsCategory(n.id.get.value)'">
           @Messages("edit")
         </button>
         <button type="button" style="float: left;"
-                data-news-category-id="@n.id.get.value" data-news-category-name="@n.categoryName" class="deleteButton">
+                data-news-category-id="@n.id.get.value"
+                data-news-category-name="@n.categoryName"
+                class="deleteButton">
           @Messages("remove")
         </button>
       </td>

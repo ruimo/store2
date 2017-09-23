@@ -91,17 +91,177 @@ class NewsCategoryMaintenanceSpec extends Specification with InjectorSupport {
 
         browser.goTo(
           controllers.routes.NewsMaintenance.listNewsCategory(
-            page = 0l page = 10, orderBySpec = "news_category.category_name"
+            page = 0, pageSize = 10, orderBySpec = "news_category.category_name"
           ).url.addParm("lang", lang.code).toString
         )
 
         browser.waitUntil(
-          failFalse(browser.find(".newsCategoryTableBody").size == 1)
+          failFalse(browser.find(".newsCategoryTable").size == 1)
         )
 
         browser.find(".newsCategoryTableBody .id").index(0).text === "1001"
 
-Thread.sleep(1000000)
+        doWith(browser.find(".newsCategoryTableBody").index(0)) { tr =>
+          tr.find(".id").text === "1001"
+          tr.find(".newsCategoryName").text === "category001"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl002")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(1)) { tr =>
+          tr.find(".id").text === "1000"
+          tr.find(".newsCategoryName").text === "category002"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl001")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(2)) { tr =>
+          tr.find(".id").text === "1002"
+          tr.find(".newsCategoryName").text === "category003"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl003")
+        }
+
+        browser.find(".newsCategoryTableHeader .id a").click()
+
+        browser.waitUntil(
+          failFalse(browser.find(".newsCategoryTableBody").size != 0)
+        )
+
+        doWith(browser.find(".newsCategoryTableBody").index(0)) { tr =>
+          tr.find(".id").text === "1000"
+          tr.find(".newsCategoryName").text === "category002"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl001")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(1)) { tr =>
+          tr.find(".id").text === "1001"
+          tr.find(".newsCategoryName").text === "category001"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl002")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(2)) { tr =>
+          tr.find(".id").text === "1002"
+          tr.find(".newsCategoryName").text === "category003"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl003")
+        }
+
+        browser.find(".newsCategoryTableHeader .id a").click()
+
+        browser.waitUntil(
+          failFalse(browser.find(".newsCategoryTableBody").size != 0)
+        )
+
+        doWith(browser.find(".newsCategoryTableBody").index(0)) { tr =>
+          tr.find(".id").text === "1002"
+          tr.find(".newsCategoryName").text === "category003"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl003")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(1)) { tr =>
+          tr.find(".id").text === "1001"
+          tr.find(".newsCategoryName").text === "category001"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl002")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(2)) { tr =>
+          tr.find(".id").text === "1000"
+          tr.find(".newsCategoryName").text === "category002"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl001")
+        }
+
+        browser.find(".newsCategoryTableHeader .newsCategoryName a").click()
+
+        browser.waitUntil(
+          failFalse(browser.find(".newsCategoryTableBody").size != 0)
+        )
+
+        doWith(browser.find(".newsCategoryTableBody").index(0)) { tr =>
+          tr.find(".id").text === "1001"
+          tr.find(".newsCategoryName").text === "category001"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl002")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(1)) { tr =>
+          tr.find(".id").text === "1000"
+          tr.find(".newsCategoryName").text === "category002"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl001")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(2)) { tr =>
+          tr.find(".id").text === "1002"
+          tr.find(".newsCategoryName").text === "category003"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl003")
+        }
+
+        browser.find(".newsCategoryTableHeader .newsCategoryName a").click()
+
+        browser.waitUntil(
+          failFalse(browser.find(".newsCategoryTableBody").size != 0)
+        )
+
+        doWith(browser.find(".newsCategoryTableBody").index(0)) { tr =>
+          tr.find(".id").text === "1002"
+          tr.find(".newsCategoryName").text === "category003"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl003")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(1)) { tr =>
+          tr.find(".id").text === "1000"
+          tr.find(".newsCategoryName").text === "category002"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl001")
+        }
+
+        doWith(browser.find(".newsCategoryTableBody").index(2)) { tr =>
+          tr.find(".id").text === "1001"
+          tr.find(".newsCategoryName").text === "category001"
+          tr.find(".newsCategoryIcon img").attribute("src") must endWith("iconUrl002")
+        }
+
+        browser.find(".newsCategoryTableBody").index(0).find(".editButton").click()
+
+        browser.waitUntil(
+          failFalse(browser.find("#categoryName").size == 1)
+        )
+
+        browser.find("#categoryName").attribute("value") === "category003"
+        browser.find("#iconUrl").attribute("value") === "iconUrl003"
+
+        browser.goTo(
+          controllers.routes.NewsMaintenance.listNewsCategory(
+            page = 0, pageSize = 10, orderBySpec = "news_category.category_name"
+          ).url.addParm("lang", lang.code).toString
+        )
+
+        browser.waitUntil(
+          failFalse(browser.find(".newsCategoryTable").size == 1)
+        )
+
+        browser.find(".newsCategoryTableBody").index(0).find(".deleteButton").click()
+
+        browser.waitUntil(
+          failFalse(browser.find(".ui-dialog").size == 1)
+        )
+
+        browser.find(".ui-dialog .ui-dialog-content").text === Messages("deleteConfirm") + " category001"
+
+        browser.find(".ui-dialog .no-button").click()
+        Thread.sleep(3000)
+
+        browser.find(".newsCategoryTableBody").size === 3
+
+        browser.find(".newsCategoryTableBody").index(0).find(".deleteButton").click()
+
+        browser.waitUntil {
+          failFalse(browser.find(".ui-dialog").size == 1)
+        }
+
+        browser.find(".ui-dialog .ui-dialog-content").text === Messages("deleteConfirm") + " category001"
+
+        browser.find(".ui-dialog .yes-button").click()
+
+        browser.waitUntil(
+          browser.find(".newsCategoryTableBody").size === 2
+        )
+
+        browser.find(".newsCategoryTableBody").index(0).find(".newsCategoryName").text === "category002"
       }
     }
   }

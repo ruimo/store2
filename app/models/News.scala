@@ -253,7 +253,7 @@ class NewsCategoryRepo @Inject() (
   def delete(id: NewsCategoryId)(implicit conn: Connection): Int =
     SQL(
       """
-      delete from news_category where news_id = {id}
+      delete from news_category where news_category_id = {id}
       """
     ).on(
       'id -> id.value

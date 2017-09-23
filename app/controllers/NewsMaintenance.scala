@@ -262,7 +262,7 @@ class NewsMaintenance @Inject() (
       db.withConnection { implicit conn =>
         newsCategoryRepo.delete(NewsCategoryId(id))
         Redirect(
-          routes.NewsMaintenance.startModifyNewsCategory(id)
+          routes.NewsMaintenance.listNewsCategory()
         ).flashing("message" -> Messages("newsCategoryIsRemoved"))
       }
     }
