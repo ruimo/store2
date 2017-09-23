@@ -24,7 +24,7 @@ import helpers.Helper.disableMailer
 class EntryUserEntrySpec extends Specification with SalesSpecBase with InjectorSupport {
   "Entry user entry" should {
     "Anonymous user can be promoted to normal user after transaction end." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("acceptableTenders.ANONYMOUS_BUYER" -> List("PAYPAL_WEB_PAYMENT_PLUS")) +

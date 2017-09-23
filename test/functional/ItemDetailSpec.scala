@@ -33,7 +33,7 @@ import com.ruimo.scoins.Scoping._
 class ItemDetailSpec extends Specification with InjectorSupport {
   "Item detail" should {
     "Can show list price with memo" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -131,7 +131,7 @@ class ItemDetailSpec extends Specification with InjectorSupport {
     }
 
     "Can show not found error." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ){
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -168,7 +168,7 @@ class ItemDetailSpec extends Specification with InjectorSupport {
     }
 
     "Can show not found error for hidden item." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

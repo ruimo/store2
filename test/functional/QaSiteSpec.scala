@@ -24,7 +24,7 @@ class QaSiteSpec extends Specification with InjectorSupport {
 
   "QA site" should {
     "Show form with some fields are filled" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -54,7 +54,7 @@ class QaSiteSpec extends Specification with InjectorSupport {
     }
 
     "Show form with tel field are filled" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -95,7 +95,7 @@ class QaSiteSpec extends Specification with InjectorSupport {
     }
 
     "Show validation error" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

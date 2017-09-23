@@ -28,7 +28,7 @@ import helpers.UrlHelper.fromString
 class ItemReserveSpec extends Specification with InjectorSupport {
   "Item reservation" should {
     "Show reserve button" in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -153,7 +153,7 @@ class ItemReserveSpec extends Specification with InjectorSupport {
     }
 
     "Can reserve item without comment" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -289,7 +289,7 @@ class ItemReserveSpec extends Specification with InjectorSupport {
     }
 
     "Can reserve item with comment" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

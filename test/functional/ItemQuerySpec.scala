@@ -31,7 +31,7 @@ import com.ruimo.scoins.Scoping._
 class ItemQuerySpec extends Specification with InjectorSupport {
   "Query" should {
     "Item empty" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -54,7 +54,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with single item" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -166,7 +166,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with two conditions" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -221,7 +221,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with category" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -289,7 +289,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with site" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -357,7 +357,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with site and category" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -488,7 +488,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Query with supplemental category" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -570,7 +570,7 @@ class ItemQuerySpec extends Specification with InjectorSupport {
     }
 
     "Order by drop down." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

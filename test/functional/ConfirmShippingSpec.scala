@@ -23,7 +23,7 @@ import play.api.test.TestServer
 class ConfirmShippingSpec extends Specification with InjectorSupport {
   "ConfirmShipping" should {
     "More than one site and more than item classes." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

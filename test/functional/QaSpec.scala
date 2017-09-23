@@ -24,7 +24,7 @@ class QaSpec extends Specification with InjectorSupport {
 
   "QA" should {
     "All field should be blank if no one is logged in." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -59,7 +59,7 @@ class QaSpec extends Specification with InjectorSupport {
     }
 
     "If some one is logged in, some fields should be filled." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -88,7 +88,7 @@ class QaSpec extends Specification with InjectorSupport {
     }
 
     "If address is available telephone number should be filled." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -143,7 +143,7 @@ class QaSpec extends Specification with InjectorSupport {
     }
 
     "Show error when nothing is entered" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -187,7 +187,7 @@ class QaSpec extends Specification with InjectorSupport {
     }
 
     "Enter invalid tel should result in error" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

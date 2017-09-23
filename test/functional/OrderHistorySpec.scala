@@ -39,7 +39,7 @@ class OrderHistorySpec extends Specification with InjectorSupport {
 
   "Order history" should {
     "Show login user's order history" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ){
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -220,7 +220,7 @@ class OrderHistorySpec extends Specification with InjectorSupport {
     }
 
     "Show login user's order history list" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -259,7 +259,7 @@ class OrderHistorySpec extends Specification with InjectorSupport {
     }
 
     "Can put an item that is bought before into shopping cart" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -372,7 +372,7 @@ class OrderHistorySpec extends Specification with InjectorSupport {
     }
 
     "Can put an item that is bought before into shopping cart and expired." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -411,6 +411,9 @@ class OrderHistorySpec extends Specification with InjectorSupport {
         }
 
         browser.await().atMost(30, TimeUnit.SECONDS).untilPage().isLoaded()
+        browser.waitUntil(
+          failFalse(browser.webDriver.getTitle == Messages("commonTitle", Messages("itemExpiredTitle")))
+        )
         browser.webDriver.getTitle === Messages("commonTitle", Messages("itemExpiredTitle"))
         browser.find(".expiredItemRow").size === 1
         browser.find(".expiredItemRow .siteName").text === "商店1"

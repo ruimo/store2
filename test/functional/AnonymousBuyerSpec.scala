@@ -23,7 +23,7 @@ import play.api.db.Database
 class AnonymousBuyerSpec extends Specification with SalesSpecBase with InjectorSupport {
   "Anonymous buyer" should {
     "If anonymousUserPurchase is false, purchase by anonymous should not be shown." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ defaultConf + ("anonymousUserPurchase" -> false))
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ defaultConf + ("anonymousUserPurchase" -> false))
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -64,7 +64,7 @@ class AnonymousBuyerSpec extends Specification with SalesSpecBase with InjectorS
     }
 
     "If anonymousUserPurchase is true, purchase by anonymous is permitted." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(
         inMemoryDatabase() ++ defaultConf +
           ("anonymousUserPurchase" -> true) +

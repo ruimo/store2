@@ -42,7 +42,7 @@ class AccountingBillSpec extends Specification with InjectorSupport {
 
   "Accounting bill" should {
     "Only transaction for the specified store will be shown" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl
+      WebDriverFactory(CHROME), appl
     ) {
       inject[Database].withConnection { implicit conn =>
         val localeInfo = inject[LocaleInfoRepo]
@@ -155,7 +155,7 @@ class AccountingBillSpec extends Specification with InjectorSupport {
     }
 
     "All transaction by users will be shown" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl
+      WebDriverFactory(CHROME), appl
     ) {
       inject[Database].withConnection { implicit conn =>
         val localeInfo = inject[LocaleInfoRepo]
@@ -335,7 +335,7 @@ class AccountingBillSpec extends Specification with InjectorSupport {
     }
 
     "All transaction that are having sent status should be shown" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl
+      WebDriverFactory(CHROME), appl
     ) {
       inject[Database].withConnection { implicit conn =>
         val localeInfo = inject[LocaleInfoRepo]
@@ -515,7 +515,7 @@ class AccountingBillSpec extends Specification with InjectorSupport {
     }
 
     "Transactions having sent status should be shown." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl
+      WebDriverFactory(CHROME), appl
     ) {
       inject[Database].withConnection { implicit conn =>
         val localeInfo = inject[LocaleInfoRepo]

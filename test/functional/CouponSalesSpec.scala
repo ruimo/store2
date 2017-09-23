@@ -27,7 +27,7 @@ import com.ruimo.scoins.Scoping._
 class CouponSalesSpec extends Specification with InjectorSupport {
   "Coupon sale" should {
     "If the all of items are coupon, shipping address should be skipped." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase(options = Map("MVCC" -> "true")))
+      WebDriverFactory(CHROME), appl(inMemoryDatabase(options = Map("MVCC" -> "true")))
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

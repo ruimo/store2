@@ -36,7 +36,7 @@ import com.ruimo.scoins.Scoping._
 class ItemMaintenanceSpec extends Specification with InjectorSupport {
   "Item maintenance" should {
     "Create new item." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ Map("hideNewlyCreatedItem" -> false))
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -88,7 +88,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Create new item and set list price." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -155,7 +155,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Create new item with list price." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -207,7 +207,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Create new item with price memo." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -279,7 +279,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Create new coupon item." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -330,7 +330,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can edit item that has no handling stores." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -413,7 +413,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Store owner cannot edit item name." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -479,7 +479,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Supplemental category maintenance." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -545,7 +545,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Creating an item that is treated by two sites." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -589,7 +589,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Store owner cannot change item name if storeOwnerCanModifyAllItemProperties is false" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -632,7 +632,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Store owner can change item name if storeOwnerCanModifyAllItemProperties is true" in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ Map("storeOwnerCanModifyAllItemProperties" -> true))
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -679,7 +679,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Create new item with hideNewlyCreatedItem = true." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ Map("hideNewlyCreatedItem" -> true))
     ) {
       inject[Database].withConnection { implicit conn =>

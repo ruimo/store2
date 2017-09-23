@@ -20,7 +20,7 @@ import helpers.Helper._
 class LoginSpec extends Specification with InjectorSupport {
   "Login" should {
     "Login screen is shown if not logged in." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -40,7 +40,7 @@ class LoginSpec extends Specification with InjectorSupport {
     }
 
     "Login empty error." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -66,7 +66,7 @@ class LoginSpec extends Specification with InjectorSupport {
     }
 
     "Login success." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>

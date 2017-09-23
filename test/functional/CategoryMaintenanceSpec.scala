@@ -21,7 +21,7 @@ import play.api.db.Database
 class CategoryMaintenanceSpec extends Specification with InjectorSupport {
   "Category maintenance" should {
     "List nothing when there are no categories." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -46,7 +46,7 @@ class CategoryMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can query all categories in order." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -142,7 +142,7 @@ class CategoryMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can change category name." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -220,7 +220,7 @@ class CategoryMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can change category code." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

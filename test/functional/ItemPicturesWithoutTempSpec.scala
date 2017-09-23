@@ -19,6 +19,7 @@ import play.api.test.Helpers.running
 import play.api.test.TestServer
 import java.nio.file.Files
 import models._
+import helpers.Helper._
 
 class ItemPicturesWithoutTempSpec extends Specification with InjectorSupport {
   val dir = Files.createTempDirectory(null)
@@ -29,7 +30,7 @@ class ItemPicturesWithoutTempSpec extends Specification with InjectorSupport {
 
   "ItemPicture" should {
     "If specified picture is not found, 'notfound.jpg' will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir)
     ) {
       inject[Database].withConnection { implicit conn =>

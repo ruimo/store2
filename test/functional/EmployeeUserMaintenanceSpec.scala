@@ -51,7 +51,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
 
   "Employee user" should {
     "Employee editing is disabled." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableEmployeeMaintenance)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -80,7 +80,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Employee editing is enabled." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ enableEmployeeMaintenance)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ enableEmployeeMaintenance)
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -147,7 +147,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "User name pattern error." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ enableEmployeeMaintenance + ("normalUserNamePattern" -> "[0-9]{6}"))
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -221,7 +221,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
 
     // Since employee maintenance is disabled, redirected to top
     "Login with super user. Since super user cannot edit employee, page is redirected to top." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableEmployeeMaintenance)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -246,7 +246,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
 
     // Since employee maintenance is disabled, redirected to top
     "Login with super user. Since super user cannot edit employee, page is redirected to top." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ disableEmployeeMaintenance)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -282,7 +282,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Edit employee will show only employees of the site of currently logined store owner." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ enableEmployeeMaintenance)
     ) {
       inject[Database].withConnection { implicit conn =>

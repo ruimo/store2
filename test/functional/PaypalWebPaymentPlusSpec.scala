@@ -29,7 +29,7 @@ import com.ruimo.scoins.Scoping._
 class PaypalWebPaymentPlusSpec extends Specification with SalesSpecBase with InjectorSupport {
   "PaypalWebPayment" should {
     "Normal paypal transaction." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(
+      WebDriverFactory(CHROME), appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("anonymousUserPurchase" -> true) +
           ("acceptableTenders.ANONYMOUS_BUYER" -> List("PAYPAL_WEB_PAYMENT_PLUS")) +
@@ -197,7 +197,7 @@ class PaypalWebPaymentPlusSpec extends Specification with SalesSpecBase with Inj
     }
 
     "Paypal cancel transaction." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(
+      WebDriverFactory(CHROME), appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("anonymousUserPurchase" -> true) +
           ("acceptableTenders.ANONYMOUS_BUYER" -> List("PAYPAL_WEB_PAYMENT_PLUS")) +

@@ -31,7 +31,7 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
 
   "Paypal" should {
     "Normal paypal transaction." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("anonymousUserPurchase" -> true) +
@@ -204,7 +204,7 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "Paypal transaction error." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("anonymousUserPurchase" -> true) +
@@ -323,7 +323,7 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "Paypal cancel transaction." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(
         inMemoryDatabase() ++ defaultConf ++ disableMailer +
           ("anonymousUserPurchase" -> true) +

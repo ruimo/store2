@@ -28,7 +28,7 @@ import com.ruimo.scoins.Scoping._
 class PriceControlSpec extends Specification with SalesSpecBase with InjectorSupport {
   "Item Price" should {
     "List price should be used for guest and anonymous users." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(
+      WebDriverFactory(CHROME), appl(
         inMemoryDatabase(options = Map("MVCC" -> "true")) +
           ("itemPriceStrategy.ANONYMOUS_BUYER.type" -> "models.ListPriceStrategy") +
           ("itemPriceStrategy.GUEST.type" -> "models.ListPriceStrategy") +

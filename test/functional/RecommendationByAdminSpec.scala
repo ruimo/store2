@@ -23,7 +23,7 @@ import com.ruimo.scoins.Scoping._
 class RecommendationByAdminSpec extends Specification with InjectorSupport {
   "recommendation by admin maintenance" should {
     "Can create record" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

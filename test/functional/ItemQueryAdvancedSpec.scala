@@ -64,7 +64,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
 
   "Item query advanced" should {
     "All items should be orderd." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -127,7 +127,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
     }
 
     "All items should be paged." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -226,7 +226,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
     }
 
     "All items should be queried by category." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

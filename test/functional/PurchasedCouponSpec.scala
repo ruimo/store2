@@ -1,5 +1,7 @@
 package functional
 
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import play.api.test._
 import play.api.test.Helpers._
 import play.api.i18n.MessagesApi
@@ -18,7 +20,6 @@ import helpers.Helper._
 import play.api.test._
 import play.api.test.Helpers._
 import com.ruimo.scoins.Scoping._
-import org.joda.time.format.DateTimeFormat
 
 class PurchasedCouponSpec extends Specification with InjectorSupport {
   case class Tran(
@@ -35,7 +36,7 @@ class PurchasedCouponSpec extends Specification with InjectorSupport {
 
   "Purchased coupon" should {
     "Show purchased coupon list" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -73,9 +74,9 @@ class PurchasedCouponSpec extends Specification with InjectorSupport {
           body.size === 1
           body.find(".tranId").text === tran01.tranHeader.id.get.toString
           body.find(".siteName").text === "商店1"
-          body.find(".tranDate").text === DateTimeFormat.forPattern(
+          body.find(".tranDate").text === DateTimeFormatter.ofPattern(
             Messages("published.date.format")
-          ).print(tran01.tranHeader.transactionTime)
+          ).format(tran01.tranHeader.transactionTime.atZone(ZoneId.systemDefault()))
           body.find(".itemName").text === "植木1"
         }
 
@@ -89,7 +90,9 @@ class PurchasedCouponSpec extends Specification with InjectorSupport {
         browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
 
         browser.find(".date").find("span").index(1).text() === 
-          DateTimeFormat.forPattern(Messages("published.date.format")).print(tran01.tranHeader.transactionTime)
+        DateTimeFormatter.ofPattern(Messages("published.date.format")).format(
+          tran01.tranHeader.transactionTime.atZone(ZoneId.systemDefault())
+        )
         browser.find(".siteName").text() === Messages("coupon.user.company.name", "商店111")
         browser.find(".name").text() === justOneSpace(
           Messages("coupon.user.name", "firstName01", "", "lastName01")

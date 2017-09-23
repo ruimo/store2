@@ -44,7 +44,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
 
   "ItemPicture" should {
     "If specified picture is not found, 'notfound.jpg' will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -68,7 +68,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified detail picture is not found, 'detailnotfound.jpg' will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -93,7 +93,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified picture is found and modified, it will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -119,7 +119,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified detail picture is found and modified, it will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -145,7 +145,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified picture is found but not modified, 304 will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -176,7 +176,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified detail picture is found but not modified, 304 will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -208,7 +208,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
 
 // Bug https://bugzilla.mozilla.org/show_bug.cgi?id=1361329
 //    "Upload item picture." in new WithBrowser(
-//      WebDriverFactory(FIREFOX),
+//      WebDriverFactory(CHROME),
 //      appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
 //    ) {
 //      inject[Database].withConnection { implicit conn =>
@@ -305,7 +305,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
 //    }
 
     "If specified attachment is not found, 404 will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -324,7 +324,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified attachment is found and modified, it will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -349,7 +349,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "If specified attachment is found but not modified, 304 will be returned." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir ++ avoidLogin)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -379,7 +379,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "Attachment count reflects item.attached.file.count settings." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -395,7 +395,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "retrieveAttachmentNames returns empty if no files are found." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() ++ withTempDir)
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -416,7 +416,7 @@ class ItemPicturesSpec extends Specification with InjectorSupport {
     }
 
     "retrieveAttachmentNames returns file names." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ withTempDir)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ withTempDir)
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

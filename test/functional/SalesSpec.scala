@@ -32,7 +32,7 @@ import com.ruimo.scoins.Scoping._
 class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
   "Sales" should {
     "Can sell item." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase(options = Map("MVCC" -> "true")) ++ disableMailer)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase(options = Map("MVCC" -> "true")) ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -323,7 +323,7 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "If price is expired, error should be shown." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ disableMailer)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -412,7 +412,7 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "Item expires at shipping confirmation." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ disableMailer)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -506,7 +506,7 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "Item expires on finalizing transaction." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ disableMailer)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -608,7 +608,7 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
     }
 
     "Stock exceeds." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(inMemoryDatabase() ++ disableMailer)
+      WebDriverFactory(CHROME), appl(inMemoryDatabase() ++ disableMailer)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

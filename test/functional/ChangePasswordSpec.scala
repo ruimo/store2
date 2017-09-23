@@ -20,7 +20,7 @@ import play.api.db.Database
 class ChangePasswordSpec extends Specification with InjectorSupport {
   "Change password" should {
     "Be able to do validation." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

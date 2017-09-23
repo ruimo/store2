@@ -30,7 +30,7 @@ import com.ruimo.scoins.Scoping._
 class ShippingMaintenanceSpec extends Specification with InjectorSupport {
   "Shipping fee maintenance" should {
     "Should occur validation error in creating shipping box" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ){
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -65,7 +65,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can create shipping box" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -129,7 +129,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can edit without records" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -151,7 +151,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can edit with some records" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -194,7 +194,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can edit one box record with validation error" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -249,7 +249,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can maintenance fee without records" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -278,7 +278,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can maintenance fee with records" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -321,7 +321,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can remove fee record" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -361,7 +361,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can create fee record" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -409,7 +409,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Show validation error when adding fee" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -465,7 +465,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
     }
 
     "Can add, edit, delete fee" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

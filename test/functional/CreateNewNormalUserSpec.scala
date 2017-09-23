@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit
 class CreateNewNormalUserSpec extends Specification with InjectorSupport {
   "CreateNewNormalUser" should {
     "Can create record" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -72,7 +72,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
     }
 
     "Email error" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -112,7 +112,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
     }
 
     "Confirmation password does not match." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -149,7 +149,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
     }
 
     "If normalUserNamePattern is set, user name should match the specified pattern." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() + ("normalUserNamePattern" -> "[0-9]{6}") + ("maxCountOfSupplementalEmail" -> 0))
     ) {
       // User name should be 6 digit string.
@@ -232,7 +232,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
     }
 
     "Supplemental email fields should be shown." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() + ("maxCountOfSupplementalEmail" -> 3))
     ) {
       // User name should be 6 digit string.

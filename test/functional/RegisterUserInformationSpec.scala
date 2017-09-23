@@ -26,7 +26,7 @@ import constraints.FormConstraints
 class RegisterUserInformationSpec extends Specification with InjectorSupport {
   "User information registration" should {
     "Show error message for blank input" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
@@ -151,7 +151,7 @@ class RegisterUserInformationSpec extends Specification with InjectorSupport {
     }
 
     "Login page should be shown after registration" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(
+      WebDriverFactory(CHROME), appl(
         inMemoryDatabase() +
           ("need.authentication.entirely" -> "true") +
           ("auto.login.after.registration" -> "false")
@@ -220,7 +220,7 @@ class RegisterUserInformationSpec extends Specification with InjectorSupport {
     }
 
     "Should be automatically logged in after registration" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(
+      WebDriverFactory(CHROME), appl(
         inMemoryDatabase() +
           ("need.authentication.entirely" -> "true") +
           ("auto.login.after.registration" -> "true")

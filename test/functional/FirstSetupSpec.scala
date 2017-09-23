@@ -21,7 +21,7 @@ import helpers.Helper._
 class FirstSetupSpec extends Specification with InjectorSupport {
   "FirstSetup" should {
     "First setup screen is shown if no user found." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -38,7 +38,7 @@ class FirstSetupSpec extends Specification with InjectorSupport {
     }
 
     "First setup create user." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -79,7 +79,7 @@ class FirstSetupSpec extends Specification with InjectorSupport {
     }
 
     "Minimum length error." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -115,7 +115,7 @@ class FirstSetupSpec extends Specification with InjectorSupport {
     }
 
     "Invalid email error." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -146,7 +146,7 @@ class FirstSetupSpec extends Specification with InjectorSupport {
     }
 
     "Confirmation password does not match." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]

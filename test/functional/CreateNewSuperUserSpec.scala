@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class CreateNewSuperUserSpec extends Specification with InjectorSupport {
   "CreateNewSuperUser" should {
     "Can create new user" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -64,7 +64,7 @@ class CreateNewSuperUserSpec extends Specification with InjectorSupport {
     }
 
     "Minimum length error." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -103,7 +103,7 @@ class CreateNewSuperUserSpec extends Specification with InjectorSupport {
     }
 
     "Invalid email error." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl()
+      WebDriverFactory(CHROME), appl()
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
@@ -137,7 +137,7 @@ class CreateNewSuperUserSpec extends Specification with InjectorSupport {
     }
 
     "Confirmation password does not match." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() + ("maxCountOfSupplementalEmail" -> 0))
     ) {
       inject[Database].withConnection { implicit conn =>
@@ -174,7 +174,7 @@ class CreateNewSuperUserSpec extends Specification with InjectorSupport {
     }
 
     "Supplemental email fields should be shown." in new WithBrowser(
-      WebDriverFactory(FIREFOX),
+      WebDriverFactory(CHROME),
       appl(inMemoryDatabase() + ("maxCountOfSupplementalEmail" -> 3))
     ) {
       // User name should be 6 digit string.

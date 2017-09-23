@@ -30,7 +30,7 @@ class ResetPasswordSpec extends Specification with InjectorSupport {
 
   "Reset password" should {
     "Can reset password" in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]

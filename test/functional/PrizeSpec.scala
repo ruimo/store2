@@ -25,7 +25,7 @@ class PrizeSpec extends Specification with InjectorSupport {
 
   "Prize" should {
     "Can show information." in new WithBrowser(
-      WebDriverFactory(FIREFOX), appl(conf)
+      WebDriverFactory(CHROME), appl(conf)
     ) {
       inject[Database].withConnection { implicit conn =>
         val currencyInfo = inject[CurrencyRegistry]
