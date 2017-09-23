@@ -1,0 +1,59 @@
+@(
+  myForm: Form[CreateNewsCategory]
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@main(Messages("createNewsCategoryMenu"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("createNewsCategoryMenu")</h1>
+
+  @if(myForm.hasErrors) {
+    <div class="globalErrorMessage">
+      @Messages("inputError")
+    </div>
+  }
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+  @helper.form(action = helper.CSRF(routes.NewsMaintenance.createNewsCategory()), 'id -> "createNewsCategoryForm") {
+    @helper.inputText(
+      myForm("categoryName"),
+      '_label -> Messages("categoryName"), 'size -> 64, 'maxlength -> 64
+    )
+
+    @inputText(
+      myForm("iconUrl"), '_label -> Messages("iconUrl"), 'size -> 80, 'maxLength -> 1024
+    )
+
+    <input type="submit" class="createNewsCategoryButton" value=@Messages("register")>
+  }
+
+  <iframe class="filesArea" src="@routes.FileServer.index()">
+  </iframe>
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.NewsMaintenance.editNewsCategory()">
+      @Messages("backTo", Messages("editNewsCategory"))
+    </a>
+
+    <br>
+    <a class="backLink" href="@routes.NewsMaintenance.index()">
+      @Messages("backTo", Messages("newsMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
+}

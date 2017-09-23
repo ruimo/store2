@@ -205,6 +205,25 @@ class NewsCategoryRepo @Inject() (
     NewsCategory(Some(NewsCategoryId(id)), categoryName, iconUrl)
   }
 
+  def list(
+    page: Int = 0, pageSize: Int = 10, orderBy: OrderBy = OrderBy("news_category.category_name")
+  ) (
+    implicit conn: Connection
+  ): PagedRecords[NewsCategory] = {
+    val records = SQL(
+      "select * from news_category order by " + orderBy + " limit {pageSize} offset {offset}"
+    ).on(
+      'pageSize -> pageSize,
+      'offset -> page * pageSize
+    ).as(simple *)
+
+    val count = SQL(
+      "select count(*) from news_category"
+    ).as(SqlParser.scalar[Long].single)
+
+    PagedRecords(page, pageSize, (count + pageSize - 1) / pageSize, orderBy, records)
+  }
+
   def tableForDropDown(implicit conn: Connection): Seq[(String, String)] =
     SQL(
       """
@@ -214,4 +233,38 @@ class NewsCategoryRepo @Inject() (
     ).as(simple *).map {
       e => e.id.get.value.toString -> e.categoryName
     }
+
+  def update(
+    id: NewsCategoryId, categoryName: String, iconUrl: String
+  )(implicit conn: Connection): Int =
+    SQL(
+      """
+      update news_category set
+        category_name = {categoryName},
+        icon_url = {iconUrl}
+      where news_category_id = {id}
+      """
+    ).on(
+      'categoryName -> categoryName,
+      'iconUrl -> iconUrl,
+      'id -> id.value
+    ).executeUpdate()
+
+  def delete(id: NewsCategoryId)(implicit conn: Connection): Int =
+    SQL(
+      """
+      delete from news_category where news_id = {id}
+      """
+    ).on(
+      'id -> id.value
+    ).executeUpdate()
+
+  def apply(id: NewsCategoryId)(implicit conn: Connection): NewsCategory = SQL(
+    """
+    select * from news_category n
+    where n.news_category_id = {id}
+    """
+  ).on(
+    'id -> id.value
+  ).as(simple.single)
 }

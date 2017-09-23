@@ -1,0 +1,126 @@
+@(
+  newsCategoryTable: PagedRecords[NewsCategory]
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+@import java.time.format.DateTimeFormatter
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+@main(Messages("modifyNewsCategory"), Some(loginSession), contentCssClass = "adminContents") {
+  <link rel="stylesheet" media="all" href="@routes.Assets.versioned("stylesheets/editNews.css")">
+  <script>
+    $(function() {
+      $(".deleteButton").each(function(idx, b) {
+        $(b).click(function(e) {
+          var formId = "deleteNewsCategory" + $(b).data("news-category-id");
+          var dlg = $('<div>@Messages("deleteConfirm") ' + $(b).data("news-category-category-name") + '</div>');
+          dlg.dialog({
+            modal: true,
+            buttons: [
+              {
+                text: '@Messages("yes")',
+                class: 'yes-button',
+                click: function() {
+                  $('#' + formId).submit();
+                }
+              },    
+              {
+                text: '@Messages("no")',
+                class: 'no-button',
+                click: function() {
+                  $(this).dialog('close');
+                }
+              }
+            ]
+          });
+          dlg.dialog('open');
+        });
+      });
+    });
+  </script>
+} {
+<h1 class="title">@Messages("modifyNewsCategory")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+<table class="newsCategoryTable">
+  <tr class="newsCategoryTableHeader">
+    <th class="id">
+      @orderMark(
+        "id",
+        routes.NewsMaintenance.listNewsCategory,
+        "news_category.news_category_id", newsCategoryTable
+      )
+    </th>
+    <th class="newsCategoryName">
+      @orderMark(
+        Messages("categoryName"),
+        routes.NewsMaintenance.listNewsCategory,
+        "news_category.category_name", newsCategoryTable
+      )
+    </th>
+    <th class="newsCategoryIcon">
+      @Messages("icon")
+    </th>
+    <th class="action"></th>
+  </tr>
+  @newsCategoryTable.records.map { n =>
+    <tr class="newsCategoryTableBody">
+      <td class="id">
+        <a href="@routes.NewsMaintenance.startModifyNewsCategory(n.id.get.value)">
+          @n.id.get.value
+        </a>
+      </td>
+      <td class="newsCategoryName">
+        @n.categoryName
+      </td>
+      <td class="newsCategoryIcon"><img src="@n.iconUrl"></td>
+      <td class="action">
+        @form(action = CSRF(routes.NewsMaintenance.deleteNewsCategory(n.id.get.value)), 'id -> ("deleteNews" + n.id.get.value)) {
+        }
+        <button type="button" style="float: left;"
+                onclick="location.href='@routes.NewsMaintenance.startModifyNewsCategory(n.id.get.value)'">
+          @Messages("edit")
+        </button>
+        <button type="button" style="float: left;"
+                data-news-category-id="@n.id.get.value" data-news-category-name="@n.categoryName" class="deleteButton">
+          @Messages("remove")
+        </button>
+      </td>
+    </tr>
+  }
+</table>
+
+<br>
+@pagingPanel(
+  newsCategoryTable,
+  routes.NewsMaintenance.listNewsCategory,
+  10, 25, 50
+)
+
+<div class="menuPanel">
+  <br>
+  <a class="backLink" href="@routes.NewsMaintenance.editNewsCategory()">
+    @Messages("backTo", Messages("editNewsCategory"))
+  </a>
+
+  <br>
+  <a class="backLink" href="@routes.NewsMaintenance.index()">
+    @Messages("backTo", Messages("newsMaintenanceTitle"))
+  </a>
+
+  <br>
+  @admin.backToAdminTop()
+</div>
+}

@@ -36,6 +36,13 @@ class NewsMaintenance @Inject() (
     )(CreateNews.apply)(CreateNews.unapply)
   )
 
+  val createCategoryForm = Form(
+    mapping(
+      "categoryName" -> text.verifying(nonEmpty, maxLength(64)),
+      "iconUrl" ->  text.verifying(nonEmpty, maxLength(1024))
+    )(CreateNewsCategory.apply)(CreateNewsCategory.unapply)
+  )
+
   def index = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     checkLogin(login) {
@@ -151,6 +158,112 @@ class NewsMaintenance @Inject() (
         Redirect(
           routes.NewsMaintenance.editNews()
         ).flashing("message" -> Messages("newsIsRemoved"))
+      }
+    }
+  }
+
+  def editNewsCategory() = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      Ok(views.html.admin.editNewsCategory())
+    }
+  }
+
+  def startCreateNewsCategory() = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      Ok(views.html.admin.createNewsCategory(createCategoryForm))
+    }
+  }
+
+  def startModifyNewsCategory(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      db.withConnection { implicit conn =>
+        val newsCategory = newsCategoryRepo(NewsCategoryId(id))
+        Ok(
+          views.html.admin.modifyNewsCategory(
+            id,
+            createCategoryForm.fill(
+              CreateNewsCategory(
+                newsCategory.categoryName, newsCategory.iconUrl
+              )
+            )
+          )
+        )
+      }
+    }
+  }
+
+  def createNewsCategory() = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      createCategoryForm.bindFromRequest.fold(
+        formWithErrors => {
+          Logger.error("Validation error in NewsMaintenance.createNewsCategory. " + formWithErrors)
+          db.withConnection { implicit conn =>
+            BadRequest(views.html.admin.createNewsCategory(formWithErrors))
+          }
+        },
+        newsCategory => db.withConnection { implicit conn =>
+          newsCategory.save()
+          Redirect(
+            routes.NewsMaintenance.startCreateNewsCategory()
+          ).flashing("message" -> Messages("newsCategoryIsUpdated"))
+        }
+      )
+    }
+  }
+
+  def modifyNewsCategory(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      createCategoryForm.bindFromRequest.fold(
+        formWithErrors => {
+          Logger.error("Validation error in NewsMaintenance.modifyNewsCategory.")
+          BadRequest(
+            db.withConnection { implicit conn =>
+              views.html.admin.modifyNewsCategory(
+                id, formWithErrors
+              )
+            }
+          )
+        },
+        newsCategory => db.withConnection { implicit conn =>
+          newsCategory.update(id)
+          Redirect(
+            routes.NewsMaintenance.listNewsCategory()
+          ).flashing("message" -> Messages("newsCategoryIsUpdated"))
+        }
+      )
+    }
+  }
+
+  def listNewsCategory(
+    page: Int, pageSize: Int, orderBySpec: String
+  ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      db.withConnection { implicit conn =>
+        Ok(
+          views.html.admin.listNewsCategory(
+            newsCategoryRepo.list(
+              page, pageSize, OrderBy(orderBySpec)
+            )
+          )
+        )
+      }
+    }
+  }
+
+  def deleteNewsCategory(id: Long) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    implicit val login = request.login
+    NeedLogin.assumeSuperUser(login) {
+      db.withConnection { implicit conn =>
+        newsCategoryRepo.delete(NewsCategoryId(id))
+        Redirect(
+          routes.NewsMaintenance.startModifyNewsCategory(id)
+        ).flashing("message" -> Messages("newsCategoryIsRemoved"))
       }
     }
   }

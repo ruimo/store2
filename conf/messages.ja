@@ -574,3 +574,11 @@ fileMaintenanceTitle=ファイルの管理
 fileListTitle=ファイル・リスト {0}
 loginWithOffice365=Office365でログイン
 unregisteredUserEmail=このemailを持ったは未登録です {0}
+editNewsCategory=ニュース・カテゴリの変更
+createNewsCategoryMenu=ニュース・カテゴリの作成
+modifyNewsCategory=ニュース・カテゴリの編集
+iconUrl=アイコンURL
+newsCategoryIsUpdated=ニュース・カテゴリが更新されました
+newsCategoryIsRemoved=ニュース・カテゴリが削除されました
+icon=アイコン
+

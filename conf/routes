@@ -294,5 +294,13 @@ GET     /fileMaintenance                 controllers.FileMaintenance.index()
 
 GET     /login/office365                 controllers.LoginAgentController.loginOffice365(code: String)
 
+GET     /admin/editNewsCategory          controllers.NewsMaintenance.editNewsCategory()
+GET     /admin/startCreateNewsCategory   controllers.NewsMaintenance.startCreateNewsCategory()
+POST    /admin/createNewsCategory        controllers.NewsMaintenance.createNewsCategory()
+GET     /admin/startModifyNewsCategory   controllers.NewsMaintenance.startModifyNewsCategory(id: Long)
+POST    /admin/modifyNewsCategory        controllers.NewsMaintenance.modifyNewsCategory(id: Long)
+GET     /admin/listNewsCategory          controllers.NewsMaintenance.listNewsCategory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "news_category.category_name")
+POST    /admin/deleteNewsCategory        controllers.NewsMaintenance.deleteNewsCategory(id: Long)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

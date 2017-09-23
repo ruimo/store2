@@ -12,7 +12,6 @@ import play.api.{Application => PlayApp}
 import play.api.inject.guice.GuiceApplicationBuilder
 import helpers.InjectorSupport
 import play.api.db.Database
-import SeleniumHelpers.FirefoxJa
 import play.api.http.Status
 import org.openqa.selenium.By
 import java.nio.file.{Paths, Files}

@@ -1,0 +1,24 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@main(Messages("editNewsCategory"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("editNewsCategory")</h1>
+
+  <div class="menuItem">
+    <a href="@routes.NewsMaintenance.startCreateNewsCategory()">
+      @Messages("createNewsCategoryMenu")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.NewsMaintenance.listNewsCategory()">
+      @Messages("modifyNewsCategory")
+    </a>
+  </div>
+}
+  
