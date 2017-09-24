@@ -95,11 +95,15 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find("#lastNameKana").fill().`with`("lastNameKana01")
         browser.find("input[name='zip1']").fill().`with`("146")
         browser.find("input[name='zip2']").fill().`with`("0082")
-        browser.find("#address1").fill().`with`("address01")
-        browser.find("#address2").fill().`with`("address02")
         browser.find("#tel1").fill().`with`("11111111")
         if (browser.find("#agreeCheck").size != 0) {
           browser.find("#agreeCheck").click()
+        }
+        browser.waitUntil(30, TimeUnit.SECONDS) {
+          failFalse {
+            browser.find("#address1").attribute("value") == "大田区" &&
+            browser.find("#address2").attribute("value") == "池上"
+          }
         }
         browser.find("#enterShippingAddressForm input[type='submit']").click()
 
@@ -139,8 +143,10 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
           browser.find("#agreeCheck").click()
         }
         browser.find("#enterShippingAddressForm input[type='submit']").click()
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-        browser.webDriver.getTitle === Messages("commonTitle", Messages("confirm.shipping.address"))
+
+        browser.waitUntil {
+          failFalse(browser.webDriver.getTitle == Messages("commonTitle", Messages("confirm.shipping.address")))
+        }
 
         browser.find(".itemTableBody .itemName").text() === "かえで"
         browser.find(".itemTableBody .siteName").text() === "Store01"
@@ -164,8 +170,8 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
           e.find(".shippingTableBody td.nameKana").text() === "firstNameKana01 lastNameKana01"
           e.find(".shippingTableBody td.zip").text() === "146 - 0082"
           e.find(".address .prefecture").text() === JapanPrefecture.東京都.toString
-          e.find(".address .address1").text() === "address01"
-          e.find(".address .address2").text() === "address02"
+          e.find(".address .address1").text() === "大田区"
+          e.find(".address .address2").text() === "池上"
           e.find(".shippingTableBody .tel1").text() === "11111111"
         }
         browser.find("#paypalimg").size === 0
@@ -199,8 +205,8 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
           e.find(".shippingTableBody .zip").text() === "146 - 0082"
 
           e.find(".prefecture").text() === JapanPrefecture.東京都.toString
-          e.find(".address1").text() === "address01"
-          e.find(".address2").text() === "address02"
+          e.find(".address1").text() === "大田区"
+          e.find(".address2").text() === "池上"
         }
 
         browser.find(".shippingTableBody .tel1").text() === "11111111"
@@ -243,8 +249,8 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
           addr.zip2 === "0082"
           addr.zip3 === ""
           addr.prefecture === JapanPrefecture.東京都
-          addr.address1 === "address01"
-          addr.address2 === "address02"
+          addr.address1 === "大田区"
+          addr.address2 === "池上"
           addr.tel1 === "11111111"
         }
 
@@ -576,8 +582,12 @@ class SalesSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find("#lastNameKana").fill().`with`("lastNameKana01")
         browser.find("input[name='zip1']").fill().`with`("146")
         browser.find("input[name='zip2']").fill().`with`("0082")
-        browser.find("#address1").fill().`with`("address01")
-        browser.find("#address2").fill().`with`("address02")
+        browser.waitUntil(30, TimeUnit.SECONDS) {
+          failFalse {
+            browser.find("#address1").attribute("value") == "大田区" &&
+            browser.find("#address2").attribute("value") == "池上"
+          }
+        }
         browser.find("#tel1").fill().`with`("11111111")
 
         if (browser.find("#agreeCheck").size != 0) {
