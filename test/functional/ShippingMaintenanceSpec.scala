@@ -31,7 +31,7 @@ class ShippingMaintenanceSpec extends Specification with InjectorSupport {
   "Shipping fee maintenance" should {
     "Should occur validation error in creating shipping box" in new WithBrowser(
       WebDriverFactory(CHROME), appl()
-    ){
+    ) {
       inject[Database].withConnection { implicit conn =>
         implicit val currencyInfo = inject[CurrencyRegistry]
         implicit val localeInfo = inject[LocaleInfoRepo]
