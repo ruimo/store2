@@ -120,8 +120,12 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find("#email").fill().`with`("foo@bar.com")
         browser.find("input[name='zip1']").fill().`with`("146")
         browser.find("input[name='zip2']").fill().`with`("0082")
-        browser.find("#address1").fill().`with`("address01")
-        browser.find("#address2").fill().`with`("address02")
+        browser.waitUntil(30, TimeUnit.SECONDS) {
+          failFalse {
+            browser.find("#address1").attribute("value") == "大田区" &&
+            browser.find("#address2").attribute("value") == "池上"
+          }
+        }
         browser.find("#tel1").fill().`with`("11111111")
 
         if (browser.find("#agreeCheck").size != 0) {
@@ -192,8 +196,8 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find(".shippingAddress").find(".nameKana").text === "firstNameKana01 lastNameKana01"
         browser.find(".shippingAddress").find(".zip").text === "146 - 0082"
         browser.find(".shippingAddress").find(".prefecture").text === "東京都"
-        browser.find(".shippingAddress").find(".address1").text === "address01"
-        browser.find(".shippingAddress").find(".address2").text === "address02"
+        browser.find(".shippingAddress").find(".address1").text === "大田区"
+        browser.find(".shippingAddress").find(".address2").text === "池上"
         browser.find(".shippingAddress").find(".tel1").text === "11111111"
 
         doWith(TransactionLogPaypalStatus.byTransactionId(headers(0).id.get)) { paypal =>
@@ -286,8 +290,12 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find("#email").fill().`with`("foo@bar.com")
         browser.find("input[name='zip1']").fill().`with`("146")
         browser.find("input[name='zip2']").fill().`with`("0082")
-        browser.find("#address1").fill().`with`("address01")
-        browser.find("#address2").fill().`with`("address02")
+        browser.waitUntil(30, TimeUnit.SECONDS) {
+          failFalse {
+            browser.find("#address1").attribute("value") == "大田区" &&
+            browser.find("#address2").attribute("value") == "池上"
+          }
+        }
         browser.find("#tel1").fill().`with`("11111111")
 
         if (browser.find("#agreeCheck").size != 0) {
@@ -405,8 +413,12 @@ class PaypalSpec extends Specification with SalesSpecBase with InjectorSupport {
         browser.find("#email").fill().`with`("foo@bar.com")
         browser.find("input[name='zip1']").fill().`with`("146")
         browser.find("input[name='zip2']").fill().`with`("0082")
-        browser.find("#address1").fill().`with`("address01")
-        browser.find("#address2").fill().`with`("address02")
+        browser.waitUntil(30, TimeUnit.SECONDS) {
+          failFalse {
+            browser.find("#address1").attribute("value") == "大田区" &&
+            browser.find("#address2").attribute("value") == "池上"
+          }
+        }
         browser.find("#tel1").fill().`with`("11111111")
 
         if (browser.find("#agreeCheck").size != 0) {

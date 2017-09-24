@@ -100,9 +100,9 @@ class PriceControlSpec extends Specification with SalesSpecBase with InjectorSup
           browser.find("#agreeCheck").click()
         }
         browser.find("#enterShippingAddressForm input[type='submit']").click()
-        browser.await().atMost(5, TimeUnit.SECONDS).untilPage().isLoaded()
-
-        browser.find(".itemTable .itemTableBody .itemPrice").text === "999円"
+        browser.waitUntil {
+          failFalse(browser.find(".itemTable .itemTableBody .itemPrice").text == "999円")
+        }
         browser.find(".itemTable .itemTableBody.subtotalWithoutTax .subtotal").text === "999円"
         browser.find(".itemTable .itemTableBody.outerTax .outerTaxAmount").text === "49円"
         browser.find(".itemTable .itemTableBody.total .grandTotal").text === "1,048円"
