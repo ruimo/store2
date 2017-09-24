@@ -57,10 +57,10 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id4).get,
-            inject[UploadedFileRepo].get(id3).get,
-            inject[UploadedFileRepo].get(id2).get,
-            inject[UploadedFileRepo].get(id1).get
+            (inject[UploadedFileRepo].get(id4).get, user1),
+            (inject[UploadedFileRepo].get(id3).get, user3),
+            (inject[UploadedFileRepo].get(id2).get, user4),
+            (inject[UploadedFileRepo].get(id1).get, user2)
           )
         }
 
@@ -70,10 +70,10 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id1).get,
-            inject[UploadedFileRepo].get(id2).get,
-            inject[UploadedFileRepo].get(id3).get,
-            inject[UploadedFileRepo].get(id4).get
+            (inject[UploadedFileRepo].get(id1).get, user2),
+            (inject[UploadedFileRepo].get(id2).get, user4),
+            (inject[UploadedFileRepo].get(id3).get, user3),
+            (inject[UploadedFileRepo].get(id4).get, user1)
           )
         }
 
@@ -83,10 +83,10 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id4).get,
-            inject[UploadedFileRepo].get(id1).get,
-            inject[UploadedFileRepo].get(id2).get,
-            inject[UploadedFileRepo].get(id3).get
+            (inject[UploadedFileRepo].get(id4).get, user1),
+            (inject[UploadedFileRepo].get(id1).get, user2),
+            (inject[UploadedFileRepo].get(id2).get, user4),
+            (inject[UploadedFileRepo].get(id3).get, user3)
           )
         }
 
@@ -96,10 +96,10 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id4).get,
-            inject[UploadedFileRepo].get(id1).get,
-            inject[UploadedFileRepo].get(id3).get,
-            inject[UploadedFileRepo].get(id2).get
+            (inject[UploadedFileRepo].get(id4).get, user1),
+            (inject[UploadedFileRepo].get(id1).get, user2),
+            (inject[UploadedFileRepo].get(id3).get, user3),
+            (inject[UploadedFileRepo].get(id2).get, user4)
           )
         }
 
@@ -109,9 +109,9 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id1).get,
-            inject[UploadedFileRepo].get(id2).get,
-            inject[UploadedFileRepo].get(id3).get
+            (inject[UploadedFileRepo].get(id1).get, user2),
+            (inject[UploadedFileRepo].get(id2).get, user4),
+            (inject[UploadedFileRepo].get(id3).get, user3)
           )
         }
 
@@ -121,7 +121,7 @@ class UploadedFileSpec extends Specification with InjectorSupport {
           )
         ) { list =>
           list.records === Seq(
-            inject[UploadedFileRepo].get(id4).get
+            (inject[UploadedFileRepo].get(id4).get, user1)
           )
         }
       }
