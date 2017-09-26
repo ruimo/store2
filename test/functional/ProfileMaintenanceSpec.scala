@@ -71,6 +71,45 @@ class ProfileMaintenanceSpec extends Specification with InjectorSupport {
           f.find(".info").index(2).text === Messages("constraint.password.char")
         }
 
+        browser.find("#firstName").fill().`with`("Admin2")
+        browser.find("#lastName").fill().`with`("Manager2")
+        browser.find("#email").fill().`with`("admin2@abc.com")
+        browser.find("#firstNameKana").fill().`with`("firstnamekana")
+        browser.find("#lastNameKana").fill().`with`("lastnamekana")
+        browser.find("#telNo0").fill().`with`("0000000000000")
+        browser.find("#telNo1").fill().`with`("1111111111111")
+        browser.find("#telNo2").fill().`with`("2222222222222")
+        browser.find("#joinedDateTextBox").fill().`with`("2011年10月23日")
+        browser.find("#photoUrl").fill().`with`("url01")
+        browser.find("#birthMonthDay").fill().`with`("0123")
+        browser.find("#profileComment").fill().`with`("Comment01")
+        browser.find("#password").fill().`with`("password")
+        browser.find("#updateButton").click()
+
+        browser.waitUntil {
+          browser.find(".message").text == Messages("userInfoIsUpdated")
+        }
+
+        browser.goTo(
+          controllers.routes.ProfileMaintenance.changeProfile() + "?lang=" + lang.code
+        )
+        browser.waitUntil {
+          failFalse(browser.find("h1.title").text == Messages("changeUserProfileTitle"))
+        }
+
+        browser.find("#firstName").attribute("value") === "Admin2"
+        browser.find("#lastName").attribute("value") === "Manager2"
+        browser.find("#email").attribute("value") === "admin2@abc.com"
+        browser.find("#firstNameKana").attribute("value") === "firstnamekana"
+        browser.find("#lastNameKana").attribute("value") === "lastnamekana"
+        browser.find("#telNo0").attribute("value") === "0000000000000"
+        browser.find("#telNo1").attribute("value") === "1111111111111"
+        browser.find("#telNo2").attribute("value") === "2222222222222"
+        browser.find("#joinedDateTextBox").attribute("value") === "2011年10月23日"
+        browser.find("#photoUrl").attribute("value") === "url01"
+        browser.find("#birthMonthDay").attribute("value") === "123"
+        browser.find("#profileComment").text === "Comment01"
+        browser.find("#password").attribute("value") === ""
       }
     }
   }
