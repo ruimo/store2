@@ -21,7 +21,9 @@ class FormConstraintsBase(cache: Cache) {
     )
   )
 
-  val passwordConstraint = List(minLength(passwordMinLength()), maxLength(24), passwordCharConstraint)
+  def passwordMaxLength = 24
+
+  val passwordConstraint = List(minLength(passwordMinLength()), maxLength(passwordMaxLength), passwordCharConstraint)
   val firstNameConstraint = List(nonEmpty, maxLength(64))
   val middleNameConstraint = List(maxLength(64))
   val lastNameConstraint = List(nonEmpty, maxLength(64))
