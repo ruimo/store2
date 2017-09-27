@@ -305,5 +305,7 @@ POST    /admin/deleteNewsCategory        controllers.NewsMaintenance.deleteNewsC
 GET     /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.startModify(storeUserId: Long)
 POST    /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.modify(storeUserId: Long)
 
+GET     /userList                        controllers.UserQuery.index(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "store_user.user_name")
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

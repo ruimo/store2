@@ -1,0 +1,84 @@
+@(users: PagedRecords[ListUserEntry])(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+@main(Messages("listUsersTitle"), Some(loginSession)) {
+} {
+<h1 class="title">@Messages("listUsersTitle")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+
+<table class="userTable">
+  <tr class="userTableHeader">
+    <th class="id">
+      @orderMark(
+        "id",
+        routes.UserQuery.index,
+        "store_user.store_user_id", users
+      )
+    </th>
+    <th class="name">
+      @orderMark(
+        Messages("userName"),
+        routes.UserQuery.index,
+        "store_user.user_name", users
+      )
+    </th>
+    <th class="fullName">
+      @orderMark(
+        Messages("name"),
+        routes.UserQuery.index,
+        "full_name", users
+      )
+    </th>
+    <th class="company">
+      @orderMark(
+        Messages("companyName"),
+        routes.UserQuery.index,
+        "store_user.company_name", users
+      )
+    </th>
+    <th class="email">
+      @orderMark(
+        Messages("email"),
+        routes.UserQuery.index,
+        "store_user.email", users
+      )
+    </th>
+  </tr>
+  @users.records.map { user =>
+    <tr class="userTableBody">
+      <td class="id">
+        @user.user.id.get
+      </td>
+      <td class="name">@user.user.userName</td>
+      <td class="fullName">@name(user.user)</td>
+      <td class="company">@user.user.companyName.getOrElse("")</td>
+      <td class="email">@user.user.email</td>
+    </tr>
+  }
+</table>
+
+<br>
+@pagingPanel(
+  users,
+  routes.UserMaintenance.editUser,
+  10, 25, 50
+)
+
+  <div class="gotoTopLink">
+    <a href="/">@Messages("gotoTop")</a>
+  </div>
+}
