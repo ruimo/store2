@@ -64,7 +64,7 @@ class UserSpec extends Specification with InjectorSupport {
       }
     }
 
-    "Can delete user" in {
+    "Can query user metadata" in {
       implicit val app: Application = GuiceApplicationBuilder().configure(inMemoryDatabase()).build()
       val localeInfo = inject[LocaleInfoRepo]
       val currencyInfo = inject[CurrencyRegistry]
@@ -75,17 +75,25 @@ class UserSpec extends Specification with InjectorSupport {
           1L, 2L, UserRole.ADMIN, Some("companyName")
         )
 
-        val user2 = inject[StoreUserRepo].create(
-          "userName2", "firstName2", None, "lastName2", "email2",
-          1L, 2L, UserRole.ADMIN, None
-        )
-
-        inject[StoreUserRepo].listUsers().records.size === 2
-        inject[StoreUserRepo].delete(user2.id.get)
         val list = inject[StoreUserRepo].listUsers()
         list.records.size === 1
         list.records(0)._1.user === user1
         list.records(0)._2 === None
+
+        val umd = UserMetadata.createNew(
+          user1.id.get,
+          Some("url"),
+          Some("firstNameKana"), Some("middleNameKana"), Some("lastNameKana"),
+          Some("tel00"), Some("tel01"), Some("tel02"),
+          Some(Instant.ofEpochMilli(1234L)),
+          Some(123),
+          Some("Comment")
+        )
+
+        val list2 = inject[StoreUserRepo].listUsers()
+        list2.records.size === 1
+        list2.records(0)._1.user === user1
+        list2.records(0)._2 === Some(umd)
       }
     }
 
