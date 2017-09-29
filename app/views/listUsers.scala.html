@@ -1,4 +1,4 @@
-@(users: PagedRecords[ListUserEntry])(
+@(users: PagedRecords[(ListUserEntry, Option[UserMetadata])])(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
@@ -61,12 +61,12 @@
   @users.records.map { user =>
     <tr class="userTableBody">
       <td class="id">
-        @user.user.id.get
+        @user._1.user.id.get
       </td>
-      <td class="name">@user.user.userName</td>
-      <td class="fullName">@name(user.user)</td>
-      <td class="company">@user.user.companyName.getOrElse("")</td>
-      <td class="email">@user.user.email</td>
+      <td class="name">@user._1.user.userName</td>
+      <td class="fullName">@name(user._1.user)</td>
+      <td class="company">@user._1.user.companyName.getOrElse("")</td>
+      <td class="email">@user._1.user.email</td>
     </tr>
   }
 </table>
@@ -74,7 +74,7 @@
 <br>
 @pagingPanel(
   users,
-  routes.UserMaintenance.editUser,
+  routes.UserQuery.index,
   10, 25, 50
 )
 

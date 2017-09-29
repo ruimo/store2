@@ -163,6 +163,18 @@ class StoreUserRepo @Inject() (
       case storeUser~siteUser~site~notificationId => ListUserEntry(storeUser, siteUser, site, notificationId.isDefined)
     }
 
+  val withSiteAndMetadata = 
+    simple ~
+    (siteUserRepo.simple ?) ~
+    (SiteRepo.simple ?) ~
+    (UserMetadata.simple ?) ~
+    SqlParser.get[Option[Long]]("order_notification.order_notification_id") map {
+      case storeUser~siteUser~site~metadata~notificationId => (
+        ListUserEntry(storeUser, siteUser, site, notificationId.isDefined),
+        metadata
+      )
+    }
+
   def count(implicit conn: Connection) = 
     SQL("select count(*) from store_user where deleted = FALSE").as(SqlParser.scalar[Long].single)
 
@@ -245,7 +257,7 @@ class StoreUserRepo @Inject() (
   def listUsers(
     page: Int = 0, pageSize: Int = 50, 
     orderBy: OrderBy = OrderBy("store_user.user_name"), employeeSiteId: Option[Long] = None
-  )(implicit conn: Connection): PagedRecords[ListUserEntry] = {
+  )(implicit conn: Connection): PagedRecords[(ListUserEntry, Option[UserMetadata])] = {
     val list = SQL(
       s"""
       select 
@@ -255,6 +267,7 @@ class StoreUserRepo @Inject() (
       from store_user
       left join site_user on store_user.store_user_id = site_user.store_user_id
       left join site on site_user.site_id = site.site_id
+      left join user_metadata on user_metadata.store_user_id = store_user.store_user_id
       left join order_notification on order_notification.store_user_id = store_user.store_user_id
       where store_user.deleted = FALSE"""
       + (employeeSiteId.map {siteId => " and user_name like '" + siteId + "-%'"}.getOrElse(""))
@@ -265,7 +278,7 @@ class StoreUserRepo @Inject() (
       'pageSize -> pageSize,
       'offset -> page * pageSize
     ).as(
-      withSiteUser *
+      withSiteAndMetadata *
     )
 
     val count = SQL("select count(*) from store_user where deleted = FALSE").as(SqlParser.scalar[Long].single)
