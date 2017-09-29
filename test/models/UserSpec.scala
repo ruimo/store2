@@ -84,7 +84,8 @@ class UserSpec extends Specification with InjectorSupport {
         inject[StoreUserRepo].delete(user2.id.get)
         val list = inject[StoreUserRepo].listUsers()
         list.records.size === 1
-        list.records(0).user === user1
+        list.records(0)._1.user === user1
+        list.records(0)._2 === None
       }
     }
 
@@ -106,18 +107,22 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 2
-          records(0).user === user1
-          records(1).user === user2
+          records(0)._1.user === user1
+          records(0)._2 === None
+          records(1)._1.user === user2
+          records(1)._2 === None
         }
 
         doWith(inject[StoreUserRepo].listUsers(employeeSiteId = Some(1)).records) { records =>
           records.size === 1
-          records(0).user === user1
+          records(0)._1.user === user1
+          records(0)._2 === None
         }
           
         doWith(inject[StoreUserRepo].listUsers(employeeSiteId = Some(2)).records) { records =>
           records.size === 1
-          records(0).user === user2
+          records(0)._1.user === user2
+          records(0)._2 === None
         }
       }
     }
@@ -148,11 +153,13 @@ class UserSpec extends Specification with InjectorSupport {
 
         val list = inject[StoreUserRepo].listUsers()
         list.records.size === 2
-        list.records(0).user === user1
-        list.records(0).sendNoticeMail === false
+        list.records(0)._1.user === user1
+        list.records(0)._1.sendNoticeMail === false
+        list.records(0)._2 === None
 
-        list.records(1).user === user2
-        list.records(1).sendNoticeMail === true
+        list.records(1)._1.user === user2
+        list.records(1)._1.sendNoticeMail === true
+        list.records(1)._2 === None
       }
     }
 
@@ -177,13 +184,15 @@ class UserSpec extends Specification with InjectorSupport {
 
         val list = inject[StoreUserRepo].listUsers()
         list.records.size === 2
-        list.records(0).user === user1
-        list.records(0).siteUser === None
-        list.records(0).sendNoticeMail === false
+        list.records(0)._1.user === user1
+        list.records(0)._1.siteUser === None
+        list.records(0)._1.sendNoticeMail === false
+        list.records(0)._2 === None
 
-        list.records(1).user === user2
-        list.records(1).siteUser.get === siteUser
-        list.records(1).sendNoticeMail === false
+        list.records(1)._1.user === user2
+        list.records(1)._1.siteUser.get === siteUser
+        list.records(1)._1.sendNoticeMail === false
+        list.records(1)._2 === None
       }
     }
 
@@ -204,7 +213,7 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 2
-          doWith(records.map {_.user}.map { r => (r.userName, r)}.toMap) { map =>
+          doWith(records.map {_._1.user}.map { r => (r.userName, r)}.toMap) { map =>
             doWith(map(site1.id.get.toString + "-01234567")) { rec =>
               rec.firstName === ""
               rec.middleName === None
@@ -279,7 +288,7 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 2
-          doWith(records.map {_.user}.map { r => (r.userName, r)}.toMap) { map =>
+          doWith(records.map {_._1.user}.map { r => (r.userName, r)}.toMap) { map =>
             doWith(map(site1.id.get.toString + "-01234567")) { rec =>
               rec.userName === site1.id.get.toString + "-01234567"
               rec.firstName === "first001"
@@ -327,7 +336,7 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 1
-          doWith(records.map {_.user}.map { r => (r.userName, r)}.toMap) { map =>
+          doWith(records.map {_._1.user}.map { r => (r.userName, r)}.toMap) { map =>
             map.get(site1.id.get.toString + "-user002") === None
           }
         }
@@ -386,7 +395,7 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 5
-          doWith(records.map {_.user}.map { r => (r.userName, r)}.toMap) { map =>
+          doWith(records.map {_._1.user}.map { r => (r.userName, r)}.toMap) { map =>
             map.get(site1.id.get.toString + "-11111111") === None
             map.get(site1.id.get.toString + "-22222222") === None
             doWith(map(site1.id.get.toString + "-33333333")) { rec =>
@@ -480,7 +489,7 @@ class UserSpec extends Specification with InjectorSupport {
 
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 3
-          doWith(records.map {_.user}.map { r => (r.userName, r)}.toMap) { map =>
+          doWith(records.map {_._1.user}.map { r => (r.userName, r)}.toMap) { map =>
             map.get(site2.id.get.toString + "-33333333") === None
             doWith(map(site1.id.get.toString + "-11111111")) { rec =>
               rec.firstName === ""
