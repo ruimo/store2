@@ -263,7 +263,7 @@ class StoreUserRepo @Inject() (
       select 
         *,
         store_user.first_name || coalesce(store_user.middle_name, '') || store_user.last_name as full_name,
-        coalesce(user_metadata.first_name_kana, '') || coalesce(user_mstadata.middle_name_kana, '') || coalesce(user_metadata.last_name_kana) as full_name_kana,
+        coalesce(user_metadata.first_name_kana, '') || coalesce(user_metadata.middle_name_kana, '') || coalesce(user_metadata.last_name_kana) as full_name_kana,
         (store_user.user_role + coalesce(site_user.site_id, 0)) as store_user_role
       from store_user
       left join site_user on store_user.store_user_id = site_user.store_user_id
