@@ -20,6 +20,7 @@ class UserQuery @Inject() (
   authenticated: Authenticated,
   cache: Cache,
   val storeUserRepo: StoreUserRepo,
+  val siteRepo: SiteRepo,
   implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
@@ -34,7 +35,15 @@ class UserQuery @Inject() (
       db.withConnection { implicit conn =>
         Ok(
           views.html.listUsers(
-            storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec))
+            storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec)).map { rec =>
+              (
+                rec._1,
+                rec._2,
+                rec._3.map { emp =>
+                  (emp, siteRepo(emp.siteId))
+                }
+              )
+            }
           )
         )
       }

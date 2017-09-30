@@ -4,6 +4,7 @@ import anorm._
 import scala.language.postfixOps
 import collection.immutable.{HashMap, IntMap}
 import java.sql.{Connection}
+import scala.collection.{immutable => imm}
 
 case class EmployeeId(id: Long) extends AnyVal
 
