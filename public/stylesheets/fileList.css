@@ -9,3 +9,11 @@ td {
 tr:nth-child(2n+1) {
   background: #F0FFFF;
 }
+
+.fileListHeader {
+    display: inline-block;
+}
+
+.fileListHeader div {
+    display: inline-block;
+}

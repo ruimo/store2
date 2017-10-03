@@ -17,7 +17,7 @@
   <script>
     $(function() {
       var showCategory = function(cat) {
-        $(".filesArea").attr("src", jsRoutes.controllers.FileServer.index(0, 10, "uf.created_time desc", cat).url);
+        $(".filesArea").attr("src", jsRoutes.controllers.FileServer.index(0, 10, "ctime desc", cat).url);
       };
 
       $("#selectFileCategory").selectmenu({

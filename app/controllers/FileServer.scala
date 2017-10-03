@@ -1,10 +1,12 @@
 package controllers
 
+import play.api.libs.json._
+import play.api.data.validation.Constraints._
 import play.api.data.Form
 import play.api.data.Forms._
 import java.time.Instant
 import play.api.i18n.{Lang, Messages, MessagesProvider}
-import controllers.NeedLogin.{Authenticated, OptAuthenticated}
+import controllers.NeedLogin.{Authenticated, OptAuthenticated, AuthenticatedJson}
 import play.api.Configuration
 import java.nio.file.{Files, NoSuchFileException, Path, Paths}
 import play.Logger
@@ -21,20 +23,16 @@ class FileServer @Inject() (
   val configForTesting: Configuration,
   val authenticated: Authenticated,
   val optAuthenticated: OptAuthenticated,
+  val authenticatedJson: AuthenticatedJson,
   val cache: Cache,
   uploadedFileRepo: UploadedFileRepo,
+  uploadedDirectoryRepo: UploadedDirectoryRepo,
   fileCategories: FileCategories,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo,
   implicit val db: Database,
   implicit val storeUserRepo: StoreUserRepo,
   implicit val loginSessionRepo: LoginSessionRepo
 ) extends MessagesAbstractController(cc) with Pictures with TimeZoneSupport {
-  val removeForm = Form(
-    mapping(
-      "fileId" -> longNumber
-    )(RemoveFile.apply)(RemoveFile.unapply)
-  )
-
   def isTesting = configForTesting.getOptional[Boolean]("files.fortest").getOrElse(false)
   def picturePathForTesting: Path = {
     val ret = config.getOptional[String]("files.path").map {
@@ -49,32 +47,55 @@ class FileServer @Inject() (
   def onPictureNotFound(id: Long, no: Int): Result = Results.NotFound
 
   def index(
-    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
   ) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
+    Logger.info("FileServer.index()")
     implicit val login: LoginSession = req.login
-    Ok(views.html.files(page, pageSize, orderBySpec, categoryName))
+    Ok(views.html.files(page, pageSize, orderBySpec, categoryName, directory.map(Directory.apply)))
   }
 
   def fileList(
-    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
   ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    Logger.info("FileServer.fileList()")
     db.withConnection { implicit conn =>
       implicit val login: LoginSession = request.login
+      val dir = directory.map(Directory.apply)
       Ok(
         views.html.fileList(
           page, pageSize, OrderBy(orderBySpec),
-          uploadedFileRepo.list(page, pageSize, OrderBy(orderBySpec), categoryName),
+          uploadedFileRepo.ls(page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))).get,
           TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
           toLocalDateTime(_)(implicitly),
-          removeForm,
-          categoryName
+          categoryName,
+          dir
+        )
+      )
+    }
+  }
+
+  def openDirectory(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directoryId: Long
+  ) = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
+    Logger.info("FileServer.openDirectory()")
+    db.withConnection { implicit conn =>
+      implicit val login: LoginSession = request.login
+      val dir = uploadedDirectoryRepo.get(UploadedFileId(directoryId)).map { d => Directory(d.fileName) }
+      Ok(
+        views.html.fileList(
+          page, pageSize, OrderBy(orderBySpec),
+          uploadedFileRepo.ls(page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))).get,
+          TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
+          toLocalDateTime(_)(implicitly),
+          categoryName,
+          dir
         )
       )
     }
   }
 
   def create(
-    categoryName: String
+    categoryName: String, uploadedDirectoryId: Option[Long]
   ) = authenticated(parse.multipartFormData) { implicit req: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
     implicit val login = req.login
     db.withConnection { implicit conn =>
@@ -82,7 +103,7 @@ class FileServer @Inject() (
         val fileName = file.filename
         val contentType = file.contentType
         val ufid = uploadedFileRepo.create(
-          login.userId, fileName, contentType, Instant.now(), categoryName
+          login.userId, fileName, contentType, Instant.now(), categoryName, uploadedDirectoryId.map(UploadedFileId.apply)
         )
 
         file.ref.moveTo(attachmentPath.resolve(f"${ufid.value}%016d"), true)
@@ -107,43 +128,99 @@ class FileServer @Inject() (
     }
   }
 
-  def remove(page: Int, pageSize: Int, orderBySpec: String) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
+  def removeJson(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
+  ) = authenticatedJson { implicit req: AuthMessagesRequest[AnyContent] =>
     implicit val login = req.login
-    removeForm.bindFromRequest.fold(
-      formWithErrors => {
-        Logger.error("Validation error in FileServer.remove() " + formWithErrors)
-        Forbidden
-      },
-      removeData => {
-        val id = removeData.fileId
-        db.withConnection { implicit conn =>
-          val ufid = UploadedFileId(id)
-          uploadedFileRepo.get(ufid).map { uf =>
-            if (uf.storeUserId != login.userId  && ! login.isSuperUser) {
-              Forbidden
-            }
-            else {
-              uploadedFileRepo.remove(ufid)
-              Redirect(routes.FileServer.fileList(0, pageSize, orderBySpec))
-            }
-          }.getOrElse(Redirect(routes.FileServer.fileList(0, pageSize, orderBySpec)))
+    req.body.asJson.map { json =>
+      val pathId = (json \ "pathId").as[String].toLong
+      db.withConnection { implicit conn =>
+        val ufid = UploadedFileId(pathId)
+        uploadedFileRepo.get(ufid).map { uf =>
+          if (uf.storeUserId != login.userId  && ! login.isSuperUser) {
+            BadRequest(Json.obj("status" -> "forbidden"))
+          }
+          else {
+            uploadedFileRepo.remove(ufid)
+            Files.delete(attachmentPath.resolve(f"${ufid.value}%016d"))
+            Ok(Json.obj("status" -> "ok"))
+          }
+        }.getOrElse(BadRequest(Json.obj("status" -> "notfound")))
+      }
+    }.get
+  }
+
+  def createDirJson(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
+  ) = authenticatedJson { implicit req: AuthMessagesRequest[AnyContent] =>
+    implicit val login = req.login
+
+    req.body.asJson.map { json =>
+      val path = (json \ "path").as[String]
+      val dir = Directory(directory.getOrElse("") + "/" + path)
+      db.withConnection { implicit conn =>
+        if (uploadedDirectoryRepo.getByDirectory(dir).isDefined) {
+          BadRequest(
+            Json.obj(
+              "status" -> "duplicated"
+            )
+          )
+        }
+        else {
+          uploadedDirectoryRepo.create(login.userId, dir, Instant.now(), categoryName)
+
+          Ok(
+            Json.obj(
+              "status" -> "ok"
+            )
+          )
         }
       }
-    )
+    }.get
+  }
+
+  def removeDirJson(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
+  ) = authenticatedJson { implicit req: AuthMessagesRequest[AnyContent] =>
+    implicit val login = req.login
+
+    req.body.asJson.map { json =>
+      val pathId = (json \ "pathId").as[String].toLong
+      db.withConnection { implicit conn =>
+        val ufid = UploadedFileId(pathId)
+        uploadedDirectoryRepo.get(ufid).map { uf =>
+          if (uf.storeUserId != login.userId  && ! login.isSuperUser) {
+            BadRequest(Json.obj("status" -> "forbidden"))
+          }
+          else {
+            if (uploadedDirectoryRepo.isEmpty(ufid)) {
+              uploadedDirectoryRepo.remove(ufid)
+              Ok(Json.obj("status" -> "ok"))
+            }
+            else {
+              BadRequest(Json.obj("status" -> "notempty"))
+            }
+          }
+        }.getOrElse(BadRequest(Json.obj("status" -> "notfound")))
+      }
+    }.get
   }
 
   def showFilesInCategory(
-    page: Int, pageSize: Int, orderBySpec: String, categoryName: String
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
   ) = authenticated { implicit req: AuthMessagesRequest[AnyContent] =>
+    Logger.info("FileServer.showFilesInCategory")
     implicit val login = req.login
+    val dir = directory.map(Directory.apply)
     Ok(
       views.html.showFilesInCategory(
         page, pageSize, OrderBy(orderBySpec),
         fileCategories.values.filter(_.value == categoryName).headOption.map(_.menuText).getOrElse(""),
+        dir,
         TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
         toLocalDateTime(_)(implicitly),
         db.withConnection { implicit conn =>
-          uploadedFileRepo.list(page, pageSize, OrderBy(orderBySpec), categoryName)
+          uploadedFileRepo.ls(page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))).get
         }
       )
     )

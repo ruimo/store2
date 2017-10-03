@@ -6,9 +6,10 @@
 @(
   page: Int, pageSize: Int, orderBy: OrderBy,
   categoryName: String,
+  directory: Option[Directory],
   imageDateFormatter: DateTimeFormatter,
   toLocalDateTime: Instant => LocalDateTime,
-  recs: PagedRecords[(UploadedFile, StoreUser)]
+  recs: PagedRecords[(UploadedPath, StoreUser)]
 )(
   implicit request: MessagesRequest[AnyContent],
   flash: Flash,
@@ -32,7 +33,7 @@
     @if(recs.isEmpty) {
       @Messages("recordEmpty")
     } else {
-      @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName), 10, 25, 50)(implicitly, Some(loginSession))
+      @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName, directory.map(_.path)), 10, 25, 50)(implicitly, Some(loginSession))
 
       <table class="fileListTable">
         @recs.records.map { rec =>

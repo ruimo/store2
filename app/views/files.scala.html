@@ -1,5 +1,5 @@
 @(
-  page: Int, pageSize: Int, orderBySpec: String, categoryName: String
+  page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[Directory]
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
@@ -48,7 +48,7 @@
       </table>
 
       <div class="storedFilesWrapper">
-        <iframe id="storedFiles" src="@routes.FileServer.fileList(page, pageSize, orderBySpec, categoryName)"></iframe>
+        <iframe id="storedFiles" src="@routes.FileServer.fileList(page, pageSize, orderBySpec, categoryName, directory.map(_.path))"></iframe>
       </div>
     </div>
 

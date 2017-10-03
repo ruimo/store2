@@ -5,11 +5,11 @@
 
 @(
   page: Int, pageSize: Int, orderBy: OrderBy,
-  recs: PagedRecords[(UploadedFile, StoreUser)],
+  recs: PagedRecords[(UploadedPath, StoreUser)],
   imageDateFormatter: DateTimeFormatter,
   toLocalDateTime: Instant => LocalDateTime,
-  removeForm: Form[RemoveFile],
-  categoryName: String
+  categoryName: String,
+  directory: Option[Directory]
 )(
   implicit request: MessagesRequest[AnyContent],
   flash: Flash,
@@ -30,35 +30,92 @@
     <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/fileList.css")"/>
   </head>
   <body>
-    @form(action = CSRF(routes.FileServer.remove(page, pageSize, orderBy.toString)), 'id -> "removeForm") {
-      <input type="hidden" name="fileId" id="fileId">
+    @form(action = CSRF(routes.FileServer.removeJson(page, pageSize, orderBy.toString, categoryName, directory.map(_.path))), 'id -> "removeForm") {
+    }
+    @form(action = CSRF(routes.FileServer.removeDirJson(page, pageSize, orderBy.toString, categoryName, directory.map(_.path))), 'id -> "removeDirForm") {
     }
 
     <div class="fileList">
       @if(recs.isEmpty) {
+        <div class="fileListHeader">
+          <div class="createDirectory">
+            <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
+          </div>
+          <div class="currentDirectory">
+            @{directory.map { d => d.path }.getOrElse("/")}
+          </div>
+          <div class="createDirectory">
+            @form(action = CSRF(routes.FileServer.createDirJson(page, pageSize, orderBy.toString, categoryName, directory.map(_.path))), 'id -> "createDirForm") {
+              <input type="text" name="path" id="path">
+            }
+          </div>
+          <div class="createDirectory">
+            <button id="createDirBtn">@Messages("createDirectory")</button>
+          </div>
+        </div>
         @Messages("recordEmpty")
       } else {
-        @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName), 10, 25, 50)(implicitly, Some(loginSession))
+        <div class="fileListHeader">
+          @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName, directory.map(_.path)), 10, 25, 50)(implicitly, Some(loginSession))
+          <div class="createDirectory">
+            <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
+          </div>
+          <div class="currentDirectory">
+            @{directory.map { d => d.path }.getOrElse("/")}
+          </div>
+          <div class="createDirectory">
+            @form(action = CSRF(routes.FileServer.createDirJson(page, pageSize, orderBy.toString, categoryName, directory.map(_.path))), 'id -> "createDirForm") {
+              <input type="text" name="path" id="path">
+            }
+          </div>
+          <div class="createDirectory">
+            <button id="createDirBtn">@Messages("createDirectory")</button>
+          </div>
+        </div>
 
         <table class="fileListTable">
           @recs.records.map { rec =>
             <tr class="row">
               <td class="fileName">
-                <a target="_blank" href="@routes.FileServer.getFile(rec._1.id.get.value)">
-                  @rec._1.fileName
-                </a>
+                @rec._1 match {
+                  case f: UploadedFile => {
+                    <a target="_blank" href="@routes.FileServer.getFile(f.id.get.value)">
+                      @f.fileName
+                    </a>
+                  }
+                  case d: UploadedDirectory => {
+                    <a href="@routes.FileServer.openDirectory(page, pageSize, orderBy.toString, categoryName, d.id.get.value)">
+                      @d.fileName
+                    </a>
+                  }
+                }
               </td>
               <td class="createdTime">@imageDateFormatter.format(toLocalDateTime(rec._1.createdTime))</td>
               <td class="createdUser">
                 @rec._2.fullName
               </td>
               <td class="link">
-                <span id="url@rec._1.id.get.value">@routes.FileServer.getFile(rec._1.id.get.value)</span>
-                <button class="copyBtn" data-clipboard-target="#url@rec._1.id.get.value">@msg("copyToClipboard")</button>
+                @rec._1 match {
+                  case f: UploadedFile => {
+                    <span id="url@f.id.get.value">@routes.FileServer.getFile(f.id.get.value)</span>
+                    <button class="copyBtn" data-clipboard-target="#url@f.id.get.value">@msg("copyToClipboard")</button>
+                  }
+                  case d: UploadedDirectory => {
+                  }
+                }
               </td>
               <td class="removeFile">
                 @if(loginSession.isSuperUser || loginSession.userId == rec._1.storeUserId) {
-                  <button class="removeBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec._1.id.get.value"></button>
+                  @rec._1 match {
+                    case f: UploadedFile => {
+                      <button class="removeBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec._1.id.get.value">
+                      </button>
+                    }
+                    case d: UploadedDirectory => {
+                      <button class="removeDirBtn" data-confirm='@Messages("deleteConfirm")' data-id="@rec._1.id.get.value">
+                      </button>
+                    }
+                  }
                 }
               </td>
             </tr>

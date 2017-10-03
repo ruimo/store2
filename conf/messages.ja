@@ -595,3 +595,6 @@ profileComment=プロフィール
 birthMonthDay=誕生日
 modifyUserMetadataTitle=ユーザ詳細情報の更新
 listUsersTitle=ユーザ・リスト
+directoryNotEmpty=ディレクトリが空ではありません
+createDirectory=ディレクトリ作成
+gotoParentDirectory=..

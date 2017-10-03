@@ -282,13 +282,16 @@ GET     /getNewsAttachment               controllers.NewsPictures.getAttachment(
 POST    /admin/uploadNewsAttachment      controllers.NewsPictures.uploadAttachment(itemId: Long, no: Int)
 POST    /admin/removeNewsAttachment      controllers.NewsPictures.removeAttachment(id: Long, no: Int, fileName: String)
 
-GET     /files                           controllers.FileServer.index(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "uf.created_time desc", categoryName: String ?= "")
+GET     /files                           controllers.FileServer.index(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "ctime desc", categoryName: String ?= "", directory: Option[String] = None)
 + nocsrf
-POST    /uploadFile                      controllers.FileServer.create(categoryName: String ?= "")
-GET     /fileList                        controllers.FileServer.fileList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "uf.created_time desc", categoryName: String ?= "")
+POST    /uploadFile                      controllers.FileServer.create(categoryName: String ?= "", uploadedDirectoryId: Option[Long])
+GET     /fileList                        controllers.FileServer.fileList(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "ctime desc", categoryName: String ?= "", directory: Option[String])
+GET     /openDirectory                   controllers.FileServer.openDirectory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "ctime desc", categoryName: String ?= "", directoryId: Long)
 GET     /getFile                         controllers.FileServer.getFile(id: Long)
-POST    /removeFile                      controllers.FileServer.remove(page: Int, pageSize: Int, orderBySpec: String)
-GET     /showFilesInCategory             controllers.FileServer.showFilesInCategory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "uf.created_time desc", categoryName: String)
+POST    /removeFileJson                  controllers.FileServer.removeJson(page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String])
+POST    /createDirectoryJson             controllers.FileServer.createDirJson(page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String])
+POST    /removeDirectoryJson             controllers.FileServer.removeDirJson(page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String])
+GET     /showFilesInCategory             controllers.FileServer.showFilesInCategory(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "ctime desc", categoryName: String, directory: Option[String] = None)
 
 GET     /fileMaintenance                 controllers.FileMaintenance.index()
 
