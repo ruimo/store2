@@ -38,9 +38,6 @@
     <div class="fileList">
       @if(recs.isEmpty) {
         <div class="fileListHeader">
-          <div class="createDirectory">
-            <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
-          </div>
           <div class="currentDirectory">
             @{directory.map { d => d.path }.getOrElse("/")}
           </div>
@@ -51,15 +48,15 @@
           </div>
           <div class="createDirectory">
             <button id="createDirBtn">@Messages("createDirectory")</button>
+          </div>
+          <div class="createDirectory">
+            <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
           </div>
         </div>
         @Messages("recordEmpty")
       } else {
         <div class="fileListHeader">
           @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName, directory.map(_.path)), 10, 25, 50)(implicitly, Some(loginSession))
-          <div class="createDirectory">
-            <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
-          </div>
           <div class="currentDirectory">
             @{directory.map { d => d.path }.getOrElse("/")}
           </div>
@@ -70,6 +67,9 @@
           </div>
           <div class="createDirectory">
             <button id="createDirBtn">@Messages("createDirectory")</button>
+          </div>
+          <div class="createDirectory">
+            <button id="gotoParentDirBtn" onclick="parent.location.href='@routes.FileServer.index(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path))';">@Messages("gotoParentDirectory")</button>
           </div>
         </div>
 
@@ -84,7 +84,7 @@
                     </a>
                   }
                   case d: UploadedDirectory => {
-                    <a href="@routes.FileServer.openDirectory(page, pageSize, orderBy.toString, categoryName, d.id.get.value)">
+                    <a href="#" onclick='parent.location.href="@routes.FileServer.index(page, pageSize, orderBy.toString, categoryName, Some(d.fileName))";'>
                       @d.fileName
                     </a>
                   }

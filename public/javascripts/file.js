@@ -24,7 +24,7 @@ app.controller(
           var file = files[i];
           if (! file.$error) {
             file.upload = Upload.upload({
-              url: $rootScope.routes.controllers.FileServer.create($rootScope.categoryName).url,
+              url: $rootScope.routes.controllers.FileServer.create($rootScope.categoryName, $rootScope.directory).url,
               headers: {'Csrf-Token': 'nocheck'},
               data: {
                 username: $scope.username,

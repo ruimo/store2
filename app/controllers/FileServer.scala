@@ -95,15 +95,16 @@ class FileServer @Inject() (
   }
 
   def create(
-    categoryName: String, uploadedDirectoryId: Option[Long]
+    categoryName: String, uploadedDirectory: String
   ) = authenticated(parse.multipartFormData) { implicit req: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
     implicit val login = req.login
     db.withConnection { implicit conn =>
+      val dirId = uploadedDirectoryRepo.getByDirectory(Directory(uploadedDirectory))
       req.body.files.foreach { file =>
         val fileName = file.filename
         val contentType = file.contentType
         val ufid = uploadedFileRepo.create(
-          login.userId, fileName, contentType, Instant.now(), categoryName, uploadedDirectoryId.map(UploadedFileId.apply)
+          login.userId, fileName, contentType, Instant.now(), categoryName, dirId.map(_.id.get)
         )
 
         file.ref.moveTo(attachmentPath.resolve(f"${ufid.value}%016d"), true)

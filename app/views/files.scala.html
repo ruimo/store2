@@ -60,6 +60,7 @@
   app.run(['$rootScope', function($rootScope) {
     $rootScope.routes = jsRoutes;
     $rootScope.categoryName = '@categoryName';
+    $rootScope.directory = '@directory.map(_.path).getOrElse("/")';
     $rootScope.uploadErrorMsg = {
       "Unknown": "@Messages("uploadErrorUnknown")",
       "TooBig": "@Messages("uploadedFileTooBig")"
