@@ -1,0 +1,74 @@
+@(
+  userId: Long,
+  siteTable: Seq[(String, String)],
+  list: Seq[(Employee, Site)],
+  createForm: Form[CreateEmployment]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@renderSite(site: Site, employee: Employee) = {
+  <tr class="row site">
+    <td>
+      @site.name
+    </td>
+    <td>
+      @form(action = helper.CSRF(routes.EmployeeMaintenance.remove(userId, employee.id.get.value))) {
+        <input type="submit" value='@Messages("remove")'>
+      }
+    </td>
+  </tr>
+}
+
+@renderExchange(e0: Employee, e1: Employee) = {
+  <tr class="row exchange">
+    <td colspan="2">
+      @form(action = helper.CSRF(routes.EmployeeMaintenance.swap(userId, e0.index, e1.index))) {
+        <input type="submit" value='@Messages("swap")'>
+      }
+    </td>
+  </tr>
+}
+
+@main(Messages("modifyEmployeeTitle"), None, contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("modifyEmployeeTitle")</h1>
+
+@{println(list)}
+  @if(list.isEmpty) {
+    @Messages("recordEmpty")
+  } else {
+    <table class="employeeTable">
+      @defining(list.sliding(2).toList) { pairs =>
+        @defining(pairs.head) { t =>
+          @renderSite(t.head._2, t.head._1)
+          @if(t.size == 2) {
+            @renderExchange(t(0)._1, t(1)._1)
+            @renderSite(t(1)._2, t(1)._1)
+          }
+        }
+
+        @pairs.tail.map { t =>
+          @renderExchange(t(0)._1, t(1)._1)
+          @renderSite(t(1)._2, t(1)._1)
+        }
+      }
+    </table>
+  }
+
+  @form(action = helper.CSRF(routes.EmployeeMaintenance.create(userId)), 'id -> "createEmployeeForm") {
+    @select(
+      createForm("siteId"), 
+      siteTable, 
+      '_label -> Messages("site"),
+      '_showConstraints -> false
+    )
+
+    <input type="submit" id="createEmployeeBtn" value='@Messages("register")'>
+  }
+}
+  
