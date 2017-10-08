@@ -124,7 +124,8 @@ class StoreUserRepo @Inject() (
   siteRepo: SiteRepo,
   db: Database,
   cache: Cache,
-  fc: FormConstraints
+  fc: FormConstraints,
+  employeeRepo: EmployeeRepo
 ) {
   val PasswordHashStretchCount: () => Int = cache.config(
     _.getOptional[Int]("passwordHashStretchCount").getOrElse(1000)
@@ -168,7 +169,7 @@ class StoreUserRepo @Inject() (
     (siteUserRepo.simple ?) ~
     (SiteRepo.simple ?) ~
     (UserMetadata.simple ?) ~
-    (Employee.simple ?) ~
+    (employeeRepo.simple ?) ~
     SqlParser.get[Option[Long]]("order_notification.order_notification_id") map {
       case storeUser~siteUser~site~metadata~employee~notificationId => (
         ListUserEntry(storeUser, siteUser, site, notificationId.isDefined),

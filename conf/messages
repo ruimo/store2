@@ -567,3 +567,6 @@ directoryNotEmpty=Directory is not empty
 createDirectory=Create Directory
 gotoParentDirectory=..
 middleName=Middle name
+modifyEmployee=Modify employment/department
+modifyEmployeeTitle=Modify employment/department
+swap=AV

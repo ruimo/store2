@@ -802,3 +802,16 @@ td, th {
 dd.info {
     color: black;
 }
+
+.employeeTable {
+    border: none;
+}
+
+.row.exchange {
+    border: none;
+}
+
+.row.exchange td {
+    border: none;
+    text-align: center;
+}

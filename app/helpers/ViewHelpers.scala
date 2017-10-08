@@ -4,7 +4,7 @@ import java.sql.Connection
 import java.util.Locale
 
 import play.api.i18n.Lang
-import models.{Employee, LoginSession}
+import models.{Employee, LoginSession, EmployeeRepo}
 import controllers.I18n
 
 object ViewHelpers extends I18n {
@@ -14,6 +14,8 @@ object ViewHelpers extends I18n {
     case _ => String.format("%.2f", amount.bigDecimal)
   }
 
-  def employee(implicit optLogin: Option[LoginSession], conn: Connection): Option[Employee] =
-    optLogin.flatMap { login => Employee.getBelonging(login.storeUser.id.get) }
+  def employee(
+    implicit employeeRepo: EmployeeRepo, optLogin: Option[LoginSession], conn: Connection
+  ): Option[Employee] =
+    optLogin.flatMap { login => employeeRepo.getBelonging(login.storeUser.id.get) }
 }

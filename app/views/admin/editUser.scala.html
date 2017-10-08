@@ -127,6 +127,11 @@
                 class="modifyUserMetadataButton">
           @Messages("modifyUserMetadata")
         </button>
+        <button type="button" style="float: left;"
+                onclick="location.href='@routes.EmployeeMaintenance.startModify(user._1.user.id.get)'"
+                class="modifyEmployeeButton">
+          @Messages("modifyEmployee")
+        </button>
       </td>
     </tr>
   }

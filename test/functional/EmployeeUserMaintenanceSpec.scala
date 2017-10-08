@@ -138,7 +138,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
           user.companyName === Some(site.name)
 
           // employee table should be updated.
-          doWith(Employee.getBelonging(user.id.get).get) { emp =>
+          doWith(inject[EmployeeRepo].getBelonging(user.id.get).get) { emp =>
             emp.userId === user.id.get
             emp.siteId === site.id.get
           }
@@ -211,7 +211,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
           user.companyName === Some(site.name)
 
           // employee table should be updated.
-          doWith(Employee.getBelonging(user.id.get).get) { emp =>
+          doWith(inject[EmployeeRepo].getBelonging(user.id.get).get) { emp =>
             emp.userId === user.id.get
             emp.siteId === site.id.get
           }

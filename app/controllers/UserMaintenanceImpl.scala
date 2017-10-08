@@ -40,6 +40,7 @@ class UserMaintenanceImpl (
   fc: FormConstraints,
   admin: Admin,
   config: Configuration,
+  employeeRepo: EmployeeRepo,
   implicit val storeUserRepo: StoreUserRepo,
   authenticated: Authenticated,
   implicit val orderNotificationRepo: OrderNotificationRepo,
@@ -206,7 +207,7 @@ class UserMaintenanceImpl (
                 companyName = Some(siteRepo(siteId).name)
               )
 
-              Employee.createNew(siteId, createdUser.id.get)
+              employeeRepo.createNew(siteId, createdUser.id.get)
             }
 
             Redirect(

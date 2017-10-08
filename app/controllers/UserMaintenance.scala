@@ -14,6 +14,7 @@ import play.api.Configuration
 class UserMaintenance @Inject() (
   cc: MessagesControllerComponents,
   config: Configuration,
+  employeeRepo: EmployeeRepo,
   cache: Cache,
   fc: FormConstraints,
   admin: Admin,
@@ -26,6 +27,6 @@ class UserMaintenance @Inject() (
   loginSessionRepo: LoginSessionRepo,
   shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends UserMaintenanceImpl(
-  cc, cache, fc, admin, config, storeUserRepo, authenticated, orderNotificationRepo, siteUserRepo, db, siteRepo, loginSessionRepo,
-  shoppingCartItemRepo
+  cc, cache, fc, admin, config, employeeRepo, storeUserRepo, authenticated, orderNotificationRepo,
+  siteUserRepo, db, siteRepo, loginSessionRepo, shoppingCartItemRepo
 )

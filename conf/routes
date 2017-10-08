@@ -309,6 +309,10 @@ GET     /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.sta
 POST    /admin/startUserMetadataUpdate   controllers.UserMetadataMaintenance.modify(storeUserId: Long)
 
 GET     /userList                        controllers.UserQuery.index(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "store_user.user_name")
+GET     /modifyEmployee                  controllers.EmployeeMaintenance.startModify(userId: Long)
+POST    /createEmployee                  controllers.EmployeeMaintenance.create(userId: Long)
+POST    /swapEmployee                    controllers.EmployeeMaintenance.swap(userId: Long, index0: Int, index1: Int)
+POST    /removeEmployee                  controllers.EmployeeMaintenance.remove(userId: Long, employeeId: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
