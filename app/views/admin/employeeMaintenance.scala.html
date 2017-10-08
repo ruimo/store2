@@ -18,7 +18,7 @@
     </td>
     <td>
       @form(action = helper.CSRF(routes.EmployeeMaintenance.remove(userId, employee.id.get.value))) {
-        <input type="submit" value='@Messages("remove")'>
+        <input class="removeBtn" type="submit" value='@Messages("remove")'>
       }
     </td>
   </tr>
@@ -28,7 +28,7 @@
   <tr class="row exchange">
     <td colspan="2">
       @form(action = helper.CSRF(routes.EmployeeMaintenance.swap(userId, e0.index, e1.index))) {
-        <input type="submit" value='@Messages("swap")'>
+        <input class="exchangeBtn" type="submit" value='@Messages("swap")'>
       }
     </td>
   </tr>
@@ -38,9 +38,8 @@
 } {
   <h1 class="title">@Messages("modifyEmployeeTitle")</h1>
 
-@{println(list)}
   @if(list.isEmpty) {
-    @Messages("recordEmpty")
+    <span class="noRecord">@Messages("recordEmpty")</span>
   } else {
     <table class="employeeTable">
       @defining(list.sliding(2).toList) { pairs =>
