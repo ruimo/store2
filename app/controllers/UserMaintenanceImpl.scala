@@ -300,7 +300,13 @@ class UserMaintenanceImpl (
         if (login.isSuperUser) {
           Ok(
             views.html.admin.editUser(
-              storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec))
+              storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec)).map { rec =>
+                (
+                  rec._1,
+                  rec._2,
+                  employeeRepo.list(rec._1.user.id.get)
+                )
+              }
             )
           )
         }
@@ -309,7 +315,13 @@ class UserMaintenanceImpl (
             val siteId = login.siteUser.map(_.siteId).get
             Ok(
               views.html.admin.editUser(
-                storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec), employeeSiteId = Some(siteId))
+                storeUserRepo.listUsers(page, pageSize, OrderBy(orderBySpec), employeeSiteId = Some(siteId)).map { rec =>
+                  (
+                    rec._1,
+                    rec._2,
+                    employeeRepo.list(rec._1.user.id.get)
+                  )
+                }
               )
             )
           }

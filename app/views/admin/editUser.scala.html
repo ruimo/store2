@@ -1,4 +1,4 @@
-@(users: PagedRecords[(ListUserEntry, Option[UserMetadata], Option[Employee])])(
+@(users: PagedRecords[(ListUserEntry, Option[UserMetadata], Seq[(Employee, Site)])])(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
   loginSession: LoginSession,

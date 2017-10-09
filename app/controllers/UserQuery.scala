@@ -21,6 +21,7 @@ class UserQuery @Inject() (
   cache: Cache,
   val storeUserRepo: StoreUserRepo,
   val siteRepo: SiteRepo,
+  val employeeRepo: EmployeeRepo,
   implicit val db: Database,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
 ) extends MessagesAbstractController(cc) {
@@ -39,9 +40,7 @@ class UserQuery @Inject() (
               (
                 rec._1,
                 rec._2,
-                rec._3.map { emp =>
-                  (emp, siteRepo(emp.siteId))
-                }
+                employeeRepo.list(rec._1.user.id.get)
               )
             }
           )
