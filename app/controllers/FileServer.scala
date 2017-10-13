@@ -1,5 +1,6 @@
 package controllers
 
+import java.nio.file.StandardCopyOption
 import play.api.libs.json._
 import play.api.data.validation.Constraints._
 import play.api.data.Form
@@ -94,6 +95,10 @@ class FileServer @Inject() (
     }
   }
 
+  def storeAttachment(path: Path, id: UploadedFileId) {
+    Files.copy(path, attachmentPath.resolve(f"${id.value}%016d"), StandardCopyOption.REPLACE_EXISTING)
+  }
+
   def create(
     categoryName: String, uploadedDirectory: String
   ) = authenticated(parse.multipartFormData) { implicit req: AuthMessagesRequest[MultipartFormData[TemporaryFile]] =>
@@ -107,7 +112,7 @@ class FileServer @Inject() (
           login.userId, fileName, contentType, Instant.now(), categoryName, dirId.map(_.id.get)
         )
 
-        file.ref.moveTo(attachmentPath.resolve(f"${ufid.value}%016d"), true)
+        storeAttachment(file.ref.path, ufid)
       }
     }
     Ok("")

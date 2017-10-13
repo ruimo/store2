@@ -53,7 +53,7 @@
             <button id="gotoParentDirBtn" onclick="location.href='@routes.FileServer.fileList(page, pageSize, orderBy.toString, categoryName, directory.map(_.parent.path)).url';">@Messages("gotoParentDirectory")</button>
           </div>
         </div>
-        @Messages("recordEmpty")
+        <span class="noRecords">@Messages("recordEmpty")</span>
       } else {
         <div class="fileListHeader">
           @pagingPanel(recs, routes.FileServer.fileList(_, _, _, categoryName, directory.map(_.path)), 10, 25, 50)(implicitly, Some(loginSession))

@@ -313,6 +313,7 @@ GET     /modifyEmployee                  controllers.EmployeeMaintenance.startMo
 POST    /createEmployee                  controllers.EmployeeMaintenance.create(userId: Long)
 POST    /swapEmployee                    controllers.EmployeeMaintenance.swap(userId: Long, index0: Int, index1: Int)
 POST    /removeEmployee                  controllers.EmployeeMaintenance.remove(userId: Long, employeeId: Long)
+GET     /createUserGroup                 controllers.UserGroupMaintenance.startCreate()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

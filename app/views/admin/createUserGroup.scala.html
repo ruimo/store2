@@ -1,0 +1,15 @@
+@(
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: models.LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@main(Messages("createUserGroup"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("createUserGroup")</h1>
+}
