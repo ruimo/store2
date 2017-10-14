@@ -1,0 +1,43 @@
+@(
+  userGroup: UserGroup,
+  blogs: PagedRecords[(News, Option[Site], Option[StoreUser], Option[NewsCategory])]
+)(
+  implicit request: MessagesRequest[AnyContent],
+  optLoginSession: Option[LoginSession],
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@main(Messages("blog", userGroup.name), optLoginSession) {
+} {
+  <h1 class="title">@Messages("blog", userGroup.name)</h1>
+
+  @blogs.records.map { rec =>
+    <div class="blogHeader">
+      <div class="blogHeader1">
+        <span class="title">@rec._1.title</span>
+        <span class="date">@publishedDate(rec._1.releaseTime)</span>
+        <span style="clear: both;">
+      </div>
+      <div class="blogHeader2">
+        <span class="site">@rec._2.map(_.name).getOrElse("")</span>
+        <span class="blogCreatedUser">@rec._3.map(_.fullName).getOrElse("")</span>
+        <span style="clear: both;">
+      </div>
+    </div>
+    <div class="blogBody">
+      @Html(rec._1.contents)
+    </div>
+  }    
+
+  <br>
+  @pagingPanel(
+    blogs,
+    routes.NewsQuery.showNewsLikeBlog(_, _, _, userGroup.id.get.value),
+    10, 25, 50
+  )
+
+  <a href="/">@Messages("backTo", Messages("top"))</a>
+}

@@ -17,6 +17,7 @@ import play.api.mvc.{AnyContent, MessagesAbstractController, MessagesControllerC
 class NewsQuery @Inject() (
   cc: MessagesControllerComponents,
   optAuthenticated: OptAuthenticated,
+  userGroupRepo: UserGroupRepo,
   implicit val db: Database,
   implicit val newsRepo: NewsRepo,
   implicit val loginSessionRepo: LoginSessionRepo,
@@ -46,6 +47,21 @@ class NewsQuery @Inject() (
     implicit val optLogin = db.withConnection { implicit conn => loginSessionRepo.fromRequest(request) }
     db.withConnection { implicit conn =>
       Ok(views.html.news(newsRepo(NewsId(id))))
+    }
+  }
+
+  def showNewsLikeBlog(
+    page:Int, pageSize:Int, orderBySpec: String, userGroupId: Long
+  ) = optAuthenticated { implicit request: MessagesRequest[AnyContent] =>
+    db.withConnection { implicit conn =>
+      implicit val optLogin = loginSessionRepo.fromRequest(request)
+      val userGroup = userGroupRepo(UserGroupId(userGroupId))
+      Ok(
+        views.html.newsLikeBlog(
+          userGroup,
+          newsRepo.list(page, pageSize, OrderBy(orderBySpec), specificUserGroupId = Some(UserGroupId(userGroupId)))
+        )
+      )
     }
   }
 }

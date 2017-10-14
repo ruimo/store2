@@ -274,6 +274,7 @@ GET     /getNewsPicture                  controllers.NewsPictures.getPicture(id:
 GET     /newsList                        controllers.NewsQuery.list(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
 GET     /showNews                        controllers.NewsQuery.show(id: Long)
 GET     /pagedNewsList                   controllers.NewsQuery.pagedList(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
+GET     /showNewsLikeBlog                controllers.NewsQuery.showNewsLikeBlog(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc", userGroupId: Long)
 
 GET     /itemzip                         controllers.ItemMaintenanceByCsv.index
 POST    /itemzip/upload                  controllers.ItemMaintenanceByCsv.uploadZip()
@@ -313,7 +314,15 @@ GET     /modifyEmployee                  controllers.EmployeeMaintenance.startMo
 POST    /createEmployee                  controllers.EmployeeMaintenance.create(userId: Long)
 POST    /swapEmployee                    controllers.EmployeeMaintenance.swap(userId: Long, index0: Int, index1: Int)
 POST    /removeEmployee                  controllers.EmployeeMaintenance.remove(userId: Long, employeeId: Long)
+GET     /userGroupMaintenance            controllers.UserGroupMaintenance.index()
 GET     /createUserGroup                 controllers.UserGroupMaintenance.startCreate()
+POST    /createUserGroup                 controllers.UserGroupMaintenance.create()
+GET     /editGroup                       controllers.UserGroupMaintenance.edit(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "user_group.name")
+POST    /removeUserGroup                 controllers.UserGroupMaintenance.remove(id: Long)
+GET     /editUserGroupMember             controllers.UserGroupMaintenance.editMember(id: Long, page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "u.user_name")
+POST    /removeUserGroupMember           controllers.UserGroupMaintenance.removeMember(userGroupId: Long, userId: Long)
+GET     /userListForMember               controllers.UserGroupMaintenance.userListForMember(page: Int ?= 0, pageSize: Int ?= 10, orderBySpec: String ?= "store_user.user_name")
+POST    /addUserAsGroupMember            controllers.UserGroupMaintenance.addMember(userGroupId: Long)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

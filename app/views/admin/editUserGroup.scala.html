@@ -1,0 +1,98 @@
+@(
+  userGroups: PagedRecords[UserGroup]
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+@main(Messages("editUserGroupTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("editUserGroupTitle")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+    
+  @if(userGroups.records.isEmpty) {
+    <p>@Messages("recordEmpty")</p>
+  } else {
+    <table class="userGroupTable">
+      <tr class="header">
+        <th class="groupName">
+          @Messages("groupName")
+        </th>
+        <th></th>
+      </tr>
+      @userGroups.records.map { u =>
+        <tr class="body">
+          <td class="groupName">
+            <a href="@routes.UserGroupMaintenance.editMember(u.id.get.value)">
+              @u.name
+            </a>
+          </td>
+          <td>
+            @form(action = CSRF(routes.UserGroupMaintenance.remove(u.id.get.value)), 'id -> ("deleteUserGroup" + u.id.get.value)) {
+            }
+            <button class="removeUserGroupBtn" onclick="removeUserGroup(@u.id.get.value, '@u.name');">
+              @Messages("remove")
+            </button>
+          </td>
+        </tr>
+      }
+    </table>
+
+    <br>
+    @pagingPanel(
+      userGroups,
+      routes.UserGroupMaintenance.edit,
+      10, 25, 50
+    )
+  }
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.UserGroupMaintenance.index">
+      @Messages("backTo", Messages("userGroupMaintenance"))
+    </a>
+
+    <br>
+    <a class="backLink" href="@routes.UserMaintenance.index">
+      @Messages("backTo", Messages("userMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
+  <div id="deleteConfirm" title='@Messages("removeConfirmation", Messages("userGroup"))' style="display:none;">
+    <div>@Messages("removeConfirmation", Messages("userGroup"))</div>
+    <div id="nameToDelete"></div>
+    <div id="removeAlert">@Messages("removeAlert")</div>
+  </div>
+  <script>
+    var removeUserGroup = function(id, name) {
+      $("#nameToDelete").text(name);
+      $("#deleteConfirm").dialog({
+        height: "auto",
+        width: 400,
+        modal: true,
+        buttons: {
+          '@Messages("remove")': function() {
+            $('#deleteUserGroup' + id).submit();
+          },
+          '@Messages("cancel")': function() {
+            $(this).dialog("close");
+          }
+        }
+      });
+    };
+  </script>
+}

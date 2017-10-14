@@ -43,6 +43,14 @@ class UserGroupRepo @Inject() (
     }
   }
 
+  def apply(id: UserGroupId)(implicit conn: Connection): UserGroup = SQL(
+    """
+    select * from user_group where user_group_id = {id}
+    """
+  ).on(
+    'id -> id.value
+  ).as(simple.single)
+
   def create(name: String)(implicit conn: Connection): UserGroup = {
     SQL(
       """
@@ -67,7 +75,6 @@ class UserGroupRepo @Inject() (
     val list = SQL(
       s"""
       select * from user_group order by $orderBy limit {pageSize} offset {offset}
-    
       """
     ).on(
       'pageSize -> pageSize,
@@ -82,7 +89,7 @@ class UserGroupRepo @Inject() (
   }
 
   def remove(id: UserGroupId)(implicit conn: Connection): Int = SQL(
-    "delete grom user_group where user_group_id = {id}"
+    "delete from user_group where user_group_id = {id}"
   ).on(
     'id -> id.value
   ).executeUpdate()
@@ -136,14 +143,18 @@ class UserGroupMemberRepo @Inject() (
     implicit conn: Connection
   ): PagedRecords[(UserGroup, StoreUser)] = {
     val list = SQL(
-      """
+      s"""
       select * from user_group_member m
       inner join user_group g on m.user_group_id = g.user_group_id
       inner join store_user u on m.store_user_id = u.store_user_id
       where m.user_group_id = {userGroupId}
+      order by $orderBy
+      limit {pageSize} offset {offset}
       """
     ).on(
-      'userGroupId -> userGroupId.value
+      'userGroupId -> userGroupId.value,
+      'pageSize -> pageSize,
+      'offset -> page * pageSize
     ).as(
       userGroupAndStoreUser *
     )

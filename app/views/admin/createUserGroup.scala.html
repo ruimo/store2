@@ -1,4 +1,5 @@
 @(
+  myForm: Form[CreateUserGroup]
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],
@@ -12,4 +13,28 @@
 @main(Messages("createUserGroup"), Some(loginSession), contentCssClass = "adminContents") {
 } {
   <h1 class="title">@Messages("createUserGroup")</h1>
+
+  @form(action = CSRF(routes.UserGroupMaintenance.create()), 'id -> "createUserGroupForm") {
+    @helper.inputText(
+      myForm("groupName"),
+      '_label -> Messages("groupName"), 'size -> 80, 'maxlength -> 256
+    )
+  
+    <input type="submit" class="createButton" value=@Messages("register")>
+  }
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.UserGroupMaintenance.index">
+      @Messages("backTo", Messages("userGroupMaintenance"))
+    </a>
+
+    <br>
+    <a class="backLink" href="@routes.UserMaintenance.index">
+      @Messages("backTo", Messages("userMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
 }

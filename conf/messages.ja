@@ -603,3 +603,17 @@ modifyEmployee=所属...
 modifyEmployeeTitle=所属の編集
 swap=↑↓
 createUserGroup=ユーザグループの作成
+groupName=グループ名
+userGroupIsCreated=ユーザグループが作成されました
+editUserGroupTitle=ユーザグループの編集
+userGroupMaintenance=ユーザグループの管理
+removeConfirmation=削除してよろしいですか?
+removeAlert=削除すると元にもどせません
+removed={0} は削除されました
+userGroup=ユーザグループ
+recordEmpty=レコードがありません
+editUserGroupMember=ユーザグループメンバの編集
+added={0} が追加されました
+blog={0} のブログ
+blogTitle=タイトル
+

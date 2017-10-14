@@ -815,3 +815,35 @@ dd.info {
     border: none;
     text-align: center;
 }
+
+.userListForMemberFrame {
+    width: 100%;
+    mi-height: 20em;
+}
+
+.blogHeader {
+    width: 100%;
+    padding: 0.7em;
+    border-right: 1px solid blue;
+    border-bottom: 1px solid blue;
+    background: blue;
+    color: white;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    display: block;
+}
+
+.blogHeader1,blogHeader2 {
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+}
+
+.blogCreatedUser {
+    float: right;
+}
+
+.blogHeader .date {
+    float: right;
+}

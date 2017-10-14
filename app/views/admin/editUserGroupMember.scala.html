@@ -1,0 +1,103 @@
+@(
+  userGroup: UserGroup,
+  userGroupMembers: PagedRecords[(UserGroup, StoreUser)]
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+@main(Messages("editUserGroupMember"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("editUserGroupMember")</h1>
+
+  @flash.get("message").map { message =>
+    <div class="message">
+      @message
+    </div>
+  }
+    
+  <div>
+    <span>@Messages("userGroup"):</span>
+    <span>@userGroup.name</span>
+  </div>
+
+  @if(userGroupMembers.records.isEmpty) {
+    <p>@Messages("recordEmpty")</p>
+  } else {
+    <table class="userGroupMemberTable">
+      <tr class="header">
+        <th class="groupName">
+          @Messages("userName")
+        </th>
+        <th></th>
+      </tr>
+      @userGroupMembers.records.map { u =>
+        <tr class="body">
+          <td class="userName">@u._2.userName</td>
+          <td>
+            @form(action = CSRF(routes.UserGroupMaintenance.removeMember(userGroup.id.get.value, u._2.id.get)), 'id -> ("deleteUserGroupMember" + u._1.id.get.value + "_" + u._2.id.get)) {
+            }
+            <button class="removeUserGroupMemberBtn" onclick="removeUserGroupMember(@u._1.id.get.value, @u._2.id.get, '@u._2.userName');">
+              @Messages("remove")
+            </button>
+          </td>
+        </tr>
+      }
+    </table>
+
+    <br>
+    @pagingPanel(
+      userGroupMembers,
+      routes.UserGroupMaintenance.editMember(userGroup.id.get.value, _, _, _),
+      10, 25, 50
+    )
+  }
+
+  <iframe class="userListForMemberFrame" src="@routes.UserGroupMaintenance.userListForMember()">
+  </iframe>
+
+  <div class="menuPanel">
+    <br>
+    <a class="backLink" href="@routes.UserGroupMaintenance.index">
+      @Messages("backTo", Messages("userGroupMaintenance"))
+    </a>
+
+    <br>
+    <a class="backLink" href="@routes.UserMaintenance.index">
+      @Messages("backTo", Messages("userMaintenanceTitle"))
+    </a>
+
+    <br>
+    @admin.backToAdminTop()
+  </div>
+  @form(action = CSRF(routes.UserGroupMaintenance.addMember(userGroup.id.get.value)), 'id -> "addMemberForm") {
+    <input type="hidden" class="userId" name="userId">
+  }
+  <script>
+    var removeUserGroupMember = function(groupId, userId, name) {
+      $('#deleteUserGroupMember' + groupId + '_' + userId).submit();
+    };
+
+    $(function() {
+      $('iframe').on('load', function(){
+        try {  
+          $(this).height(0);
+          $(this).height(this.contentWindow.document.documentElement.scrollHeight);
+        } catch (e) {
+        }
+      }).trigger('load');
+    });
+
+    var addAsMember = function(userId) {
+      $("#addMemberForm .userId").attr("value", String(userId));
+      $("#addMemberForm").submit();
+    };
+  </script>
+}

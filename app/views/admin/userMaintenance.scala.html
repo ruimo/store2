@@ -53,6 +53,14 @@
     </div>
   }
 
+  @if(loginSession.isSuperUser) {
+    <div class="menuItem">
+      <a href="@routes.UserGroupMaintenance.index">
+        @Messages("userGroupMaintenance")
+      </a>
+    </div>
+  }
+
   @if(siteOwnerCanUploadUserCsv || loginSession.isSuperUser) {
     <div class="menuItem">
       <a href="@routes.UserMaintenance.startAddUsersByCsv()">

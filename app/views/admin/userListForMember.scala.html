@@ -1,0 +1,42 @@
+@(
+  users: PagedRecords[(ListUserEntry, Option[UserMetadata])]
+)(
+  implicit flash: play.api.mvc.Flash,
+  request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@import helper._
+
+@implicitLoginSessionOpt = @{Some(loginSession)}
+
+<html>
+  <head>
+    @commonHeader("", Html(""))
+    <link rel="stylesheet" media="all" href="@routes.Assets.versioned("stylesheets/userListForMember.css")">
+  </head>
+  <body>
+    <table class="userListForMember">
+      @users.records.map { u =>
+        <tr class="body">
+          <td class="userName">@u._1.user.userName</td>
+          <td class="fullName">@u._1.user.fullName</td>
+          <td class="email">@u._1.user.email</td>
+          <td>
+            <button onclick="parent.addAsMember(@u._1.user.id.get);">
+              @Messages("add")
+            </button>
+          </td>
+        </tr>
+      }
+    </table>
+    <br>
+    @pagingPanel(
+      users,
+      routes.UserGroupMaintenance.userListForMember,
+      10, 25, 50
+    )
+  </body>
+</html>

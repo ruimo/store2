@@ -96,7 +96,8 @@ class CategoryMaintenance @Inject() (
         newCategory => db.withConnection { implicit conn =>
           newCategory.save
           Redirect(
-            routes.CategoryMaintenance.startCreateNewCategory).flashing("message" -> Messages("categoryIsCreated"))
+            routes.CategoryMaintenance.startCreateNewCategory
+          ).flashing("message" -> Messages("categoryIsCreated"))
         })
     }
   }

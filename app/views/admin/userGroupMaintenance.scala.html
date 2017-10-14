@@ -1,0 +1,23 @@
+@()(
+  implicit request: MessagesRequest[AnyContent],
+  loginSession: LoginSession,
+  shoppingCartItemRepo: ShoppingCartItemRepo,
+  db: play.api.db.Database
+)
+
+@main(Messages("userGroupMaintenanceTitle"), Some(loginSession), contentCssClass = "adminContents") {
+} {
+  <h1 class="title">@Messages("userGroupMaintenanceTitle")</h1>
+
+  <div class="menuItem">
+    <a href="@routes.UserGroupMaintenance.create()">
+      @Messages("createUserGroup")
+    </a>
+  </div>
+
+  <div class="menuItem">
+    <a href="@routes.UserGroupMaintenance.edit()">
+      @Messages("editUserGroupTitle")
+    </a>
+  </div>
+}
