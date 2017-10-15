@@ -271,7 +271,7 @@ POST    /admin/deleteNews                controllers.NewsMaintenance.deleteNews(
 POST    /admin/uploadNewsPicture         controllers.NewsPictures.upload(id: Long, no: Int)
 POST    /admin/removeNewsPicture         controllers.NewsPictures.remove(id: Long, no: Int)
 GET     /getNewsPicture                  controllers.NewsPictures.getPicture(id: Long, no: Int)
-GET     /newsList                        controllers.NewsQuery.list(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
+GET     /newsList                        controllers.NewsQuery.list(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc", userGroupId: Option[Long] ?= None)
 GET     /showNews                        controllers.NewsQuery.show(id: Long)
 GET     /pagedNewsList                   controllers.NewsQuery.pagedList(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc")
 GET     /showNewsLikeBlog                controllers.NewsQuery.showNewsLikeBlog(page:Int ?= 0, pageSize:Int ?= 10, orderBySpec ?= "news.release_time desc", userGroupId: Long)
