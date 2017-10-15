@@ -88,8 +88,7 @@ class FileServerSpec extends Specification with InjectorSupport {
           browser.find(".fileList .noRecords").text === Messages("recordEmpty")
           browser.find("#gotoParentDirBtn").click()
 
-          browser.switchTo(browser.waitUntil(browser.find("#storedFiles")))
-          browser.find(".fileListHeader .currentDirectory").index(0).text === "/"
+          browser.waitUntil(browser.find(".fileListHeader .currentDirectory")).index(0).text === "/"
 
           // With "category01", there should no file or directory exist.
           browser.goTo(
