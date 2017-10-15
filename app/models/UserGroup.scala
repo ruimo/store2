@@ -51,6 +51,14 @@ class UserGroupRepo @Inject() (
     'id -> id.value
   ).as(simple.single)
 
+  def getByName(name: String)(implicit conn: Connection): Option[UserGroup] = SQL(
+    """
+    select * from user_group where name = {name}
+    """
+  ).on(
+    'name -> name
+  ).as(simple.singleOpt)
+
   def create(name: String)(implicit conn: Connection): UserGroup = {
     SQL(
       """

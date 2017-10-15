@@ -30,7 +30,10 @@ class NewsQuery @Inject() (
     db.withConnection { implicit conn =>
       Ok(
         views.html.newsList(
-          newsRepo.list(page, pageSize, OrderBy(orderBySpec), System.currentTimeMillis, specificUserGroupId = userGroupId)
+          newsRepo.list(
+            page, pageSize, OrderBy(orderBySpec), System.currentTimeMillis,
+            specificUserGroupId = userGroupId.map(UserGroupId.apply)
+          )
         )
       )
     }
