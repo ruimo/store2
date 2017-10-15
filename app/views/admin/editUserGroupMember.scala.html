@@ -23,13 +23,13 @@
     </div>
   }
     
-  <div>
+  <div class="userGroup">
     <span>@Messages("userGroup"):</span>
-    <span>@userGroup.name</span>
+    <span class="groupName">@userGroup.name</span>
   </div>
 
   @if(userGroupMembers.records.isEmpty) {
-    <p>@Messages("recordEmpty")</p>
+    <p class="emptyMessage">@Messages("recordEmpty")</p>
   } else {
     <table class="userGroupMemberTable">
       <tr class="header">
