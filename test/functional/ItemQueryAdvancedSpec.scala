@@ -290,6 +290,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
           failFalse(browser.find("#pagingPaneDestination .pageCount").text == "1/3")
         )
 
+        // turn on odd cat
         browser.find("#categoryCondition .categoryConditionItem[data-category-code='10000000'] label").click()
         browser.waitUntil(
           failFalse(browser.find("#pagingPaneDestination .pageCount").text == "1/1")
@@ -303,6 +304,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
           failFalse(browser.find(".categoryConditionItem[data-category-code='2000000'] label").first().displayed())
         )
 
+        // turn on above ten cat
         browser.find(".categoryConditionItem[data-category-code='2000000'] label").click()
 
         new WebDriverWait(browser.webDriver, 10).until(itemNameMatcher(0, "item7"))
@@ -311,11 +313,10 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
         browser.waitUntil(
           failFalse(browser.find("#categoryCondition .categoryConditionItem[data-category-code='10000000'] label").first().displayed())
         )
-        click(
-          browser, browser.webDriver.findElement(
-            By.cssSelector(".categoryConditionItem[data-category-code='10000000'] label")
-          )
-        )
+        // turn off odd cat
+        browser.waitUntil(
+          browser.find(".categoryConditionItem[data-category-code='10000000'] label")
+        ).click()
 
         browser.waitUntil(
           failFalse(browser.find("#pagingPaneDestination .pageCount").first().displayed())
