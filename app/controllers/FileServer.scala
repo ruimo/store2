@@ -124,8 +124,8 @@ class FileServer @Inject() (
         val path = attachmentPath.resolve(f"${uf.id.get.value}%016d")
         if (Files.isReadable(path)) {
           if (isModified(path, req))
-            readFile(
-              path, uf.contentType.getOrElse("application/octet-stream"),
+            readFileRange(
+              req, path, uf.contentType.getOrElse("application/octet-stream"),
               if (asAttachedFile) Some(uf.fileName) else None
             )
           else NotModified
@@ -137,7 +137,24 @@ class FileServer @Inject() (
     }
   }
 
-  def getFileMp4(id: Long) = getFile(id, false)
+//  def getFileMp4(id: Long) = getFile(id, false)
+
+  def getFileMp4(id: Long) = Action { implicit req =>
+    db.withConnection { implicit conn =>
+      uploadedFileRepo.get(UploadedFileId(id)).map { uf =>
+        val path = attachmentPath.resolve(f"${uf.id.get.value}%016d")
+        if (Files.isReadable(path)) {
+          readFileRange(
+            req, path, uf.contentType.getOrElse("application/octet-stream"),
+            None
+          )
+        }
+        else {
+          NotFound
+        }
+      }.getOrElse(NotFound)
+    }
+  }
 
   def removeJson(
     page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]

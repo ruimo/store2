@@ -1,5 +1,8 @@
 package controllers
 
+import play.api.mvc.Headers
+import akka.stream.scaladsl.FileIO
+import play.api.http.HttpEntity
 import scala.collection.JavaConverters._
 import scala.collection.Iterable
 import java.text.{ParseException, SimpleDateFormat}
@@ -152,20 +155,43 @@ def pictureName(id: Long, no: Int) = id + "_" + no + ".jpg"
   }
 
   def readFile(path: Path, contentType: String = "image/jpeg", fileName: Option[String] = None): Result = {
-    val source = Source.fromFile(path.toFile)(scala.io.Codec.ISO8859)
-    val byteArray = try {
-      source.map(_.toByte).toArray
-    }
-    finally {
-      try {
-        source.close()
-      }
-      catch {
-        case t: Throwable => Logger.error("Cannot close stream.", t)
-      }
-    }
+    val source = FileIO.fromPath(path)
+    val contentLength = Some(path.toFile.length())
 
-    bytesResult(byteArray, contentType, fileName)
+    fileName match {
+      case None =>
+        Result(
+          header = ResponseHeader(
+            200,
+            Map(
+              CACHE_CONTROL -> "max-age=0",
+              EXPIRES -> "Mon, 26 Jul 1997 05:00:00 GMT",
+              LAST_MODIFIED -> CacheDateFormat.get.format(new java.util.Date(System.currentTimeMillis))
+            )
+          ),
+          body = HttpEntity.Streamed(source, contentLength, Some(contentType))
+        )
+
+      case Some(fname) =>
+        Result(
+          header = ResponseHeader(
+            200,
+            Map(
+              CACHE_CONTROL -> "max-age=0",
+              EXPIRES -> "Mon, 26 Jul 1997 05:00:00 GMT",
+              LAST_MODIFIED -> CacheDateFormat.get.format(new java.util.Date(System.currentTimeMillis)),
+              CONTENT_DISPOSITION -> ("attachment; filename=" + fname)
+            )
+          ),
+          body = HttpEntity.Streamed(source, contentLength, Some(contentType))
+        )
+    }
+  }
+
+  def readFileRange(
+    requestHeader: RequestHeader, path: Path, contentType: String = "image/jpeg", fileName: Option[String] = None
+  ): Result = {
+    RangeResult.ofFile(path.toFile, requestHeader.headers.get("Range"), Some(contentType))
   }
 
   def bytesResult(byteArray: Array[Byte], contentType: String, fileName: Option[String]): Result = {
