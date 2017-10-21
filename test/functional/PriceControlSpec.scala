@@ -100,7 +100,7 @@ class PriceControlSpec extends Specification with SalesSpecBase with InjectorSup
           browser.find("#agreeCheck").click()
         }
         browser.find("#enterShippingAddressForm input[type='submit']").click()
-        browser.waitUntil {
+        browser.waitUntil(60, TimeUnit.SECONDS) {
           failFalse(browser.find(".itemTable .itemTableBody .itemPrice").text == "999円")
         }
         browser.find(".itemTable .itemTableBody.subtotalWithoutTax .subtotal").text === "999円"
