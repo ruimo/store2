@@ -134,6 +134,8 @@ class FileServer @Inject() (
     }
   }
 
+  def getFileMp4(id: Long) = getFile(id)
+
   def removeJson(
     page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
   ) = authenticatedJson { implicit req: AuthMessagesRequest[AnyContent] =>

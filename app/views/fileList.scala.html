@@ -97,7 +97,7 @@
               <td class="link">
                 @rec._1 match {
                   case f: UploadedFile => {
-                    <span id="url@f.id.get.value">@routes.FileServer.getFile(f.id.get.value)</span>
+                    <span id="url@f.id.get.value">@if(f.fileName.toLowerCase.endsWith(".mp4")) {@routes.FileServer.getFileMp4(f.id.get.value)} else {@routes.FileServer.getFile(f.id.get.value)}</span>
                     <button class="copyBtn" data-clipboard-target="#url@f.id.get.value">@msg("copyToClipboard")</button>
                   }
                   case d: UploadedDirectory => {
