@@ -21,12 +21,12 @@
     }
 
     @if(isFav) {
-      <div class="fav" onclick="$('#decForm').submit();" title='@Messages("decrementFavoCount")'>
+      <div class="fav like" onclick="$('#decForm').submit();" title='@Messages("decrementFavoCount")'>
         <img src='@routes.Assets.versioned("images/favo-r.png")'>
         <span class="favCount">@count</span>
       </div>
     } else {
-      <div class="fav" onclick="$('#incForm').submit();">
+      <div class="fav nolike" onclick="$('#incForm').submit();">
         <img src='@routes.Assets.versioned("images/favo.png")' title='@Messages("incrementFavoCount")'>
         <span class="favCount">@count</span>
       </div>
