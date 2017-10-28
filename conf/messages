@@ -584,3 +584,6 @@ editUserGroupMember=Edit user group member
 added={0} is added
 blog={0}'s blog
 blogTitle=Title
+incrementFavoCount=Like
+decrementFavoCount=Cancel like
+

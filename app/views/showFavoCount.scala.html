@@ -1,0 +1,35 @@
+@(
+  kindId: Int, contentId: Long, count: Long, isFav: Boolean
+)(
+  implicit request: MessagesRequest[AnyContent],
+  flash: Flash,
+  loginSession: LoginSession
+)
+
+@import helper._
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="@routes.Assets.versioned("stylesheets/favo.css")"/>
+    @commonHeader("", Html(""))
+  </head>
+  <body>
+    @form(action = CSRF(routes.Favo.inc(kindId, contentId)), 'id -> "incForm") {
+    }
+    @form(action = CSRF(routes.Favo.dec(kindId, contentId)), 'id -> "decForm") {
+    }
+
+    @if(isFav) {
+      <div class="fav" onclick="$('#decForm').submit();" title='@Messages("decrementFavoCount")'>
+        <img src='@routes.Assets.versioned("images/favo-r.png")'>
+        <span class="favCount">@count</span>
+      </div>
+    } else {
+      <div class="fav" onclick="$('#incForm').submit();">
+        <img src='@routes.Assets.versioned("images/favo.png")' title='@Messages("incrementFavoCount")'>
+        <span class="favCount">@count</span>
+      </div>
+    }
+  </body>
+</html>

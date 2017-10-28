@@ -17,6 +17,18 @@
   <div class="newsContents">
     @Html(news._1.contents)
   </div>
+  <iframe id="favFrame" src="@routes.Favo.show(FavoKind.NEWS.ordinal, news._1.id.get.id)"></iframe>
+
+  <script>
+    $(function() {
+      var myFrame = document.getElementById("favFrame");
+      myFrame.onload = function() {
+        var w = this.contentWindow.document.documentElement.scrollWidth;
+        var h = this.contentWindow.document.documentElement.scrollHeight;
+        $(this).css({width: w, height:h});
+      };
+    });
+  </script>
 }
 
 
