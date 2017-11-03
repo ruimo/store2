@@ -142,7 +142,7 @@ class UserMetadataMaintenanceSpec extends Specification with InjectorSupport {
           um.telNo1 === Some("11111111")
           um.telNo2 === Some("22222222")
           um.joinedDate === Some(Instant.ofEpochMilli(date("2000-01-22").getTime))
-          um.birthMonthDay === Some(123)
+          um.birthMonthDay === Some(MonthDay(123))
           um.profileComment === Some("PROFILE COMMENT")
         }
 

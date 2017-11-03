@@ -81,7 +81,7 @@ class ModifyUserProfileRepo @Inject() (
       um.flatMap(_.telNo1),
       um.flatMap(_.telNo2),
       um.flatMap(_.joinedDate),
-      um.flatMap(_.birthMonthDay.map(_.toString)),
+      um.flatMap(_.birthMonthDay.map(_.value.toString)),
       um.flatMap(_.profileComment)
     )
   }

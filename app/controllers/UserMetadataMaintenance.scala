@@ -60,7 +60,7 @@ class UserMetadataMaintenance @Inject() (
               um.firstNameKana, um.middleNameKana, um.lastNameKana,
               um.telNo0, um.telNo1, um.telNo2,
               um.joinedDate,
-              um.birthMonthDay.map(_.toString),
+              um.birthMonthDay.map(_.value.toString),
               um.profileComment
             )
           )
