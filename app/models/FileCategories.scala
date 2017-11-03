@@ -18,4 +18,8 @@ class FileCategories @Inject() (conf: Configuration) {
       e.get[String]("value"), e.get[String]("menuText")
     )
   }.toList
+
+  val byName: imm.Map[String, FileCategory] = values.map { e =>
+    e.value -> e
+  }.toMap
 }
