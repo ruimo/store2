@@ -7,8 +7,38 @@ import java.sql.Connection
 import anorm._
 import anorm.SqlParser
 import java.time.Instant
+import java.time.LocalDate
+import java.time.temporal.ChronoField
 
 case class UserMetadataId(id: Long) extends AnyVal
+
+// MMdd
+case class MonthDay(value: Int) extends AnyVal {
+  def month: Int = value / 100
+
+  def day = value - 100 * month
+
+  def monthDay: (Int, Int) = {
+    val m = month
+    (month, value - 100 * month)
+  }
+
+  // If the following condition is met, Some(days from now) will be returned. Otherwise None.
+  // this day - day of now <= maxDays
+  // 
+  // Example:
+  // MonthDay(1201).isNear(LocalDate.of(2017, 12, 1), 1) == Some(0)
+  // MonthDay(1201).isNear(LocalDate.of(2017, 11, 30), 1) == Some(1)
+  // MonthDay(1202).isNear(LocalDate.of(2017, 11, 30), 2) == Some(2)
+  // MonthDay(1202).isNear(LocalDate.of(2017, 11, 30), 1) == None
+  // MonthDay(1201).isNear(LocalDate.of(2017, 12, 2), 1) == None
+  // MonthDay(101).isNear(LocalDate.of(2017, 12, 31), 1) == Some(1)
+  def isNear(now: LocalDate.now(), maxDays: Int): Option[Int] = {
+    val (m: Int, d: Int) = monthDay
+
+
+  }
+}
 
 case class UserMetadata(
   id: Option[UserMetadataId] = None,
@@ -21,7 +51,7 @@ case class UserMetadata(
   telNo1: Option[String],
   telNo2: Option[String],
   joinedDate: Option[Instant],
-  birthMonthDay: Option[Int],
+  birthMonthDay: Option[MonthDay],
   profileComment: Option[String]
 ) {
   lazy val fullKanaName = firstNameKana.getOrElse("") + middleNameKana.map(n => " " + n).getOrElse("") + " " + lastNameKana.getOrElse("")
@@ -44,7 +74,7 @@ object UserMetadata {
       case id~userId~photoUrl~firstNameKana~middleNameKana~lastNameKana~telNo0~telNo1~telNo2~joindDate~birthMonthDay~profileComment =>
         UserMetadata(
           id.map(UserMetadataId.apply), userId, photoUrl, firstNameKana, middleNameKana, lastNameKana,
-          telNo0, telNo1, telNo2, joindDate, birthMonthDay, profileComment
+          telNo0, telNo1, telNo2, joindDate, birthMonthDay.map(MonthDay.apply), profileComment
         )
     }
   }
@@ -67,7 +97,7 @@ object UserMetadata {
     telNo1: Option[String] = None,
     telNo2: Option[String] = None,
     joinedDate: Option[Instant] = None,
-    birthMonthDay: Option[Int] = None,
+    birthMonthDay: Option[MonthDay] = None,
     profileComment: Option[String] = None
   )(implicit conn: Connection): UserMetadata = {
     SQL(
@@ -110,7 +140,7 @@ object UserMetadata {
       'telNo1 -> telNo1,
       'telNo2 -> telNo2,
       'joinedDate -> joinedDate,
-      'birthMonthDay -> birthMonthDay,
+      'birthMonthDay -> birthMonthDay.map(_.value),
       'profileComment -> profileComment
     ).executeUpdate()
 
@@ -173,7 +203,7 @@ object UserMetadata {
     telNo1: Option[String] = None,
     telNo2: Option[String] = None,
     joinedDate: Option[Instant] = None,
-    birthMonthDay: Option[Int] = None,
+    birthMonthDay: Option[MonthDay] = None,
     profileComment: Option[String] = None
   )(implicit conn: Connection) = {
     SQL(
@@ -201,7 +231,7 @@ object UserMetadata {
       'telNo1 -> telNo1,
       'telNo2 -> telNo2,
       'joinedDate -> joinedDate,
-      'birthMonthDay -> birthMonthDay,
+      'birthMonthDay -> birthMonthDay.map(_.value),
       'profileComment -> profileComment
     ).executeUpdate()
   }

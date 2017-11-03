@@ -23,7 +23,7 @@ case class UpdateUserMetadata(
           photoUrl,
           firstNameKana, middleNameKana, lastNameKana,
           telNo0, telNo1, telNo2,
-          joinedDate, birthMonthDay.map(_.toInt), profileComment
+          joinedDate, birthMonthDay.map(md => MonthDay(md.toInt)), profileComment
         )
       case Some(um) =>
         UserMetadata.update(
@@ -31,7 +31,7 @@ case class UpdateUserMetadata(
           photoUrl,
           firstNameKana, middleNameKana, lastNameKana,
           telNo0, telNo1, telNo2,
-          joinedDate, birthMonthDay.map(_.toInt), profileComment
+          joinedDate, birthMonthDay.map(md => MonthDay(md.toInt)), profileComment
         )
     }
   }
