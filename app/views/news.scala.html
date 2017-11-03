@@ -10,6 +10,13 @@
 @import helper._
 
 @main(Messages("news"), optLoginSession) {
+  <script>
+    $(function() {
+      $(".favFrame").on('load', function() {
+        $(this).height(this.contentWindow.document.documentElement.scrollHeight);
+      }).trigger('load');
+    });
+  </script>
 } {
   <h1 class="newsTitle">@news._1.title</h1>
   <h2 class="newsReleaseDate">@publishedDate(news._1.releaseTime)</h2>
@@ -17,18 +24,7 @@
   <div class="newsContents">
     @Html(news._1.contents)
   </div>
-  <iframe id="favFrame" src="@routes.Favo.show(FavoKind.NEWS.ordinal, news._1.id.get.id)"></iframe>
-
-  <script>
-    $(function() {
-      var myFrame = document.getElementById("favFrame");
-      myFrame.onload = function() {
-        var w = this.contentWindow.document.documentElement.scrollWidth;
-        var h = this.contentWindow.document.documentElement.scrollHeight;
-        $(this).css({width: w, height:h});
-      };
-    });
-  </script>
+  <iframe class="favFrame" src="@routes.Favo.show(FavoKind.NEWS.ordinal, news._1.id.get.id)"></iframe>
 }
 
 

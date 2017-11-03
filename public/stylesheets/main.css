@@ -848,6 +848,6 @@ dd.info {
     float: right;
 }
 
-#favFrame {
+.favFrame {
     border: none;
 }
