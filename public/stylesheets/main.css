@@ -847,3 +847,7 @@ dd.info {
 .blogHeader .date {
     float: right;
 }
+
+#favFrame {
+    border: none;
+}

@@ -2,9 +2,7 @@
   title: String,
   header: Html
 )(
-  implicit request: MessagesRequest[AnyContent],
-  shoppingCartItemRepo: ShoppingCartItemRepo,
-  db: play.api.db.Database
+  implicit request: MessagesRequest[AnyContent]
 )
 
 <title>@Messages("commonTitle", title)</title>
