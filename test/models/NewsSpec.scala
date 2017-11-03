@@ -224,5 +224,51 @@ class NewsSpec extends Specification with InjectorSupport {
         }
       }
     }
+
+    "Can exclude specify user group." in {
+      implicit val app: Application = GuiceApplicationBuilder().configure(inMemoryDatabase()).build()
+      val localeInfo = inject[LocaleInfoRepo]
+      val currencyInfo = inject[CurrencyRegistry]
+
+      inject[Database].withConnection { implicit conn =>
+        val user1 = inject[StoreUserRepo].create(
+          "userName", "firstName", Some("middleName"), "lastName", "email",
+          1L, 2L, UserRole.NORMAL, Some("companyName")
+        )
+        val user2 = inject[StoreUserRepo].create(
+          "userName2", "firstName2", Some("middleName2"), "lastName2", "email2",
+          1L, 2L, UserRole.NORMAL, Some("companyName2")
+        )
+        val user3 = inject[StoreUserRepo].create(
+          "userName3", "firstName3", Some("middleName3"), "lastName3", "email3",
+          1L, 2L, UserRole.NORMAL, Some("companyName3")
+        )
+        val news1 = inject[NewsRepo].createNew(
+          user1.id.get, None, None, "title01", "contents01", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(234L)
+        )
+        val news2 = inject[NewsRepo].createNew(
+          user2.id.get, None, None, "title02", "contents02", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(235L)
+        )
+        val news3 = inject[NewsRepo].createNew(
+          user3.id.get, None, None, "title03", "contents03", Instant.ofEpochMilli(123L), Instant.ofEpochMilli(236L)
+        )
+
+        val ug1 = inject[UserGroupRepo].create("group1")
+        val ug2 = inject[UserGroupRepo].create("group2")
+
+        // Group1: user1, user2
+        inject[UserGroupMemberRepo].create(ug1.id.get, user1.id.get)
+        inject[UserGroupMemberRepo].create(ug1.id.get, user2.id.get)
+
+        // Group2: user2, user3
+        inject[UserGroupMemberRepo].create(ug2.id.get, user2.id.get)
+        inject[UserGroupMemberRepo].create(ug2.id.get, user3.id.get)
+
+        doWith(inject[NewsRepo].list(specificUserGroupId = Some(ug1.id.get), excludeUserGroupId = Some(ug2.id.get))) { list =>
+          list.records.size === 1
+          list.records(0)._1 === news1
+        }
+      }
+    }
   }
 }

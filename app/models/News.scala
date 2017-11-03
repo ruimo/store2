@@ -77,7 +77,8 @@ class NewsRepo @Inject() (
     orderBy: OrderBy = OrderBy("news.release_time desc"),
     now: Long = MaxDate,
     specificUser: Option[Long] = None,
-    specificUserGroupId: Option[UserGroupId] = None
+    specificUserGroupId: Option[UserGroupId] = None,
+    excludeUserGroupId: Option[UserGroupId] = None
   )(
     implicit conn: Connection
   ): PagedRecords[(News, Option[Site], Option[StoreUser], Option[NewsCategory])] = {
@@ -95,6 +96,13 @@ class NewsRepo @Inject() (
         (specificUserGroupId.map { ug =>
           s"""
           and news.store_user_id in (
+            select store_user_id from user_group_member where user_group_id = ${ug.value}
+          )
+          """
+        }).getOrElse("") +
+        (excludeUserGroupId.map { ug =>
+          s"""
+          and news.store_user_id not in (
             select store_user_id from user_group_member where user_group_id = ${ug.value}
           )
           """
