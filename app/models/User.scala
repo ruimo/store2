@@ -186,6 +186,13 @@ class StoreUserRepo @Inject() (
       'id -> id
     ).as(simple.single)
   
+  def get(id: Long)(implicit conn: Connection): Option[StoreUser] =
+    SQL(
+      "select * from store_user where store_user_id = {id} and deleted = FALSE"
+    ).on(
+      'id -> id
+    ).as(simple.singleOpt)
+
   def findByUserName(userName: String)(implicit conn: Connection): Option[StoreUser] =
     SQL(
       "select * from store_user where user_name = {user_name} and deleted = FALSE"

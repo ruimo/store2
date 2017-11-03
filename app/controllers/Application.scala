@@ -23,11 +23,11 @@ class Application @Inject() (
       implicit val optLogin = loginSessionRepo.fromRequest(request)
       Ok(
         views.html.index(
-          UserMetadata.recentlyJoindUsers(Instant.now().plus(-30, ChronoUnit.DAYS)).map { um =>
-            (storeUserRepo(um.storeUserId), um)
+          UserMetadata.recentlyJoindUsers(Instant.now().plus(-30, ChronoUnit.DAYS)).flatMap { um =>
+            storeUserRepo.get(um.storeUserId).map {u => (u, um)}
           },
-          UserMetadata.nearBirthDayUsers().map { um =>
-            (storeUserRepo(um.storeUserId), um)
+          UserMetadata.nearBirthDayUsers().flatMap { um =>
+            storeUserRepo.get(um.storeUserId).map {u => (u, um)}
           }
         )
       )
