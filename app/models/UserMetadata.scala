@@ -33,10 +33,19 @@ case class MonthDay(value: Int) extends AnyVal {
   // MonthDay(1202).isNear(LocalDate.of(2017, 11, 30), 1) == None
   // MonthDay(1201).isNear(LocalDate.of(2017, 12, 2), 1) == None
   // MonthDay(101).isNear(LocalDate.of(2017, 12, 31), 1) == Some(1)
-  def isNear(now: LocalDate.now(), maxDays: Int): Option[Int] = {
+  // MonthDay(228).isNear(LocalDate.of(2016, 3, 1), 1) == None
+  // MonthDay(228).isNear(LocalDate.of(2016, 3, 1), 2) == Some(1)
+  // MonthDay(228).isNear(LocalDate.of(2017, 3, 1), 1) == Some(1)
+  def isNear(now: LocalDate = LocalDate.now(), maxDays: Int): Option[Int] = {
     val (m: Int, d: Int) = monthDay
+    val nowDays = now.toEpochDay
 
+    def check(year: Int): Option[Int] = {
+      val birthDays = LocalDate.of(year, m, d).toEpochDay
+      if (nowDays <= birthDays && birthDays <= nowDays + maxDays) Some((birthDays - nowDays).toInt) else None
+    }
 
+    check(now.getYear).orElse(check(now.getYear + 1))
   }
 }
 

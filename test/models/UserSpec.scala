@@ -86,7 +86,7 @@ class UserSpec extends Specification with InjectorSupport {
           Some("firstNameKana"), Some("middleNameKana"), Some("lastNameKana"),
           Some("tel00"), Some("tel01"), Some("tel02"),
           Some(Instant.ofEpochMilli(1234L)),
-          Some(123),
+          Some(MonthDay(123)),
           Some("Comment")
         )
 

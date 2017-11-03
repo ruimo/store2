@@ -1,6 +1,6 @@
 package models
 
-import java.time.LocalDateTime
+import java.time.{LocalDateTime, LocalDate}
 import scala.collection.{immutable => imm}
 import org.specs2.mutable._
 import java.time.Instant
@@ -70,7 +70,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = Some(now.plus(-30, ChronoUnit.DAYS)),
-          birthMonthDay = Some(123),
+          birthMonthDay = Some(MonthDay(123)),
           profileComment = Some("comment01")
         )
 
@@ -86,7 +86,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = Some(now.plus(-29, ChronoUnit.DAYS)),
-          birthMonthDay = Some(123),
+          birthMonthDay = Some(MonthDay(123)),
           profileComment = Some("comment02")
         )
 
@@ -100,7 +100,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = None,
-          birthMonthDay = Some(123),
+          birthMonthDay = Some(MonthDay(123)),
           profileComment = Some("comment03")
         )
 
@@ -145,7 +145,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = Some(now.plus(-30, ChronoUnit.DAYS)),
-          birthMonthDay = Some(131),
+          birthMonthDay = Some(MonthDay(131)),
           profileComment = Some("comment01")
         )
 
@@ -159,7 +159,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = Some(now.plus(-29, ChronoUnit.DAYS)),
-          birthMonthDay = Some(201),
+          birthMonthDay = Some(MonthDay(201)),
           profileComment = Some("comment02")
         )
 
@@ -173,7 +173,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           Some("tel02"),
           Some("tel03"),
           joinedDate = None,
-          birthMonthDay = Some(202),
+          birthMonthDay = Some(MonthDay(202)),
           profileComment = Some("comment03")
         )
 
@@ -190,6 +190,18 @@ class UserMetadataSpec extends Specification with InjectorSupport {
         UserMetadata.nearBirthDayUsers(LocalDateTime.of(2000, 2, 2, 0, 0)).toSet === imm.HashSet(um03)
         UserMetadata.nearBirthDayUsers(LocalDateTime.of(2000, 2, 3, 0, 0)).toSet === imm.HashSet()
       }
+    }
+
+    "Can query new birthday." in {
+      MonthDay(1201).isNear(LocalDate.of(2017, 12, 1), 1) === Some(0)
+      MonthDay(1201).isNear(LocalDate.of(2017, 11, 30), 1) === Some(1)
+      MonthDay(1202).isNear(LocalDate.of(2017, 11, 30), 2) === Some(2)
+      MonthDay(1202).isNear(LocalDate.of(2017, 11, 30), 1) === None
+      MonthDay(1201).isNear(LocalDate.of(2017, 12, 2), 1) === None
+      MonthDay(101).isNear(LocalDate.of(2017, 12, 31), 1) === Some(1)
+      MonthDay(301).isNear(LocalDate.of(2016, 2, 28), 1) === None
+      MonthDay(301).isNear(LocalDate.of(2016, 2, 28), 2) === Some(2)
+      MonthDay(301).isNear(LocalDate.of(2017, 2, 28), 1) === Some(1)
     }
   }
 }
