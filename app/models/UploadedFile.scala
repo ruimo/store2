@@ -151,6 +151,25 @@ class UploadedFileRepo @Inject() (
     UploadedFileId(SQL("select currval('uploaded_file_seq')").as(SqlParser.scalar[Long].single))
   }
 
+  def update(file: UploadedFile)(implicit conn: Connection): Int = SQL(
+    """
+    update uploaded_file set 
+      store_user_id = {storeUserId},
+      file_name = {fileName},
+      content_type = {contentType},
+      category_name = {categoryName},
+      uploaded_directory_id = {uploadedDirectoryId}
+    where uploaded_file_id = {id}
+    """
+  ).on(
+    'id -> file.id.get.value,
+    'storeUserId -> file.storeUserId,
+    'fileName -> file.fileName,
+    'contentType -> file.contentType,
+    'categoryName -> file.categoryName,
+    'uploadedDirectoryId -> file.uploadedDirectory.map(_.value)
+  ).executeUpdate()
+
   val lsSimple = {
     SqlParser.get[Option[Long]]("path_id") ~
     SqlParser.get[Long]("sid") ~

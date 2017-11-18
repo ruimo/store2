@@ -586,4 +586,7 @@ blog={0}'s blog
 blogTitle=Title
 incrementFavoCount=Like
 decrementFavoCount=Cancel like
-
+convertToMp4=Convert to mp4
+fileConversion.WAITING=Waiting
+fileConversion.CONVERTING=Converting...
+fileConversion.ERROR=Error

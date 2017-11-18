@@ -26,6 +26,7 @@ class FileServer @Inject() (
   val optAuthenticated: OptAuthenticated,
   val authenticatedJson: AuthenticatedJson,
   val cache: Cache,
+  val fileConversionStatusRepo: FileConversionStatusRepo,
   uploadedFileRepo: UploadedFileRepo,
   uploadedDirectoryRepo: UploadedDirectoryRepo,
   fileCategories: FileCategories,
@@ -65,7 +66,15 @@ class FileServer @Inject() (
       Ok(
         views.html.fileList(
           page, pageSize, OrderBy(orderBySpec),
-          uploadedFileRepo.ls(page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))).get,
+          uploadedFileRepo.ls(
+            page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))
+          ).get.map { case (uploadedPath, storeUser) =>
+              (
+                uploadedPath,
+                storeUser,
+                fileConversionStatusRepo.get(uploadedPath.id.get)
+              )
+          },
           TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
           toLocalDateTime(_)(implicitly),
           categoryName,
@@ -85,7 +94,15 @@ class FileServer @Inject() (
       Ok(
         views.html.fileList(
           page, pageSize, OrderBy(orderBySpec),
-          uploadedFileRepo.ls(page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))).get,
+          uploadedFileRepo.ls(
+            page, pageSize, OrderBy(orderBySpec), categoryName, dir.getOrElse(Directory("/"))
+          ).get.map { case (uploadedPath, storeUser) =>
+              (
+                uploadedPath,
+                storeUser,
+                fileConversionStatusRepo.get(uploadedPath.id.get)
+              )
+          },
           TimeZoneSupport.formatter(Messages("imageDateFormatInImageList")),
           toLocalDateTime(_)(implicitly),
           categoryName,
@@ -95,8 +112,11 @@ class FileServer @Inject() (
     }
   }
 
+  def toFilePath(id: UploadedFileId): Path =
+    attachmentPath.resolve(f"${id.value}%016d")
+
   def storeAttachment(path: Path, id: UploadedFileId) {
-    Files.copy(path, attachmentPath.resolve(f"${id.value}%016d"), StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(path, toFilePath(id), StandardCopyOption.REPLACE_EXISTING)
   }
 
   def create(
@@ -121,7 +141,7 @@ class FileServer @Inject() (
   def getFile(id: Long, asAttachedFile: Boolean = true) = authenticated { implicit req =>
     db.withConnection { implicit conn =>
       uploadedFileRepo.get(UploadedFileId(id)).map { uf =>
-        val path = attachmentPath.resolve(f"${uf.id.get.value}%016d")
+        val path = toFilePath(uf.id.get)
         if (Files.isReadable(path)) {
           if (isModified(path, req))
             readFileRange(
@@ -142,7 +162,7 @@ class FileServer @Inject() (
   def getFileMp4(id: Long) = Action { implicit req =>
     db.withConnection { implicit conn =>
       uploadedFileRepo.get(UploadedFileId(id)).map { uf =>
-        val path = attachmentPath.resolve(f"${uf.id.get.value}%016d")
+        val path = toFilePath(uf.id.get)
         if (Files.isReadable(path)) {
           readFileRange(
             req, path, uf.contentType.getOrElse("application/octet-stream"),
@@ -170,7 +190,7 @@ class FileServer @Inject() (
           }
           else {
             uploadedFileRepo.remove(ufid)
-            Files.delete(attachmentPath.resolve(f"${ufid.value}%016d"))
+            Files.delete(toFilePath(ufid))
             Ok(Json.obj("status" -> "ok"))
           }
         }.getOrElse(BadRequest(Json.obj("status" -> "notfound")))
@@ -252,5 +272,28 @@ class FileServer @Inject() (
         }
       )
     )
+  }
+
+  def convertToMp4Json(
+    page: Int, pageSize: Int, orderBySpec: String, categoryName: String, directory: Option[String]
+  ) = authenticatedJson { implicit req: AuthMessagesRequest[AnyContent] =>
+    implicit val login = req.login
+    req.body.asJson.map { json =>
+      val pathId = (json \ "pathId").as[String].toLong
+      db.withConnection { implicit conn =>
+        val ufid = UploadedFileId(pathId)
+        uploadedFileRepo.get(ufid).map { uf =>
+          if (uf.storeUserId != login.userId  && ! login.isSuperUser) {
+            BadRequest(Json.obj("status" -> "forbidden"))
+          }
+          else {
+            val fileToConvert = toFilePath(ufid)
+            fileConversionStatusRepo.create(ufid, FileConversionStatusValue.WAITING)
+
+            Ok(Json.obj("status" -> "ok"))
+          }
+        }.getOrElse(BadRequest(Json.obj("status" -> "notfound")))
+      }
+    }.get
   }
 }

@@ -11,6 +11,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoField
 import javax.inject.Singleton
 import javax.inject.Inject
+import scala.collection.{immutable => imm}
 
 case class FileConversionStatusId(value: Long) extends AnyVal
 
@@ -68,5 +69,32 @@ class FileConversionStatusRepo @Inject() (
   ).as(
     simple.singleOpt
   )
-}
 
+  def update(
+    id: FileConversionStatusId, status: FileConversionStatusValue
+  )(implicit conn: Connection): Int = {
+    SQL(
+      """
+      update file_conversion_status
+      set status = {status}
+      where file_conversion_status_id = {id}
+      """
+    ).on(
+      'status -> status.ordinal,
+      'id -> id.value
+    ).executeUpdate()
+  }
+
+  def list(maxCount: Int = 10)(implicit conn: Connection): imm.Seq[FileConversionStatus] = SQL(
+    """
+    select * from file_conversion_status
+    where status in(""" +
+      FileConversionStatusValue.WAITING.ordinal + ", " +
+      FileConversionStatusValue.CONVERTING.ordinal +
+    """)
+    order by created_at desc limit {maxCount}
+    """
+  ).on(
+    'maxCount -> maxCount
+  ).as(simple *)
+}

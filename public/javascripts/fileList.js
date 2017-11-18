@@ -120,4 +120,33 @@ $(function() {
       });
     }
   });
+
+  $(".convertBtn").click(function(e) {
+    var id = $(this).attr("data-id");
+    $.ajax({
+      type: 'post',
+      url: $("#convertToMp4Form").attr("action"),
+      data: JSON.stringify({pathId: id}),
+      contentType: 'application/json',
+      dataType: 'json',
+      cache: false,
+      success: function(data, status, jqXhr) {
+        if (data["status"] == "ok") {
+          location.reload();
+        }
+        else {
+          alert("ただいま混雑しています。少し時間をあけて試してください。");
+        }
+      },
+      error: function(jqXhr, status, error) {
+        if (jqXhr.responseJSON.status == "notfound") {
+          alert("指定されたファイルは見つかりませんでした。");
+          location.reload();
+        }
+        else {
+          alert("ただいま混雑しています。少し時間をあけて試してください。");
+        }
+      }
+    });
+  });
 });

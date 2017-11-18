@@ -1,7 +1,7 @@
 package models;
 
 public enum FileConversionStatusValue {
-    WATITING, CONVERTING, COMPLETED, ERROR;
+    WAITING, CONVERTING, COMPLETED, ERROR;
 
     private static final FileConversionStatusValue byIndex[] = FileConversionStatusValue.class.getEnumConstants();
 

@@ -18,10 +18,10 @@ alter table file_conversion_status
 alter table file_conversion_status
     add constraint file_conversion_status_file_uploaded_file_id_unique unique (uploaded_file_id);
 
-create sequence file_conversion_seq;
+create sequence file_conversion_status_seq;
 
 # --- !Downs
 
-drop sequence file_conversion_seq;
+drop sequence file_conversion_status_seq;
 
 drop table file_conversion_status;
