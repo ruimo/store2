@@ -81,7 +81,6 @@ class FileConverter @Inject() (
         val pathString = path.toAbsolutePath.toString
         PathUtil.withTempFile(None, Some(".mp4")) { mp4Path =>
           val mp4 = mp4Path.toAbsolutePath.toString
-          Thread.sleep(10 * 1000)
           val cmd = s"ffmpeg -y -i $pathString -movflags faststart -vcodec libx264 -acodec aac -strict experimental $mp4"
           Logger.info("Invoking [" + cmd + "]")
           val rc = ((Process(cmd) run) exitValue())

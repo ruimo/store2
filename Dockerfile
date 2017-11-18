@@ -2,7 +2,7 @@ FROM java:8-jdk
 MAINTAINER Shisei Hanai<shanai@jp.ibm.com>
 
 RUN apt-get update
-RUN apt-get install unzip -y
+RUN apt-get install unzip ffmpeg -y
 
 RUN useradd -d "/var/home" -s /bin/bash appuser
 RUN mkdir -p /opt/functional-store2
