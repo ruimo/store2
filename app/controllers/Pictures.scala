@@ -191,7 +191,13 @@ def pictureName(id: Long, no: Int) = id + "_" + no + ".jpg"
   def readFileRange(
     requestHeader: RequestHeader, path: Path, contentType: String = "image/jpeg", fileName: Option[String] = None
   ): Result = {
-    RangeResult.ofFile(path.toFile, requestHeader.headers.get("Range"), Some(contentType))
+    fileName match {
+      case Some(fname) =>
+        RangeResult.ofFile(path.toFile, requestHeader.headers.get("Range"), fname, Some(contentType))
+
+      case None =>
+        RangeResult.ofFile(path.toFile, requestHeader.headers.get("Range"), Some(contentType))
+    }
   }
 
   def bytesResult(byteArray: Array[Byte], contentType: String, fileName: Option[String]): Result = {
