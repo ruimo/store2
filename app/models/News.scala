@@ -61,15 +61,16 @@ class NewsRepo @Inject() (
     case news~site~user~category => (news, site, user, category)
   }
 
-  def apply(id: NewsId)(implicit conn: Connection): (News, Option[Site]) = SQL(
+  def apply(id: NewsId)(implicit conn: Connection): (News, Option[Site], Option[StoreUser]) = SQL(
     """
     select * from news n
     left join site s on s.site_id = n.site_id
+    left join store_user u on u.store_user_id = n.store_user_id
     where n.news_id = {id}
     """
   ).on(
     'id -> id.id
-  ).as(withSite.single)
+  ).as(withSiteUser.single)
 
   def list(
     page: Int = 0,

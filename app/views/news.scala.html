@@ -1,5 +1,5 @@
 @(
-  news: (News, Option[Site])
+  news: (News, Option[Site], Option[StoreUser])
 )(
   implicit request: MessagesRequest[AnyContent],
   optLoginSession: Option[LoginSession],
@@ -21,6 +21,7 @@
   <h1 class="newsTitle">@news._1.title</h1>
   <h2 class="newsReleaseDate">@publishedDate(news._1.releaseTime)</h2>
   <h2 class="newsSite">@news._2.map(_.name).getOrElse("")</h2>
+  <h2 class="newsUser">@news._3.map(_.fullName).getOrElse("")</h2>
   <div class="newsContents">
     @Html(news._1.contents)
   </div>
