@@ -72,6 +72,38 @@ class NewsRepo @Inject() (
     'id -> id.id
   ).as(withSiteUser.single)
 
+  def isRecentlyUpdated(
+    now: Instant = Instant.now(),
+    from: Instant,
+    specificUserGroupId: Option[UserGroupId] = None
+  )(
+    implicit conn: Connection
+  ): Boolean = SQL(
+    """
+    select exists(
+      select * from news
+      where
+        release_time <= {now}
+        and {from} <= release_time
+    """ +
+      (specificUserGroupId.map { ug =>
+        s"""
+        and news.store_user_id in (
+          select store_user_id from user_group_member where user_group_id = ${ug.value}
+        )
+        """
+      }).getOrElse("") +
+
+    """
+    )
+    """
+  ).on(
+    'now -> now,
+    'from -> from
+  ).as(
+    SqlParser.scalar[Boolean].single
+  )
+
   def list(
     page: Int = 0,
     pageSize: Int = 10,
