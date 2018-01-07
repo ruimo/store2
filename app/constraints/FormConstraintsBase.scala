@@ -10,7 +10,7 @@ import helpers.Cache
 
 class FormConstraintsBase(cache: Cache) {
   def passwordMinLength: () => Int = cache.config(_.getOptional[Int]("password.min.length").getOrElse(6))
-  val userNameMinLength = 6
+  def userNameMinLength: Int = cache.config(_.getOptional[Int]("userName.min.length").getOrElse(6))()
   def userNameConstraint: () => Seq[Constraint[String]] =
     () => Seq(minLength(userNameMinLength), maxLength(24))
   def normalUserNameConstraint: () => Seq[Constraint[String]] = cache.config(
