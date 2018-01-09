@@ -17,7 +17,7 @@ case class ModifyUser(
 ) extends CreateUserBase {
   def update(implicit tokenGenerator: TokenGenerator, conn: Connection) {
     val salt = tokenGenerator.next
-    val hash = PasswordHash.generate(password, salt)
+    val hash = PasswordHash.generate(password, salt, storeUserRepo.PasswordHashStretchCount())
     storeUserRepo.update(
       userId, userName, firstName, middleName, lastName, email, hash, salt, Some(companyName)
     )

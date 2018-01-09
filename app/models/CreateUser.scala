@@ -9,9 +9,10 @@ trait CreateUser extends CreateUserBase {
 
   def save(implicit conn: Connection): StoreUser = {
     val salt = RandomTokenGenerator().next
-    val hash = PasswordHash.generate(password, salt)
+    val stretchCount = storeUserRepo.PasswordHashStretchCount()
+    val hash = PasswordHash.generate(password, salt, stretchCount)
     val user = storeUserRepo.create(
-      userName, firstName, middleName, lastName, email, hash, salt, role, Some(companyName)
+      userName, firstName, middleName, lastName, email, hash, salt, role, Some(companyName), stretchCount
     )
     SupplementalUserEmail.save(supplementalEmails.toSet, user.id.get)
     user

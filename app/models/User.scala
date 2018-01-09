@@ -339,7 +339,8 @@ class StoreUserRepo @Inject() (
   def update(
     userId: Long,
     userName: String, firstName: String, middleName: Option[String], lastName: String,
-    email: String, passwordHash: Long, salt: Long, companyName: Option[String]
+    email: String, passwordHash: Long, salt: Long, companyName: Option[String],
+    stretchCount: Int = PasswordHashStretchCount()
   )(implicit conn: Connection): Int =
     SQL(
       """
@@ -351,7 +352,8 @@ class StoreUserRepo @Inject() (
         email = {email},
         password_hash = {passwordHash},
         salt = {salt},
-        company_name = {companyName}
+        company_name = {companyName},
+        stretch_count = {stretchCount}
       where store_user_id = {userId}
       """
     ).on(
@@ -363,7 +365,8 @@ class StoreUserRepo @Inject() (
       'passwordHash -> passwordHash,
       'salt -> salt,
       'companyName -> companyName,
-      'userId -> userId
+      'userId -> userId,
+      'stretchCount -> stretchCount
     ).executeUpdate()
 
   def maintainByCsv(
