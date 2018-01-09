@@ -64,7 +64,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
         newUser.middleName === None
         newUser.lastName === "lastName"
         newUser.email === "ruimo@ruimo.com"
-        newUser.passwordHash === PasswordHash.generate("password", newUser.salt)
+        newUser.passwordHash === PasswordHash.generate("password", newUser.salt, inject[StoreUserRepo].PasswordHashStretchCount())
         newUser.deleted === false
         newUser.userRole === UserRole.NORMAL
         newUser.companyName === Some("site01")
@@ -224,7 +224,7 @@ class CreateNewNormalUserSpec extends Specification with InjectorSupport {
         newUser.middleName === None
         newUser.lastName === "lastName"
         newUser.email === "ruimo@ruimo.com"
-        newUser.passwordHash === PasswordHash.generate("password", newUser.salt)
+        newUser.passwordHash === PasswordHash.generate("password", newUser.salt, inject[StoreUserRepo].PasswordHashStretchCount())
         newUser.deleted === false
         newUser.userRole === UserRole.NORMAL
         newUser.companyName === Some("site01")

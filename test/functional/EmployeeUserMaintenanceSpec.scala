@@ -365,7 +365,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
           newUser.lastName === "lastName2"
           newUser.companyName === Some("companyName2")
           newUser.email === "xxx@xxx.xxx"
-          newUser.passwordHash === PasswordHash.generate("password2", newUser.salt)
+          newUser.passwordHash === PasswordHash.generate("password2", newUser.salt, storeUserRepo.PasswordHashStretchCount())
         }
 
         browser.find("button[data-user-id='" + employee01.id.get + "']").click()
