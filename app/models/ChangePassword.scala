@@ -15,8 +15,10 @@ case class ChangePassword(
   implicit storeUserRepo: StoreUserRepo
 ) {
   def changePassword(storeUserId: Long)(implicit conn: Connection): Boolean = {
+    val stretchCount = storeUserRepo.PasswordHashStretchCount()
     val salt = ChangePassword.tokenGenerator.next
-    storeUserRepo.changePassword(storeUserId, PasswordHash.generate(passwords._1, salt), salt) != 0
+    val hash = PasswordHash.generate(passwords._1, salt, stretchCount)
+    storeUserRepo.changePassword(storeUserId, hash, salt, stretchCount) != 0
   }
 }
 

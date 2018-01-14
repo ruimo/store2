@@ -123,8 +123,14 @@ class ResetPasswordRepo @Inject() (
       'resetTime -> new java.sql.Timestamp(timeout)
     ).executeUpdate() != 0
   ) {
+    val stretchCount = storeUserRepo.PasswordHashStretchCount()
     val salt = tokenGenerator.next
-    storeUserRepo.changePassword(storeUserId, PasswordHash.generate(password, salt), salt) != 0
+    storeUserRepo.changePassword(
+      storeUserId,
+      PasswordHash.generate(password, salt, stretchCount),
+      salt,
+      stretchCount
+    ) != 0
   }
   else {
     false

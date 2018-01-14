@@ -582,17 +582,23 @@ class StoreUserRepo @Inject() (
     }
   }
 
-  def changePassword(userId: Long, passwordHash: Long, salt: Long)(implicit conn: Connection): Int = SQL(
+  def changePassword(
+    userId: Long, passwordHash: Long, salt: Long, stretchCount: Long
+  )(
+    implicit conn: Connection
+  ): Int = SQL(
     """
     update store_user set
       password_hash = {passwordHash},
-      salt = {salt}
+      salt = {salt},
+      stretch_count = {sc}
     where store_user_id = {userId}
     """
   ).on(
     'passwordHash -> passwordHash,
     'salt -> salt,
-    'userId -> userId
+    'userId -> userId,
+    'sc -> stretchCount
   ).executeUpdate()
 
   def validateNormalUserName(userName: String) {

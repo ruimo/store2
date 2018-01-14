@@ -548,7 +548,8 @@ class UserSpec extends Specification with InjectorSupport {
           111L, 222L, UserRole.ADMIN, Some("companyName2")
         )
           
-        inject[StoreUserRepo].changePassword(user1.id.get, 123L, 234L)
+        val stretchCount = inject[StoreUserRepo].PasswordHashStretchCount()
+        inject[StoreUserRepo].changePassword(user1.id.get, 123L, 234L, stretchCount)
 
         doWith(inject[StoreUserRepo].apply(user1.id.get)) { u =>
           u.userName === "userName"
