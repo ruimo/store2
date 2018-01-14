@@ -115,7 +115,7 @@ class ResetPasswordSpec extends Specification with InjectorSupport {
 
         browser.webDriver.getTitle === Messages("commonTitle", Messages("passwordIsUpdated"))
         val newUser = inject[StoreUserRepo].apply(user.id.get)
-        newUser.passwordHash === PasswordHash.generate("1q2w3e4r", newUser.salt)
+        newUser.passwordHash === PasswordHash.generate("1q2w3e4r", newUser.salt, inject[StoreUserRepo].PasswordHashStretchCount())
       }
     }
   }
