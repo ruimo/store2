@@ -112,7 +112,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
         browser.await().atMost(10, TimeUnit.SECONDS).untilPage().isLoaded()
 
         0 to 4 foreach { i =>
-          new WebDriverWait(browser.webDriver, 10).until(itemNameMatcher(i, "item" + (4 - i)))
+          new WebDriverWait(browser.webDriver, 30).until(itemNameMatcher(i, "item" + (4 - i)))
         }
 
         browser.find("#orderBySelect option[value='item_price_history.unit_price ASC']").click()
@@ -121,7 +121,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
           failFalse(browser.find("#queryBody .qthumItem").first().displayed())
         )
         0 to 4 foreach { i =>
-          new WebDriverWait(browser.webDriver, 10).until(itemNameMatcher(i, "item" + i))
+          new WebDriverWait(browser.webDriver, 30).until(itemNameMatcher(i, "item" + i))
         }
       }
     }
@@ -307,7 +307,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
         // turn on above ten cat
         browser.find(".categoryConditionItem[data-category-code='2000000'] label").click()
 
-        new WebDriverWait(browser.webDriver, 10).until(itemNameMatcher(0, "item7"))
+        new WebDriverWait(browser.webDriver, 30).until(itemNameMatcher(0, "item7"))
         
         browser.find(".category01").click()
         browser.waitUntil(
@@ -331,7 +331,7 @@ class ItemQueryAdvancedSpec extends Specification with InjectorSupport {
         }
         browser.find("#pagingPaneDestination button.nextPageButton").click()
 
-        new WebDriverWait(browser.webDriver, 10).until(itemNameMatcher(0, "item16"))
+        new WebDriverWait(browser.webDriver, 30).until(itemNameMatcher(0, "item16"))
       }
     }
   }
