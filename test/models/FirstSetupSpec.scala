@@ -16,7 +16,8 @@ class FirstSetupSpec extends Specification with InjectorSupport {
       inject[Database].withConnection { implicit conn =>
         implicit val storeUserRepo = inject[StoreUserRepo]
         val user = FirstSetup(
-          "userName", "firstName", Some("middleName"), "lastName", "email", Seq[String](), "password", "companyName"
+          "userName", "firstName", Some("middleName"), "lastName", "email", Seq[String](), "password", "companyName",
+          Some("kanaFirstName"), None, Some("kanaLastName")
         ).save(
           conn
         )

@@ -18,7 +18,7 @@ class HelperBase {
   // password == password
   def createTestUser(implicit storeUserRepo: StoreUserRepo, conn: Connection): StoreUser = storeUserRepo.create(
     "administrator", "Admin", None, "Manager", "admin@abc.com",
-    4151208325021896473L, -1106301469931443100L, UserRole.ADMIN, Some("Company1")
+    4151208325021896473L, -1106301469931443100L, UserRole.ADMIN, Some("Company1"), stretchCount = 1
   )
 
   // password == password
@@ -35,7 +35,7 @@ class HelperBase {
   ): (StoreUser, SiteUser) = {
     val storeUser = storeUserRepo.create(
       name, firstName, middleName, lastName, "admin@abc.com",
-      4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1")
+      4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1"), stretchCount = 1
     )
 
     val siteUser = siteUserRepo.createNew(storeUser.id.get, siteId)

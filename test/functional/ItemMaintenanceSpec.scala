@@ -402,7 +402,7 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
     def createNormalUser(userName: String = "user")(implicit conn: Connection, app: PlayApp): StoreUser =
       inject[StoreUserRepo].create(
         userName, "Admin", None, "Manager", "admin@abc.com",
-        4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1")
+        4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1"), stretchCount = 1
       )
 
     def login(browser: TestBrowser, userName: String = "administrator") {
@@ -666,7 +666,9 @@ class ItemMaintenanceSpec extends Specification with InjectorSupport {
         browser.goTo(
           controllers.routes.ItemMaintenance.startChangeItem(1000).url.addParm("lang", lang.code).toString
         )
-        browser.find("#itemNames_0_itemName").fill().`with`("かえで2");
+        browser.waitUntil(
+          browser.find("#itemNames_0_itemName")
+        ).fill().`with`("かえで2");
         browser.find(".changeItemName .itemBody .itemName").click()
 
         // By default, store owner cannot change item name. The attempt will transit the page to top.

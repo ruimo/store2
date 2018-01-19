@@ -35,7 +35,8 @@ case class LoginSession(storeUser: StoreUser, siteUser: Option[SiteUser], expire
       addr.email,
       storeUser.passwordHash,
       storeUser.salt,
-      storeUser.companyName
+      storeUser.companyName,
+      Some(addr.firstNameKana), None, Some(addr.lastNameKana)
     )
   }
 }

@@ -37,7 +37,7 @@ case class EntryUserRegistration(
     val user = ExceptionMapper.mapException {
       storeUserRepo.create(
         userName, firstName, None, lastName,
-        email, passwordHash, salt, UserRole.ENTRY_USER, None, stretchCount
+        email, passwordHash, salt, UserRole.ENTRY_USER, None, Some(firstNameKana), None, Some(lastNameKana), stretchCount
       )
     }
 

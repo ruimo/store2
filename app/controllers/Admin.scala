@@ -42,8 +42,16 @@ class Admin @Inject() (
   )
 
   def createUserForm[T <: CreateUser](
-    apply: (String, String, Option[String], String, String, Seq[Option[String]], (String, String), String) => T,
-    unapply: T => Option[(String, String, Option[String], String, String, Seq[Option[String]], (String, String), String)]
+    apply: (
+      String, String, Option[String], String, String, Seq[Option[String]], (String, String), String,
+      Option[String], Option[String], Option[String]
+    ) => T,
+    unapply: T => Option[
+      (
+        String, String, Option[String], String, String, Seq[Option[String]], (String, String), String,
+        Option[String], Option[String], Option[String]
+      )
+    ]
   )(implicit mp: MessagesProvider) = Form(
     mapping(
       "userName" -> text.verifying(fc.userNameConstraint(): _*),
@@ -58,13 +66,24 @@ class Admin @Inject() (
       ).verifying(
         Messages("confirmPasswordDoesNotMatch"), passwords => passwords._1 == passwords._2
       ),
-      "companyName" -> text.verifying(fc.companyNameConstraint: _*)
+      "companyName" -> text.verifying(fc.companyNameConstraint: _*),
+      "altFirstName" -> optional(text),
+      "altMiddleName" -> optional(text),
+      "altLastName" -> optional(text)
     )(apply)(unapply)
   )
 
   def createNormalUserForm[T <: CreateUser](
-    apply: (String, String, Option[String], String, String, Seq[Option[String]], (String, String), String) => T,
-    unapply: T => Option[(String, String, Option[String], String, String, Seq[Option[String]], (String, String), String)]
+    apply: (
+      String, String, Option[String], String, String, Seq[Option[String]], (String, String), String,
+      Option[String], Option[String], Option[String]
+    ) => T,
+    unapply: T => Option[
+      (
+        String, String, Option[String], String, String, Seq[Option[String]], (String, String), String,
+        Option[String], Option[String], Option[String]
+      )
+    ]
   )(implicit mp: MessagesProvider) = Form(
     mapping(
       "userName" -> text.verifying(fc.normalUserNameConstraint(): _*),
@@ -79,7 +98,10 @@ class Admin @Inject() (
       ).verifying(
         Messages("confirmPasswordDoesNotMatch"), passwords => passwords._1 == passwords._2
       ),
-      "companyName" -> text.verifying(fc.companyNameConstraint: _*)
+      "companyName" -> text.verifying(fc.companyNameConstraint: _*),
+      "altFirstName" -> optional(text),
+      "altMiddleName" -> optional(text),
+      "altLastName" -> optional(text)
     )(apply)(unapply)
   )
 
@@ -237,7 +259,10 @@ class Admin @Inject() (
               passwordHash = PasswordHash.generate(userName, salt),
               salt = salt,
               userRole = UserRole.ANONYMOUS,
-              companyName = None
+              companyName = None,
+              altFirstName = None,
+              altMiddleName = None,
+              altLastName = None
             )
 
             Logger.info("Anonymous login success '" + user + "'")

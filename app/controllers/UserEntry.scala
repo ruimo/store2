@@ -186,7 +186,6 @@ class UserEntry @Inject() (
   }
 
   def submitUserInfo(userId: Long) = Action { implicit request: MessagesRequest[AnyContent] =>
-println("*** submitUserInfo(" + userId + ")")
     createRegistrationForm.bindFromRequest.fold(
       formWithErrors =>
         BadRequest(registerUserInformationView(userId, formWithErrors)),
@@ -219,7 +218,8 @@ println("*** submitUserInfo(" + userId + ")")
               newInfo.email,
               PasswordHash.generate(newInfo.passwords._1, u.salt),
               u.salt,
-              u.companyName
+              u.companyName,
+              Some(newInfo.firstNameKana), None, Some(newInfo.lastNameKana)
             )
 
             val address = Address.createNew(
@@ -378,7 +378,8 @@ println("*** submitUserInfo(" + userId + ")")
       user.id.get,
       user.userName, 
       userInfo.firstName, userInfo.middleName, userInfo.lastName,
-      userInfo.email, user.passwordHash, user.salt, user.companyName
+      userInfo.email, user.passwordHash, user.salt, user.companyName,
+      Some(userInfo.firstNameKana), None, Some(userInfo.lastNameKana)
     )
   }
 

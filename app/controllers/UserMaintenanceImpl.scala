@@ -49,7 +49,7 @@ class UserMaintenanceImpl (
   implicit val siteRepo: SiteRepo,
   implicit val loginSessionRepo: LoginSessionRepo,
   implicit val shoppingCartItemRepo: ShoppingCartItemRepo
-) extends MessagesAbstractController(cc) {
+) extends MessagesAbstractController(cc) with I18n {
 
   val EmployeeCsvRegistration: () => Boolean = cache.config(
     _.getOptional[Boolean]("employee.csv.registration").getOrElse(false)
@@ -92,7 +92,10 @@ class UserMaintenanceImpl (
         Messages("confirmPasswordDoesNotMatch"), passwords => passwords._1 == passwords._2
       ),
       "companyName" -> text.verifying(fc.companyNameConstraint: _*),
-      "sendNoticeMail" -> boolean
+      "sendNoticeMail" -> boolean,
+      "altFirstName" -> optional(text),
+      "altMiddleName" -> optional(text),
+      "altLastName" -> optional(text)
     )(ModifyUser.fromForm)(ModifyUser.toForm)
   )
 
@@ -111,7 +114,10 @@ class UserMaintenanceImpl (
       ).verifying(
         Messages("confirmPasswordDoesNotMatch"), passwords => passwords._1 == passwords._2
       ),
-      "companyName" -> text.verifying(fc.companyNameConstraint: _*)
+      "companyName" -> text.verifying(fc.companyNameConstraint: _*),
+      "altFirstName" -> optional(text),
+      "altMiddleName" -> optional(text),
+      "altLastName" -> optional(text)
     )(CreateSiteOwner.fromForm)(CreateSiteOwner.toForm)
   )
 
@@ -127,13 +133,23 @@ class UserMaintenanceImpl (
     }
   }
 
+  def hasAltName(implicit request: MessagesRequest[AnyContent]): Boolean = db.withConnection { implicit conn =>
+    supportedLangs.preferred(langs) match {
+      case `japanese` => true
+      case `japan` => true
+
+      case _ => false
+    }
+  }
+
   def startCreateNewSuperUser = authenticated { implicit request: AuthMessagesRequest[AnyContent] =>
     implicit val login = request.login
     NeedLogin.assumeSuperUser(login) {
       Ok(
         views.html.admin.createNewSuperUser(
           admin.createUserForm(FirstSetup.fromForm, FirstSetup.toForm),
-          MaxCountOfSupplementalEmail()
+          MaxCountOfSupplementalEmail(),
+          hasAltName(request)
         )
       )
     }
@@ -145,7 +161,8 @@ class UserMaintenanceImpl (
       db.withConnection { implicit conn =>
         Ok(
           views.html.admin.createNewSiteOwner(
-            newSiteOwnerForm, siteRepo.tableForDropDown, MaxCountOfSupplementalEmail()
+            newSiteOwnerForm, siteRepo.tableForDropDown, MaxCountOfSupplementalEmail(),
+            hasAltName(request)
           )
         )
       }
@@ -158,7 +175,8 @@ class UserMaintenanceImpl (
       Ok(
         views.html.admin.createNewNormalUser(
           admin.createNormalUserForm(CreateNormalUser.fromForm, CreateNormalUser.toForm),
-          MaxCountOfSupplementalEmail()
+          MaxCountOfSupplementalEmail(),
+          hasAltName(request)
         )
       )
     }
@@ -170,7 +188,7 @@ class UserMaintenanceImpl (
       if (SiteOwnerCanEditEmployee()) {
         val siteId = login.siteUser.map(_.siteId).get
         db.withConnection { implicit conn =>
-          Ok(views.html.admin.createNewEmployeeUser(siteRepo(siteId), createEmployeeForm))
+          Ok(views.html.admin.createNewEmployeeUser(siteRepo(siteId), createEmployeeForm, hasAltName(request)) )
         }
       }
       else {
@@ -187,7 +205,7 @@ class UserMaintenanceImpl (
           Logger.error("Validation error in UserMaintenance.createNewEmployeeUser." + formWithErrors)
           val siteId = login.siteUser.map(_.siteId).get
           db.withConnection { implicit conn =>
-            BadRequest(views.html.admin.createNewEmployeeUser(siteRepo(siteId), formWithErrors))
+            BadRequest(views.html.admin.createNewEmployeeUser(siteRepo(siteId), formWithErrors, hasAltName(request)))
           }
         },
         newUser => {
@@ -204,7 +222,10 @@ class UserMaintenanceImpl (
                 passwordHash = PasswordHash.generate(newUser.passwords._1, salt),
                 salt = salt,
                 userRole = UserRole.NORMAL,
-                companyName = Some(siteRepo(siteId).name)
+                companyName = Some(siteRepo(siteId).name),
+                altFirstName = None,
+                altMiddleName = None,
+                altLastName = None
               )
 
               employeeRepo.createNew(siteId, createdUser.id.get)
@@ -230,7 +251,7 @@ class UserMaintenanceImpl (
           Logger.error("Validation error in UserMaintenance.createNewSuperUser." + formWithErrors)
           BadRequest(
             views.html.admin.createNewSuperUser(
-              formWithErrors, MaxCountOfSupplementalEmail()
+              formWithErrors, MaxCountOfSupplementalEmail(), hasAltName(request)
             )
           )
         },
@@ -253,7 +274,7 @@ class UserMaintenanceImpl (
           db.withConnection { implicit conn =>
             BadRequest(
               views.html.admin.createNewSiteOwner(
-                formWithErrors, siteRepo.tableForDropDown, MaxCountOfSupplementalEmail()
+                formWithErrors, siteRepo.tableForDropDown, MaxCountOfSupplementalEmail(), hasAltName(request)
               )
             )
           }
@@ -277,7 +298,7 @@ class UserMaintenanceImpl (
           Logger.error("Validation error in UserMaintenance.createNewNormalUser." + formWithErrors)
           BadRequest(
             views.html.admin.createNewNormalUser(
-              formWithErrors, MaxCountOfSupplementalEmail()
+              formWithErrors, MaxCountOfSupplementalEmail(), hasAltName(request)
             )
           )
         },

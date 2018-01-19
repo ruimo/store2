@@ -39,7 +39,7 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
   def createNormalUser(userName: String = "administrator")(implicit conn: Connection, app: PlayApp): StoreUser =
     inject[StoreUserRepo].create(
       userName, "Admin", None, "Manager", "admin@abc.com",
-      4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1")
+      4151208325021896473L, -1106301469931443100L, UserRole.NORMAL, Some("Company1"), stretchCount = 1
     )
 
   def login(browser: TestBrowser, userName: String = "administrator") {
@@ -67,7 +67,6 @@ class EmployeeUserMaintenanceSpec extends Specification with InjectorSupport {
         val site = inject[SiteRepo].createNew(Ja, "店舗1")
         val siteUser = inject[SiteUserRepo].createNew(user.id.get, site.id.get)
         login(browser)
-
         browser.goTo(
           controllers.routes.UserMaintenance.startCreateNewEmployeeUser().url +
           "?lang=" + lang.code

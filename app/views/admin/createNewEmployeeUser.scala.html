@@ -1,6 +1,7 @@
 @(
   site: Site,
-  myForm: Form[CreateEmployee]
+  myForm: Form[CreateEmployee],
+  hasAltName: Boolean
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],

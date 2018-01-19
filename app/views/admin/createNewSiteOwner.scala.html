@@ -1,6 +1,7 @@
 @(
   myForm: Form[models.CreateSiteOwner], siteTable: Seq[(String, String)],
-  countOfSupplementalEmail: Int
+  countOfSupplementalEmail: Int,
+  hasAltName: Boolean
 )(
   implicit flash: play.api.mvc.Flash,
   request: MessagesRequest[AnyContent],

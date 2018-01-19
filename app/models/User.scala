@@ -214,7 +214,8 @@ class StoreUserRepo @Inject() (
   def create(
     userName: String, firstName: String, middleName: Option[String], lastName: String,
     email: String, passwordHash: Long, salt: Long, userRole: UserRole, companyName: Option[String],
-    stretchCount: Int = 1
+    altFirstName: Option[String] = None, altMiddleName: Option[String] = None, altLastName: Option[String] = None,
+    stretchCount: Int = PasswordHashStretchCount()
   )(implicit conn: Connection): StoreUser = {
     SQL(
       """
@@ -340,6 +341,7 @@ class StoreUserRepo @Inject() (
     userId: Long,
     userName: String, firstName: String, middleName: Option[String], lastName: String,
     email: String, passwordHash: Long, salt: Long, companyName: Option[String],
+    altFirstName: Option[String] = None, altMiddleName: Option[String] = None, altLastName: Option[String] = None,
     stretchCount: Int = PasswordHashStretchCount()
   )(implicit conn: Connection): Int =
     SQL(
