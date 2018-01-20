@@ -78,9 +78,9 @@ class UserSpec extends Specification with InjectorSupport {
         val list = inject[StoreUserRepo].listUsers()
         list.records.size === 1
         list.records(0)._1.user === user1
-        list.records(0)._2 === None
+        list.records(0)._2.get.storeUserId === user1.id.get
 
-        val umd = UserMetadata.createNew(
+        val umd = UserMetadata.update(
           user1.id.get,
           Some("url"),
           Some("firstNameKana"), Some("middleNameKana"), Some("lastNameKana"),
@@ -93,7 +93,19 @@ class UserSpec extends Specification with InjectorSupport {
         val list2 = inject[StoreUserRepo].listUsers()
         list2.records.size === 1
         list2.records(0)._1.user === user1
-        list2.records(0)._2 === Some(umd)
+        doWith(list2.records(0)._2.get) { rec =>
+          rec.storeUserId === user1.id.get
+          rec.photoUrl === Some("url")
+          rec.firstNameKana === Some("firstNameKana")
+          rec.middleNameKana === Some("middleNameKana")
+          rec.lastNameKana === Some("lastNameKana")
+          rec.telNo0 === Some("tel00")
+          rec.telNo1 === Some("tel01")
+          rec.telNo2 === Some("tel02")
+          rec.joinedDate === Some(Instant.ofEpochMilli(1234L))
+          rec.birthMonthDay === Some(MonthDay(123))
+          rec.profileComment === Some("Comment")
+        }
       }
     }
 
@@ -116,21 +128,21 @@ class UserSpec extends Specification with InjectorSupport {
         doWith(inject[StoreUserRepo].listUsers().records) { records =>
           records.size === 2
           records(0)._1.user === user1
-          records(0)._2 === None
+          records(0)._2.get.storeUserId === user1.id.get
           records(1)._1.user === user2
-          records(1)._2 === None
+          records(1)._2.get.storeUserId === user2.id.get
         }
 
         doWith(inject[StoreUserRepo].listUsers(employeeSiteId = Some(1)).records) { records =>
           records.size === 1
           records(0)._1.user === user1
-          records(0)._2 === None
+          records(0)._2.get.storeUserId === user1.id.get
         }
           
         doWith(inject[StoreUserRepo].listUsers(employeeSiteId = Some(2)).records) { records =>
           records.size === 1
           records(0)._1.user === user2
-          records(0)._2 === None
+          records(0)._2.get.storeUserId === user2.id.get
         }
       }
     }
@@ -163,11 +175,11 @@ class UserSpec extends Specification with InjectorSupport {
         list.records.size === 2
         list.records(0)._1.user === user1
         list.records(0)._1.sendNoticeMail === false
-        list.records(0)._2 === None
+        list.records(0)._2.get.storeUserId === user1.id.get
 
         list.records(1)._1.user === user2
         list.records(1)._1.sendNoticeMail === true
-        list.records(1)._2 === None
+        list.records(1)._2.get.storeUserId === user2.id.get
       }
     }
 
@@ -195,12 +207,12 @@ class UserSpec extends Specification with InjectorSupport {
         list.records(0)._1.user === user1
         list.records(0)._1.siteUser === None
         list.records(0)._1.sendNoticeMail === false
-        list.records(0)._2 === None
+        list.records(0)._2.get.storeUserId === user1.id.get
 
         list.records(1)._1.user === user2
         list.records(1)._1.siteUser.get === siteUser
         list.records(1)._1.sendNoticeMail === false
-        list.records(1)._2 === None
+        list.records(1)._2.get.storeUserId === user2.id.get
       }
     }
 

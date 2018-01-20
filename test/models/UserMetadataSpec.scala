@@ -58,9 +58,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           companyName = None
         )
 
-        UserMetadata.getByStoreUserId(user01.id.get) === None
-
-        val um01 = UserMetadata.createNew(
+        UserMetadata.update(
           user01.id.get,
           Some("url01"),
           Some("firstNameKana01"),
@@ -74,9 +72,9 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           profileComment = Some("comment01")
         )
 
-        UserMetadata.getByStoreUserId(user01.id.get) === Some(um01)
+        val um01 = UserMetadata.getByStoreUserId(user01.id.get).get
 
-        val um02 = UserMetadata.createNew(
+        UserMetadata.update(
           user02.id.get,
           Some("url02"),
           Some("firstNameKana02"),
@@ -90,7 +88,9 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           profileComment = Some("comment02")
         )
 
-        val um03 = UserMetadata.createNew(
+        val um02 = UserMetadata.getByStoreUserId(user02.id.get).get
+
+        UserMetadata.update(
           user03.id.get,
           Some("url03"),
           Some("firstNameKana03"),
@@ -103,6 +103,8 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           birthMonthDay = Some(MonthDay(123)),
           profileComment = Some("comment03")
         )
+
+        val um03 = UserMetadata.getByStoreUserId(user03.id.get).get
 
         UserMetadata.recentlyJoindUsers(now.plus(-28, ChronoUnit.DAYS)).size === 0
         UserMetadata.recentlyJoindUsers(now.plus(-29, ChronoUnit.DAYS)).size === 0
@@ -135,7 +137,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           email = "", passwordHash = 0L, salt = 0L, userRole = UserRole.NORMAL, companyName = None
         )
 
-        val um01 = UserMetadata.createNew(
+        UserMetadata.update(
           user01.id.get,
           Some("url01"),
           Some("firstNameKana01"),
@@ -149,7 +151,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           profileComment = Some("comment01")
         )
 
-        val um02 = UserMetadata.createNew(
+        UserMetadata.update(
           user02.id.get,
           Some("url02"),
           Some("firstNameKana02"),
@@ -163,7 +165,7 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           profileComment = Some("comment02")
         )
 
-        val um03 = UserMetadata.createNew(
+        UserMetadata.update(
           user03.id.get,
           Some("url03"),
           Some("firstNameKana03"),
@@ -176,6 +178,10 @@ class UserMetadataSpec extends Specification with InjectorSupport {
           birthMonthDay = Some(MonthDay(202)),
           profileComment = Some("comment03")
         )
+
+        val um01 = UserMetadata.getByStoreUserId(user01.id.get).get
+        val um02 = UserMetadata.getByStoreUserId(user02.id.get).get
+        val um03 = UserMetadata.getByStoreUserId(user03.id.get).get
 
         UserMetadata.nearBirthDayUsers(LocalDateTime.of(2000, 1, 23, 0, 0)).toSet === imm.HashSet()
         UserMetadata.nearBirthDayUsers(LocalDateTime.of(2000, 1, 24, 0, 0)).toSet === imm.HashSet(um01)
