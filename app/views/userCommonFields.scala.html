@@ -1,6 +1,7 @@
 @(
   myForm: Form[_],
-  countOfSupplementalEmail: Int
+  countOfSupplementalEmail: Int,
+  hasAltName: Boolean
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
@@ -20,10 +21,28 @@
   '_label -> Messages("firstName"), 'size -> 32, 'maxlength -> 32
 )
 
+@if(hasAltName) {
+  @inputText(
+    myForm("altFirstName"),
+    '_label -> Messages("altFirstName"), 'size -> 32, 'maxlength -> 32
+  )
+}
+
+@inputText(myForm("altMiddleName"), 'type -> "hidden", '_showConstraints -> false)(
+  helper.FieldConstructor(simpleField.f), implicitly
+)
+
 @inputText(
   myForm("lastName"),
   '_label -> Messages("lastName"), 'size -> 32, 'maxlength -> 32
 )
+
+@if(hasAltName) {
+  @inputText(
+    myForm("altLastName"),
+    '_label -> Messages("altLastName"), 'size -> 32, 'maxlength -> 32
+  )
+}
 
 @inputText(
   myForm("companyName"),

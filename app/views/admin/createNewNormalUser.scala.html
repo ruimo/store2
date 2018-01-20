@@ -27,7 +27,7 @@
   }
 
   @helper.form(action = helper.CSRF(routes.UserMaintenance.createNewNormalUser()), 'id -> "createNewNormalUserForm") {
-    @userCommonFields(myForm, countOfSupplementalEmail)
+    @userCommonFields(myForm, countOfSupplementalEmail, hasAltName)
     <input type="submit" id="registerNormalUser" value=@Messages("register")>
   }
 

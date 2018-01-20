@@ -1,7 +1,8 @@
 @(
   user: ListUserEntry,
   myForm: Form[ModifyUser],
-  countOfSupplementalEmail: Int
+  countOfSupplementalEmail: Int,
+  hasAltName: Boolean
 )(
   implicit request: MessagesRequest[AnyContent],
   loginSession: LoginSession,
@@ -25,7 +26,7 @@
     @inputText(myForm("userId"), 'type -> "hidden", '_showConstraints -> false)(
       helper.FieldConstructor(simpleField.f), implicitly
     )
-    @userCommonFields(myForm, countOfSupplementalEmail)
+    @userCommonFields(myForm, countOfSupplementalEmail, hasAltName)
 
     @if(user.user.userRole == UserRole.ADMIN || user.site.isDefined) {
       @checkbox(

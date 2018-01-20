@@ -622,3 +622,5 @@ convertToMp4=mp4変換
 fileConversion.WAITING=変換待ち
 fileConversion.CONVERTING=変換中
 fileConversion.ERROR=変換エラー
+altFirstName=姓(カナ)
+altLastName=名(カナ)

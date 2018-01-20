@@ -29,6 +29,23 @@ case class ModifyUser(
     orderNotificationRepo.delete(userId)
     if (sendNoticeMail)
       orderNotificationRepo.createNew(userId)
+
+    UserMetadata.getByStoreUserId(userId) match {
+      case None =>
+        UserMetadata.createNew(
+          userId,
+          firstNameKana = altFirstName,
+          middleNameKana = altMiddleName,
+          lastNameKana = altLastName
+        )
+      case Some(um) =>
+        UserMetadata.update(
+          userId,
+          firstNameKana = altFirstName,
+          middleNameKana = altMiddleName,
+          lastNameKana = altLastName
+        )
+    }
   }
 }
 

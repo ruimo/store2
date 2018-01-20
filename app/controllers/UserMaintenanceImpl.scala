@@ -366,7 +366,8 @@ class UserMaintenanceImpl (
               modifyUserForm.fill(
                 ModifyUser(user, SupplementalUserEmail.load(userId).toSeq)
               ),
-              MaxCountOfSupplementalEmail()
+              MaxCountOfSupplementalEmail(),
+              hasAltName(request)
             )
           )
         }
@@ -377,7 +378,8 @@ class UserMaintenanceImpl (
                 user, modifyUserForm.fill(
                   ModifyUser(user, SupplementalUserEmail.load(userId).toSeq)
                 ),
-                MaxCountOfSupplementalEmail()
+                MaxCountOfSupplementalEmail(),
+                hasAltName(request)
               )
             )
           }
@@ -398,7 +400,12 @@ class UserMaintenanceImpl (
           db.withConnection { implicit conn =>
             val user: ListUserEntry = storeUserRepo.withSite(userId)
             BadRequest(
-              views.html.admin.modifyUser(user, formWithErrors, MaxCountOfSupplementalEmail())
+              views.html.admin.modifyUser(
+                user,
+                formWithErrors,
+                MaxCountOfSupplementalEmail(),
+                hasAltName(request)
+              )
             )
           }
         },

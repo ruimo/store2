@@ -242,6 +242,12 @@ class StoreUserRepo @Inject() (
     ).executeUpdate()
 
     val storeUserId = SQL("select currval('store_user_seq')").as(SqlParser.scalar[Long].single)
+    UserMetadata.createNew(
+      storeUserId = storeUserId,
+      firstNameKana = altFirstName,
+      middleNameKana = altMiddleName,
+      lastNameKana = altLastName
+    )
     StoreUser(Some(storeUserId), userName, firstName, middleName, lastName, email, passwordHash,
               salt, deleted = false, userRole, companyName, stretchCount)(this)
   }
@@ -343,8 +349,8 @@ class StoreUserRepo @Inject() (
     email: String, passwordHash: Long, salt: Long, companyName: Option[String],
     altFirstName: Option[String] = None, altMiddleName: Option[String] = None, altLastName: Option[String] = None,
     stretchCount: Int = PasswordHashStretchCount()
-  )(implicit conn: Connection): Int =
-    SQL(
+  )(implicit conn: Connection): Int = {
+    val count = SQL(
       """
       update store_user set
         user_name = {userName},
@@ -370,6 +376,9 @@ class StoreUserRepo @Inject() (
       'userId -> userId,
       'stretchCount -> stretchCount
     ).executeUpdate()
+
+    count
+  }
 
   def maintainByCsv(
     z: Iterator[Try[CsvRecord]],
